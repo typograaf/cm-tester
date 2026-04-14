@@ -26,13 +26,17 @@ const CASE_MODES = [
   { id: "lower", label: "tt", transform: "lowercase" },
 ];
 
-// Friendly names for standard OpenType features
+// Hard-coded labels. Takes precedence over UI names in the font's name table.
 const FEATURE_LABELS = {
-  kern: "Kerning",
+  ss01: "alt A",
+  ss02: "alt E",
+  ss03: "alt IJ",
+  ss04: "alt MNU",
+  ss05: "alt Oo",
+  ss06: "alt MmNnUu",
   liga: "Ligatures",
   dlig: "Disc. Ligatures",
   clig: "Context. Ligatures",
-  calt: "Context. Alternates",
   salt: "Stylistic Alt.",
   smcp: "Small Caps",
   c2sc: "Caps to Small",
@@ -49,15 +53,18 @@ const FEATURE_LABELS = {
   locl: "Localized",
 };
 
-// Features that are on by default — skip as toggles
-const HIDDEN_DEFAULTS = new Set(["kern", "calt", "rlig", "ccmp", "mark", "mkmk"]);
+// Features hidden from the toggle row — on by default, no point showing
+const HIDDEN_DEFAULTS = new Set(["kern", "calt", "rlig", "ccmp", "mark", "mkmk", "aalt"]);
+
+// Features that should start toggled ON
+const DEFAULT_ON_FEATURES = new Set(["liga", "dlig"]);
 
 // -------- state ----------------------------------------------------------
 
 const state = {
   activeExp: 1,
   caseMode: null, // null = as typed
-  featureState: {},
+  featureState: Object.fromEntries([...DEFAULT_ON_FEATURES].map((t) => [t, true])),
   loaded: new Map(), // id -> { family, features }
 };
 
@@ -146,6 +153,9 @@ function buildNameLookup(font) {
 }
 
 function labelForTag(tag, gsub, nameLookup) {
+  // Hard-coded labels win
+  if (FEATURE_LABELS[tag]) return FEATURE_LABELS[tag];
+  // Otherwise try the font's UI name table for stylistic sets
   if (/^ss\d\d$/.test(tag)) {
     const feat = (gsub?.features || []).find((f) => f && f.tag === tag);
     const nameID = feat?.feature?.params?.uiLabelNameID;
@@ -155,7 +165,7 @@ function labelForTag(tag, gsub, nameLookup) {
     return tag.toUpperCase();
   }
   if (/^cv\d\d$/.test(tag)) return tag.toUpperCase();
-  return FEATURE_LABELS[tag] || tag;
+  return tag;
 }
 
 // -------- render --------------------------------------------------------
