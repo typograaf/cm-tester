@@ -185,7 +185,8 @@ html, body {
 
 .stage-caption {
   margin: 0;
-  font-weight: 500;          /* BE Cause Medium */
+  font-weight: 400;
+  font-variation-settings: "wght" 400, "wdth" 60;
   font-size: var(--body-size);
   line-height: 1.2;
   letter-spacing: var(--body-track);
