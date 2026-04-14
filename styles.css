@@ -117,6 +117,7 @@ html, body {
 .features button {
   font-family: var(--ui);
   font-weight: 700;
+  font-variation-settings: "wght" 700, "wdth" 60;
   font-size: var(--body-size);
   line-height: 1;
   letter-spacing: var(--body-track);
@@ -262,7 +263,8 @@ html, body {
 }
 
 .slider > span {
-  font-weight: 500;          /* Medium */
+  font-weight: 400;
+  font-variation-settings: "wght" 400, "wdth" 60;
   font-size: var(--body-size);
   line-height: 1.2;
   letter-spacing: var(--body-track);
