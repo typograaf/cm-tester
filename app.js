@@ -101,8 +101,13 @@ async function loadFont(exp) {
   await fontFace.load();
   document.fonts.add(fontFace);
   // Wait for the browser's internal font metrics to settle before
-  // fitHeadline measures scrollWidth etc.
+  // fitHeadline measures widths.
   await document.fonts.ready;
+  // Force the font to actually be rasterized at a sample size so the
+  // canvas-based measurements pick it up (critical on iOS Safari).
+  try {
+    await document.fonts.load(`700 100px "${family}"`);
+  } catch (_) {}
 
   let features = [];
   try {
@@ -309,30 +314,51 @@ function fitHeadlineDesktop() {
   stageText.style.fontSize = `${lo}em`;
 }
 
-// Mobile: there's no size slider. Find the largest font-size where the
-// widest explicit line still fits the stage width AND the document fits
-// inside the viewport. CSS uses `white-space: pre` on mobile so lines are
-// only broken on explicit `\n`, which lets us use scrollWidth to detect
-// horizontal overflow accurately.
+// Mobile: no size slider — pick the largest font-size where the widest
+// explicit line fits the stage width AND the whole page fits in the
+// viewport. Uses a canvas to measure line widths exactly (much more
+// reliable on iOS Safari than DOM scrollWidth comparisons).
 function fitHeadlineMobile() {
-  const MIN = 16;
-  const MAX = 240;
+  const record = state.loaded.get(state.activeExp);
+  if (!record) return;
 
-  const horizOverflow = () =>
-    stageText.scrollWidth > stageText.clientWidth + 1;
-  const vertOverflow = () =>
-    document.documentElement.scrollHeight > window.innerHeight + 1;
+  const text = stageText.textContent || "";
+  const lines = text.split("\n");
+  if (!lines.length) return;
 
-  // Start at the max and binary search down.
-  let lo = MIN;
-  let hi = MAX;
-  for (let i = 0; i < 22; i++) {
-    const mid = (lo + hi) / 2;
-    stageText.style.fontSize = `${mid}px`;
-    if (horizOverflow() || vertOverflow()) hi = mid;
-    else lo = mid;
+  // Canvas measurement at a known test size
+  const TEST = 100;
+  const canvas = fitHeadlineMobile._canvas ||
+    (fitHeadlineMobile._canvas = document.createElement("canvas"));
+  const ctx = canvas.getContext("2d");
+  ctx.font = `700 ${TEST}px "${record.family}", system-ui, sans-serif`;
+
+  let maxLineWidth = 0;
+  for (const line of lines) {
+    const w = ctx.measureText(line).width;
+    if (w > maxLineWidth) maxLineWidth = w;
   }
-  stageText.style.fontSize = `${lo}px`;
+  if (!maxLineWidth) return;
+
+  const availableWidth = stageText.clientWidth;
+  if (!availableWidth) return;
+
+  // Largest size where the widest line still fits.
+  // A 2% safety margin keeps it from clipping at the edge.
+  let size = (availableWidth / maxLineWidth) * TEST * 0.98;
+
+  // Apply, then shrink if vertical overflow (controls would be pushed off).
+  stageText.style.fontSize = `${size}px`;
+  let guard = 0;
+  while (
+    document.documentElement.scrollHeight > window.innerHeight + 1 &&
+    size > 16 &&
+    guard < 30
+  ) {
+    size *= 0.95;
+    stageText.style.fontSize = `${size}px`;
+    guard++;
+  }
 }
 
 async function setExploration(id) {

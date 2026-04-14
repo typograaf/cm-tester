@@ -195,10 +195,14 @@ html, body {
   font-feature-settings: normal;
   /* Hide until the font is loaded and the first fit pass has run —
      prevents a big-then-small flash on load. */
+  visibility: hidden;
   opacity: 0;
   transition: opacity 0.1s ease;
 }
-.stage-text.is-ready { opacity: 1; }
+.stage-text.is-ready {
+  visibility: visible;
+  opacity: 1;
+}
 .stage-text:focus { caret-color: var(--green); }
 
 .stage-footer {
@@ -390,26 +394,26 @@ html, body {
     gap: 1.2rem;
   }
 
-  /* --- Stage: headline only, centered both axes --------------------- */
+  /* --- Stage: headline only, fills space, text centered ------------ */
 
   .panel--stage {
-    /* Reset the stage's local em base so the preferred headline size
-       isn't absurdly big relative to a phone viewport. */
+    /* Reset the stage's local em base. */
     font-size: 1rem;
-    padding: 2rem;
+    padding: 1.5rem;
     gap: 0;
     border-radius: 3rem;
     text-align: center;
     align-items: center;
     justify-content: center;
-    margin: auto 0;
+    margin: 0;
+    flex: 1 1 auto;           /* grow to fill vertical space */
+    min-height: 0;
   }
   .stage-text {
     text-align: center;
     max-width: 100%;
-    /* Only hard `\n` breaks lines — no soft wrapping — so we can
-       measure the true widest line width in JS and fit the font-size
-       to it. */
+    /* Only explicit `\n` breaks lines. JS (canvas-based) computes
+       the largest font-size where the widest line fits. */
     white-space: pre;
     overflow-wrap: normal;
     word-break: normal;
