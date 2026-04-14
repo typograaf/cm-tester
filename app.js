@@ -235,7 +235,6 @@ function applyTypography() {
   stageText.style.fontFamily = family;
   stageText.style.lineHeight = leadingInput.value;
   stageText.style.letterSpacing = `${trackingInput.value}em`;
-  stageText.style.fontSize = `${sizeInput.value}em`;
   stageText.style.fontFeatureSettings = fft;
   stageText.style.textTransform =
     state.caseMode === "upper" ? "uppercase"
@@ -246,6 +245,38 @@ function applyTypography() {
   stageMark.style.fontFamily = family;
   stageMark.style.letterSpacing = `${trackingInput.value}em`;
   stageMark.style.fontFeatureSettings = fft;
+
+  // Size is handled by fitHeadline so it can shrink when content overflows
+  fitHeadline();
+}
+
+// Shrink the headline so the whole app fits in the viewport without the
+// bottom UI being pushed below the fold. Uses a binary search between a
+// hard minimum (2em ≈ 20px) and the user's preferred slider value.
+function fitHeadline() {
+  const preferred = parseFloat(sizeInput.value) || 14.4;
+  const MIN = 2;
+
+  // Try the preferred size first.
+  stageText.style.fontSize = `${preferred}em`;
+
+  // Force layout and measure. doc height > viewport means we overflow.
+  const overflows = () => {
+    return document.documentElement.scrollHeight > window.innerHeight + 1;
+  };
+
+  if (!overflows()) return;
+
+  // Binary search downwards for the largest size that still fits.
+  let lo = MIN;
+  let hi = preferred;
+  for (let i = 0; i < 18; i++) {
+    const mid = (lo + hi) / 2;
+    stageText.style.fontSize = `${mid}em`;
+    if (overflows()) hi = mid;
+    else lo = mid;
+  }
+  stageText.style.fontSize = `${lo}em`;
 }
 
 async function setExploration(id) {
@@ -264,6 +295,7 @@ function pickRandomString() {
   const options = pool.length ? pool : PRESETS;
   const next = options[Math.floor(Math.random() * options.length)];
   stageText.textContent = next;
+  fitHeadline();
 }
 
 // -------- init ----------------------------------------------------------
@@ -276,6 +308,13 @@ async function init() {
   trackingInput.addEventListener("input", applyTypography);
   sizeInput.addEventListener("input", applyTypography);
   randomBtn.addEventListener("click", pickRandomString);
+
+  // Re-fit whenever the user types or the window resizes
+  stageText.addEventListener("input", fitHeadline);
+  window.addEventListener("resize", fitHeadline);
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(fitHeadline);
+  }
 
   await setExploration(1);
   for (const exp of EXPLORATIONS.slice(1)) {
