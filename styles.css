@@ -50,7 +50,9 @@ html {
 html, body {
   margin: 0;
   padding: 0;
-  min-height: 100vh;
+  /* svh = small viewport height — the stable "URL bar visible"
+     measurement. Using vh on iOS Safari varies with URL bar state. */
+  min-height: 100svh;
   background: var(--bg);
   font-family: var(--ui);
   font-feature-settings: "dlig" 1;
@@ -72,7 +74,7 @@ html.loading .app { opacity: 0; }
   flex-direction: column;
   gap: 2.4rem;               /* 24 */
   padding: 3.8rem;           /* 38 */
-  min-height: 100vh;
+  min-height: 100svh;
 }
 
 /* -----------------------------------------------------------------------

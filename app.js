@@ -315,40 +315,47 @@ function fitHeadlineDesktop() {
 }
 
 // Mobile: soft-wrap at word boundaries only (no mid-word breaks).
-// Binary search the largest font-size where BOTH:
-//   1. no single word overflows the stage-text horizontally
-//      (scrollWidth > clientWidth means at least one word is too wide)
-//   2. the bottom of the controls panel is still within the viewport
-// Pure DOM measurement — reliable on iOS Safari.
+// Binary search the largest font-size where BOTH the widest line fits
+// horizontally AND the wrapped stack fits inside the stage panel.
+// Measurement target is the stage PANEL's client height (stable, based
+// on flex layout and 100svh) — NOT window.innerHeight which varies
+// with iOS Safari URL bar / keyboard state.
 function fitHeadlineMobile() {
-  const controls = document.querySelector(".panel--controls");
-  if (!controls) return;
+  const panel = stageText.parentElement; // .panel--stage
+  if (!panel) return;
 
-  // Use innerHeight (layout viewport) — NOT visualViewport.height,
-  // which shrinks when the iOS software keyboard opens and would
-  // cause the headline to collapse to a tiny size while editing.
-  const vpH = () => window.innerHeight;
+  // Capture the available inner height while stage-text is at its
+  // minimum size, so the panel is at its flex-allocated maximum.
+  stageText.style.fontSize = "16px";
+  void stageText.offsetHeight;
 
-  // Two separate constraint checks
+  const pStyle = getComputedStyle(panel);
+  const padT = parseFloat(pStyle.paddingTop) || 0;
+  const padB = parseFloat(pStyle.paddingBottom) || 0;
+  const availH = panel.clientHeight - padT - padB;
+  const availW = stageText.clientWidth;
+
+  if (!isFinite(availH) || !isFinite(availW) || availH <= 0 || availW <= 0) {
+    return;
+  }
+
   const fitsH = () => {
-    // Force sync layout by touching offsetHeight, then compare widths.
     void stageText.offsetHeight;
-    return stageText.scrollWidth <= stageText.clientWidth + 0.5;
+    return stageText.scrollWidth <= availW + 0.5;
   };
   const fitsV = () => {
     void stageText.offsetHeight;
-    return controls.getBoundingClientRect().bottom <= vpH() + 0.5;
+    return stageText.scrollHeight <= availH + 0.5;
   };
   const fits = () => fitsH() && fitsV();
 
   const MIN = 16;
   const MAX = 260;
 
-  // Clamp to MIN if even that's overflowing (very unusual).
-  stageText.style.fontSize = `${MIN}px`;
+  // Already at MIN — if it still doesn't fit, bail.
   if (!fits()) return;
 
-  // Binary search the largest size that still fits both constraints.
+  // Binary search for the largest size that satisfies both constraints.
   let lo = MIN;
   let hi = MAX;
   for (let i = 0; i < 24; i++) {
@@ -414,14 +421,31 @@ async function init() {
   document.documentElement.classList.remove("loading");
 
   // Run fit at several moments to catch iOS Safari timing quirks
-  // (pull-to-refresh in particular, where innerHeight reads vary
-  // while the URL bar / scroll state settles).
+  // (pull-to-refresh in particular).
   requestAnimationFrame(() => {
     requestAnimationFrame(fitHeadline);
   });
   setTimeout(fitHeadline, 150);
   setTimeout(fitHeadline, 500);
   window.addEventListener("load", fitHeadline, { once: true });
+
+  // ResizeObserver: re-fit when the stage panel's allocated size
+  // changes (layout settling, orientation, URL bar). Skip while the
+  // headline is focused so the keyboard opening doesn't trigger a
+  // collapse.
+  let editing = false;
+  stageText.addEventListener("focus", () => { editing = true; });
+  stageText.addEventListener("blur", () => {
+    editing = false;
+    fitHeadline();
+  });
+  const panelStage = document.querySelector(".panel--stage");
+  if (panelStage && typeof ResizeObserver !== "undefined") {
+    const ro = new ResizeObserver(() => {
+      if (!editing) fitHeadline();
+    });
+    ro.observe(panelStage);
+  }
 
   for (const exp of EXPLORATIONS.slice(1)) {
     loadFont(exp).catch((e) => console.warn(e));
