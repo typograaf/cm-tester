@@ -17,6 +17,7 @@ const EXPLORATIONS = [
 
 const PRESETS = [
   "Leef gerust\nwat meer.",
+  "Leef gerust\nwat losser.",
   "Leef gerust\niets te wild.",
   "Leef gerust\nzonder bang\nte zijn om op\nje gezicht\nte gaan.",
 ];
