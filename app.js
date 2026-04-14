@@ -16,9 +16,9 @@ const EXPLORATIONS = [
 ];
 
 const PRESETS = [
-  "Leef gerust wat meer.",
-  "Leef gerust iets te wild.",
-  "Leef gerust zonder bang te zijn om op je gezicht te gaan.",
+  "Leef gerust\nwat meer.",
+  "Leef gerust\niets te wild.",
+  "Leef gerust\nzonder bang\nte zijn om op\nje gezicht\nte gaan.",
 ];
 
 const CASE_MODES = [

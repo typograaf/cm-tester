@@ -170,6 +170,7 @@ html, body {
   width: 100%;               /* use the full stage-panel inner width */
   outline: none;
   overflow-wrap: break-word;
+  white-space: pre-line;     /* respect explicit \n from presets and Enter */
   font-feature-settings: normal;
 }
 .stage-text:focus { caret-color: var(--green); }
