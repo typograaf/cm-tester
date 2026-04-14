@@ -98,7 +98,10 @@ html, body {
   flex-direction: column;
   gap: 12rem;                /* 120 between headline + footer */
   padding: 7.2rem;           /* 72 all sides */
-  /* No min-height / no flex-grow — box hugs its content */
+  /* Hug the content vertically, but float in the middle of the viewport.
+     `margin: auto 0` distributes remaining space in the app flex column
+     equally above and below this panel. */
+  margin: auto 0;
 }
 
 /* -----------------------------------------------------------------------
