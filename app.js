@@ -267,24 +267,30 @@ function applyTypography() {
   fitHeadline();
 }
 
-// Shrink the headline so the whole app fits in the viewport without the
-// bottom UI being pushed below the fold. Uses a binary search between a
-// hard minimum (2em ≈ 20px) and the user's preferred slider value.
+// Dispatch to the right fit strategy based on viewport.
 function fitHeadline() {
+  if (window.matchMedia("(max-width: 900px)").matches) {
+    fitHeadlineMobile();
+  } else {
+    fitHeadlineDesktop();
+  }
+}
+
+// Desktop: shrink the headline so the whole app fits in the viewport
+// without the bottom UI being pushed below the fold. Binary search between
+// a hard minimum (2em ≈ 20px) and the slider's preferred value.
+function fitHeadlineDesktop() {
   const preferred = parseFloat(sizeInput.value) || 14.4;
   const MIN = 2;
 
-  // Try the preferred size first.
   stageText.style.fontSize = `${preferred}em`;
 
-  // Force layout and measure. doc height > viewport means we overflow.
   const overflows = () => {
     return document.documentElement.scrollHeight > window.innerHeight + 1;
   };
 
   if (!overflows()) return;
 
-  // Binary search downwards for the largest size that still fits.
   let lo = MIN;
   let hi = preferred;
   for (let i = 0; i < 18; i++) {
@@ -294,6 +300,32 @@ function fitHeadline() {
     else lo = mid;
   }
   stageText.style.fontSize = `${lo}em`;
+}
+
+// Mobile: there's no size slider. Find the largest font-size where the
+// widest explicit line still fits the stage width AND the document fits
+// inside the viewport. CSS uses `white-space: pre` on mobile so lines are
+// only broken on explicit `\n`, which lets us use scrollWidth to detect
+// horizontal overflow accurately.
+function fitHeadlineMobile() {
+  const MIN = 16;
+  const MAX = 240;
+
+  const horizOverflow = () =>
+    stageText.scrollWidth > stageText.clientWidth + 1;
+  const vertOverflow = () =>
+    document.documentElement.scrollHeight > window.innerHeight + 1;
+
+  // Start at the max and binary search down.
+  let lo = MIN;
+  let hi = MAX;
+  for (let i = 0; i < 22; i++) {
+    const mid = (lo + hi) / 2;
+    stageText.style.fontSize = `${mid}px`;
+    if (horizOverflow() || vertOverflow()) hi = mid;
+    else lo = mid;
+  }
+  stageText.style.fontSize = `${lo}px`;
 }
 
 async function setExploration(id) {

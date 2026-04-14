@@ -402,6 +402,13 @@ html, body {
   .stage-text {
     text-align: center;
     max-width: 100%;
+    /* Only hard `\n` breaks lines — no soft wrapping — so we can
+       measure the true widest line width in JS and fit the font-size
+       to it. */
+    white-space: pre;
+    overflow-wrap: normal;
+    word-break: normal;
+    overflow: hidden;
   }
   .stage-footer { display: none; }
 
