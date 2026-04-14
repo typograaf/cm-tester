@@ -311,18 +311,76 @@ html, body {
 }
 
 /* -----------------------------------------------------------------------
-   Narrow-viewport collapse (below the clamp floor)
+   Mobile layout (≤900px)
+
+   - Stage shows only the centered headline (no caption, no brand)
+   - Top bar + controls wrap to multi-row stacks and center their items
+   - Sliders stack vertically and take full width
    ----------------------------------------------------------------------- */
 
-@media (max-width: 700px) {
-  html { font-size: 9px; }
-  .app { padding: 2rem; gap: 1.6rem; }
-  .panel { border-radius: 2.8rem; }
-  .panel--stage { padding: 3.2em; gap: 4.8em; }
-  .panel--topbar { height: auto; padding: 1.6rem 2rem; flex-wrap: wrap; gap: 1.6rem; }
-  .panel--controls { padding: 1.6rem 2rem; gap: 1.6rem; row-gap: 1.6rem; column-gap: 1.6rem; }
-  .sliders { flex-direction: column; align-items: stretch; min-width: 0; }
-  .stage-footer { flex-direction: column; align-items: flex-start; gap: 2.4rem; }
-  .stage-text { font-size: 8.5em; max-width: 100%; }
-  .stage-mark { font-size: 5em; }
+@media (max-width: 900px) {
+  html { font-size: 8px; }
+
+  .app {
+    padding: 1.6rem;
+    gap: 1.6rem;
+  }
+
+  .panel { border-radius: 3rem; }
+
+  /* Top bar: let the pills wrap, center the whole thing */
+  .panel--topbar {
+    height: auto;
+    min-height: 0;
+    padding: 1.6rem 2rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.2rem;
+  }
+  .explorations,
+  .case-toggle {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.2rem;
+  }
+
+  /* Stage: only the headline, centered both axes */
+  .panel--stage {
+    padding: 4em;
+    gap: 0;
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+    margin: auto 0;
+  }
+  .stage-text {
+    text-align: center;
+    max-width: 100%;
+    /* preferred slider base still applies; auto-fit handles overflow */
+  }
+  .stage-footer { display: none; }
+
+  /* Controls: vertical stack, sliders full-width */
+  .panel--controls {
+    min-height: 0;
+    padding: 1.6rem 2rem;
+    row-gap: 1.2rem;
+    column-gap: 1.2rem;
+    justify-content: center;
+  }
+  .panel--controls > .pill { align-self: stretch; text-align: center; }
+  .sliders {
+    flex-direction: column;
+    align-items: stretch;
+    min-width: 0;
+    width: 100%;
+    flex-basis: 100%;
+    gap: 1.6rem;
+  }
+  .slider { min-width: 0; }
+  .features {
+    flex: 0 0 100%;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
 }
