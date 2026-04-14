@@ -2,15 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>CM Typeface Tester</title>
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=20260414a" />
 </head>
 <body>
   <main class="app">
     <!-- top bar: exploration switcher + case toggle -->
     <section class="panel panel--topbar">
       <div class="explorations" id="explorations"></div>
+      <select class="explorations-select" id="explorationsSelect" aria-label="Exploration"></select>
       <div class="case-toggle" id="caseToggle"></div>
     </section>
 
@@ -38,27 +39,29 @@ te gaan.</div>
 
     <!-- controls -->
     <section class="panel panel--controls">
-      <button class="pill pill--primary" id="randomString" type="button">Random String</button>
+      <div class="controls-main">
+        <button class="pill pill--primary" id="randomString" type="button">Random String</button>
 
-      <div class="sliders">
-        <label class="slider">
-          <span>Leading</span>
-          <input type="range" id="leading" min="0.6" max="2" step="0.01" value="0.87" />
-        </label>
-        <label class="slider">
-          <span>Tracking</span>
-          <input type="range" id="tracking" min="-0.1" max="0.2" step="0.005" value="-0.01" />
-        </label>
-        <label class="slider">
-          <span>Size</span>
-          <input type="range" id="fontsize" min="4" max="24" step="0.1" value="14.4" />
-        </label>
+        <div class="sliders">
+          <label class="slider">
+            <span>Leading</span>
+            <input type="range" id="leading" min="0.6" max="2" step="0.01" value="0.87" />
+          </label>
+          <label class="slider">
+            <span>Tracking</span>
+            <input type="range" id="tracking" min="-0.1" max="0.2" step="0.005" value="-0.01" />
+          </label>
+          <label class="slider">
+            <span>Size</span>
+            <input type="range" id="fontsize" min="4" max="24" step="0.1" value="14.4" />
+          </label>
+        </div>
       </div>
 
       <div class="features" id="features"></div>
     </section>
   </main>
 
-  <script type="module" src="app.js"></script>
+  <script type="module" src="app.js?v=20260414a"></script>
 </body>
 </html>

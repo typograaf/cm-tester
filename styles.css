@@ -56,6 +56,7 @@ html, body {
   font-feature-settings: "dlig" 1;
   color: var(--dark-green);
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden; /* prevent any element from forcing horizontal overflow, which makes iOS Safari zoom out and skip the mobile media query */
 }
 
 .app {
@@ -94,6 +95,12 @@ html, body {
   row-gap: 2.4rem;
   column-gap: 6rem;          /* 60 — Figma gap between groups */
 }
+
+/* On desktop the controls-main wrapper is invisible — its children
+   (Random String pill + sliders) behave as direct children of the
+   control bar so the Figma layout is unchanged. On mobile the media
+   query promotes it to a flex box and gives it its own white panel. */
+.controls-main { display: contents; }
 
 .panel--stage {
   /* Stage renders its interior at the FULL Figma scale (100%), even
@@ -164,6 +171,9 @@ html, body {
   gap: 1.2rem;               /* 12 */
 }
 
+/* Native select for the exploration switcher — mobile only. */
+.explorations-select { display: none; }
+
 /* -----------------------------------------------------------------------
    Stage
    ----------------------------------------------------------------------- */
@@ -177,8 +187,10 @@ html, body {
   line-height: 0.87;
   letter-spacing: -0.01em;
   width: 100%;
+  max-width: 100%;
   outline: none;
-  overflow-wrap: break-word;
+  overflow-wrap: anywhere;   /* prevent any unbreakable word from overflowing */
+  word-break: break-word;
   white-space: pre-line;
   font-feature-settings: normal;
 }
@@ -314,8 +326,9 @@ html, body {
    Mobile layout (≤900px)
 
    - Stage shows only the centered headline (no caption, no brand)
-   - Top bar + controls wrap to multi-row stacks and center their items
-   - Sliders stack vertically and take full width
+   - Exploration switcher collapses to a native <select>
+   - Controls split into two stacked white panels: [main][features]
+   - Sliders stack vertically full-width
    ----------------------------------------------------------------------- */
 
 @media (max-width: 900px) {
@@ -328,23 +341,52 @@ html, body {
 
   .panel { border-radius: 3rem; }
 
-  /* Top bar: let the pills wrap, center the whole thing */
+  /* --- Top bar ------------------------------------------------------- */
+
   .panel--topbar {
     height: auto;
     min-height: 0;
     padding: 1.6rem 2rem;
     flex-wrap: wrap;
-    justify-content: center;
-    gap: 1.2rem;
-  }
-  .explorations,
-  .case-toggle {
-    flex-wrap: wrap;
-    justify-content: center;
+    justify-content: space-between;
     gap: 1.2rem;
   }
 
-  /* Stage: only the headline, centered both axes */
+  /* Swap the pill cluster for a native <select> */
+  .explorations { display: none; }
+  .explorations-select {
+    display: inline-flex;
+    font-family: var(--ui);
+    font-weight: 700;
+    font-variation-settings: "wght" 700, "wdth" 60;
+    font-feature-settings: "dlig" 1;
+    font-size: 2.4rem;
+    line-height: 1;
+    letter-spacing: 0.02em;
+    color: var(--dark-green);
+    background: var(--pill-bg);
+    border: 0;
+    height: 4.4rem;
+    padding: 0 3.2rem 0 2.4rem;
+    border-radius: 9.3rem;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--dark-green) 50%),
+                      linear-gradient(-45deg, transparent 50%, var(--dark-green) 50%);
+    background-position: right 1.4rem center, right 0.9rem center;
+    background-size: 0.5rem 0.5rem, 0.5rem 0.5rem;
+    background-repeat: no-repeat;
+  }
+
+  .case-toggle {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 1.2rem;
+  }
+
+  /* --- Stage: headline only, centered both axes --------------------- */
+
   .panel--stage {
     padding: 4em;
     gap: 0;
@@ -356,31 +398,57 @@ html, body {
   .stage-text {
     text-align: center;
     max-width: 100%;
-    /* preferred slider base still applies; auto-fit handles overflow */
   }
   .stage-footer { display: none; }
 
-  /* Controls: vertical stack, sliders full-width */
+  /* --- Controls: two stacked white panels --------------------------- */
+
+  /* Outer container is transparent — just a flex column of its children. */
   .panel--controls {
+    background: transparent;
+    border-radius: 0;
     min-height: 0;
-    padding: 1.6rem 2rem;
-    row-gap: 1.2rem;
-    column-gap: 1.2rem;
-    justify-content: center;
+    padding: 0;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    row-gap: 1.6rem;
+    column-gap: 0;
   }
-  .panel--controls > .pill { align-self: stretch; text-align: center; }
+
+  /* Controls-main becomes its own white panel */
+  .panel--controls > .controls-main {
+    display: flex;
+    flex-direction: column;
+    gap: 1.6rem;
+    background: var(--white);
+    border-radius: 3rem;
+    padding: 2rem 2.4rem;
+    width: 100%;
+  }
+  .panel--controls > .controls-main > .pill {
+    align-self: stretch;
+    text-align: center;
+  }
   .sliders {
+    display: flex;
     flex-direction: column;
     align-items: stretch;
-    min-width: 0;
-    width: 100%;
-    flex-basis: 100%;
     gap: 1.6rem;
+    width: 100%;
+    min-width: 0;
   }
   .slider { min-width: 0; }
-  .features {
-    flex: 0 0 100%;
+
+  /* Features in its own white panel below */
+  .panel--controls > .features {
+    display: flex;
     flex-wrap: wrap;
     justify-content: center;
+    gap: 1.2rem;
+    background: var(--white);
+    border-radius: 3rem;
+    padding: 2rem 2.4rem;
+    width: 100%;
+    flex: 0 0 auto;
   }
 }

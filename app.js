@@ -73,6 +73,7 @@ const state = {
 
 const $ = (id) => document.getElementById(id);
 const explorationsEl = $("explorations");
+const explorationsSelectEl = $("explorationsSelect");
 const caseToggleEl = $("caseToggle");
 const featuresEl = $("features");
 const stageText = $("stageText");
@@ -173,6 +174,7 @@ function labelForTag(tag, gsub, nameLookup) {
 // -------- render --------------------------------------------------------
 
 function renderExplorations() {
+  // Desktop: pill buttons
   explorationsEl.innerHTML = "";
   for (const exp of EXPLORATIONS) {
     const btn = document.createElement("button");
@@ -182,6 +184,21 @@ function renderExplorations() {
     btn.addEventListener("click", () => setExploration(exp.id));
     explorationsEl.appendChild(btn);
   }
+
+  // Mobile: native <select>. Rebuild options and sync selection.
+  if (explorationsSelectEl.options.length !== EXPLORATIONS.length) {
+    explorationsSelectEl.innerHTML = "";
+    for (const exp of EXPLORATIONS) {
+      const opt = document.createElement("option");
+      opt.value = String(exp.id);
+      opt.textContent = exp.label;
+      explorationsSelectEl.appendChild(opt);
+    }
+    explorationsSelectEl.addEventListener("change", (e) => {
+      setExploration(parseInt(e.target.value, 10));
+    });
+  }
+  explorationsSelectEl.value = String(state.activeExp);
 }
 
 function renderCaseToggle() {
