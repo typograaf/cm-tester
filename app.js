@@ -324,7 +324,10 @@ function fitHeadlineMobile() {
   const controls = document.querySelector(".panel--controls");
   if (!controls) return;
 
-  const vpH = () => window.visualViewport?.height || window.innerHeight;
+  // Use innerHeight (layout viewport) — NOT visualViewport.height,
+  // which shrinks when the iOS software keyboard opens and would
+  // cause the headline to collapse to a tiny size while editing.
+  const vpH = () => window.innerHeight;
 
   // Two separate constraint checks
   const fitsH = () => {
