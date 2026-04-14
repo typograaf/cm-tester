@@ -20,9 +20,9 @@
    ----------------------------------------------------------------------- */
 
 html {
-  /* Everything is keyed to 1rem. Halving this halves the whole UI
-     while preserving proportions. */
-  font-size: clamp(3.5px, calc(100vw / 384), 5px);
+  /* Chrome (top bar, control bar, app padding) renders at 75% of Figma.
+     1rem = 7.5px at a 1920px viewport. */
+  font-size: clamp(5.25px, calc(100vw / 256), 7.5px);
 }
 
 :root {
@@ -96,14 +96,19 @@ html, body {
 }
 
 .panel--stage {
+  /* Stage renders its interior at the FULL Figma scale (100%), even
+     though the surrounding chrome is at 75%. Setting font-size here to
+     1.3333rem establishes a local em base of 10px at 1920 (same as the
+     original Figma scale). All values inside the stage are then in em
+     so they follow this base instead of the 75% rem. */
+  font-size: calc(1rem * 4 / 3);
+
   display: flex;
   flex-direction: column;
-  gap: 12rem;                /* 120 between headline + footer */
-  padding: 7.2rem;           /* 72 all sides */
-  /* Hug the content vertically, but float in the middle of the viewport.
-     `margin: auto 0` distributes remaining space in the app flex column
-     equally above and below this panel. */
-  margin: auto 0;
+  gap: 12em;                 /* 120 between headline + footer */
+  padding: 7.2em;            /* 72 all sides */
+  border-radius: 4.8em;      /* 48 — override the rem-based chrome radius */
+  margin: auto 0;            /* float vertically centered in the app column */
 }
 
 /* -----------------------------------------------------------------------
@@ -167,13 +172,14 @@ html, body {
   font-family: var(--cm);
   font-weight: 700;
   color: var(--dark-green);
-  font-size: 14.4rem;        /* 144 */
+  /* font-size set inline via JS from the size slider (em). */
+  font-size: 14.4em;         /* default 144 */
   line-height: 0.87;
-  letter-spacing: -0.01em;   /* -1.44 / 144 */
-  width: 100%;               /* use the full stage-panel inner width */
+  letter-spacing: -0.01em;
+  width: 100%;
   outline: none;
   overflow-wrap: break-word;
-  white-space: pre-line;     /* respect explicit \n from presets and Enter */
+  white-space: pre-line;
   font-feature-settings: normal;
 }
 .stage-text:focus { caret-color: var(--green); }
@@ -182,7 +188,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 2.4rem;
+  gap: 2.4em;
   width: 100%;
 }
 
@@ -190,7 +196,7 @@ html, body {
   margin: 0;
   font-weight: 400;
   font-variation-settings: "wght" 400, "wdth" 60;
-  font-size: var(--body-size);
+  font-size: 2.4em;          /* 24 */
   line-height: 1.2;
   letter-spacing: var(--body-track);
   color: var(--dark-green);
@@ -200,13 +206,13 @@ html, body {
 .stage-brand {
   display: flex;
   align-items: center;
-  gap: 2.4rem;               /* 24 */
-  height: 6.3rem;            /* 63 — matches logo */
+  gap: 2.4em;                /* 24 */
+  height: 6.3em;             /* 63 — matches logo */
 }
 .stage-mark {
   font-family: var(--cm);
   font-weight: 700;
-  font-size: 4.8rem;         /* 48 */
+  font-size: 4.8em;          /* 48 */
   line-height: 1;
   color: var(--dark-green);
   text-transform: uppercase;
@@ -217,11 +223,11 @@ html, body {
   height: 100%;
 }
 .stage-logo {
-  width: 6.3rem;             /* 63 */
-  height: 6.3rem;
+  width: 6.3em;              /* 63 */
+  height: 6.3em;
   flex: 0 0 auto;
   display: block;
-  filter: drop-shadow(1rem 1rem 3rem rgba(0, 0, 0, 0.1));
+  filter: drop-shadow(1em 1em 3em rgba(0, 0, 0, 0.1));
 }
 
 /* -----------------------------------------------------------------------
@@ -312,11 +318,11 @@ html, body {
   html { font-size: 9px; }
   .app { padding: 2rem; gap: 1.6rem; }
   .panel { border-radius: 2.8rem; }
-  .panel--stage { padding: 3.2rem; gap: 4.8rem; }
+  .panel--stage { padding: 3.2em; gap: 4.8em; }
   .panel--topbar { height: auto; padding: 1.6rem 2rem; flex-wrap: wrap; gap: 1.6rem; }
   .panel--controls { padding: 1.6rem 2rem; gap: 1.6rem; row-gap: 1.6rem; column-gap: 1.6rem; }
   .sliders { flex-direction: column; align-items: stretch; min-width: 0; }
   .stage-footer { flex-direction: column; align-items: flex-start; gap: 2.4rem; }
-  .stage-text { font-size: 8.5rem; max-width: 100%; }
-  .stage-mark { font-size: 5rem; }
+  .stage-text { font-size: 8.5em; max-width: 100%; }
+  .stage-mark { font-size: 5em; }
 }

@@ -54,8 +54,8 @@ const FEATURE_LABELS = {
   locl: "Localized",
 };
 
-// Features hidden from the toggle row — on by default, no point showing
-const HIDDEN_DEFAULTS = new Set(["kern", "calt", "rlig", "ccmp", "mark", "mkmk", "aalt"]);
+// Features hidden from the toggle row — on by default or not useful here
+const HIDDEN_DEFAULTS = new Set(["kern", "calt", "rlig", "ccmp", "mark", "mkmk", "aalt", "locl"]);
 
 // Features that should start toggled ON
 const DEFAULT_ON_FEATURES = new Set(["liga", "dlig"]);
@@ -79,6 +79,7 @@ const stageText = $("stageText");
 const stageMark = $("stageMark");
 const leadingInput = $("leading");
 const trackingInput = $("tracking");
+const sizeInput = $("fontsize");
 const randomBtn = $("randomString");
 
 // -------- font loading --------------------------------------------------
@@ -234,6 +235,7 @@ function applyTypography() {
   stageText.style.fontFamily = family;
   stageText.style.lineHeight = leadingInput.value;
   stageText.style.letterSpacing = `${trackingInput.value}em`;
+  stageText.style.fontSize = `${sizeInput.value}em`;
   stageText.style.fontFeatureSettings = fft;
   stageText.style.textTransform =
     state.caseMode === "upper" ? "uppercase"
@@ -272,6 +274,7 @@ async function init() {
 
   leadingInput.addEventListener("input", applyTypography);
   trackingInput.addEventListener("input", applyTypography);
+  sizeInput.addEventListener("input", applyTypography);
   randomBtn.addEventListener("click", pickRandomString);
 
   await setExploration(1);
