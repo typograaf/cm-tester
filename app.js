@@ -8,11 +8,11 @@ import opentype from "https://cdn.jsdelivr.net/npm/opentype.js@1.3.4/+esm";
 // -------- config ---------------------------------------------------------
 
 const EXPLORATIONS = [
-  { id: 1, label: "Actief",   file: "fonts/CM_1_260413a-Bold.otf" },
-  { id: 2, label: "Gezond",   file: "fonts/CM_2_260414-Bold.otf"  },
-  { id: 3, label: "Stable",   file: "fonts/CM_3_260413-Bold.otf"  },
-  { id: 4, label: "Solidair", file: "fonts/CM_4_260413b-Bold.otf" },
-  { id: 5, label: "Zorg",     file: "fonts/CM_5_260414c-Bold.otf" },
+  { id: 1, label: "Actief",   file: "fonts/CM_1_260414-Bold.otf"  },
+  { id: 2, label: "Gezond",   file: "fonts/CM_2_260414d-Bold.otf" },
+  { id: 3, label: "Stable",   file: "fonts/CM_3_260414-Bold.otf"  },
+  { id: 4, label: "Solidair", file: "fonts/CM_4_260413c-Bold.otf" },
+  { id: 5, label: "Zorg",     file: "fonts/CM_5_260414d-Bold.otf" },
 ];
 
 const PRESETS = [
