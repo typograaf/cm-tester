@@ -20,7 +20,9 @@
    ----------------------------------------------------------------------- */
 
 html {
-  font-size: clamp(7px, calc(100vw / 192), 10px);
+  /* Everything is keyed to 1rem. Halving this halves the whole UI
+     while preserving proportions. */
+  font-size: clamp(3.5px, calc(100vw / 384), 5px);
 }
 
 :root {
