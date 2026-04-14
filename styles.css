@@ -407,12 +407,14 @@ html.loading .app { visibility: hidden; }
   .stage-text {
     text-align: center;
     max-width: 100%;
-    /* Allow soft-wrapping on mobile so long lines break onto multiple
-       sub-lines. JS then binary-searches for the largest font-size
-       where the whole stack still fits the viewport. */
+    /* Respect explicit \n AND soft-wrap only at word boundaries. Never
+       break inside a word. If a single word is wider than the container
+       at the current size, it overflows horizontally — JS detects that
+       via scrollWidth > clientWidth and shrinks. */
     white-space: pre-line;
-    overflow-wrap: anywhere;
-    word-break: break-word;
+    overflow-wrap: normal;
+    word-break: normal;
+    hyphens: none;
     overflow: visible;
     line-height: 0.95;    /* slightly looser than 0.87 so descenders don't clip */
     padding-bottom: 0.12em;

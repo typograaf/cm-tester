@@ -314,37 +314,41 @@ function fitHeadlineDesktop() {
   stageText.style.fontSize = `${lo}em`;
 }
 
-// Mobile: soft-wrap enabled on the headline. Binary search for the
-// largest font-size where the controls panel's bottom edge still sits
-// inside the viewport. Pure DOM measurement (getBoundingClientRect)
-// since that's reliable on iOS Safari where canvas font timing isn't.
+// Mobile: soft-wrap at word boundaries only (no mid-word breaks).
+// Binary search the largest font-size where BOTH:
+//   1. no single word overflows the stage-text horizontally
+//      (scrollWidth > clientWidth means at least one word is too wide)
+//   2. the bottom of the controls panel is still within the viewport
+// Pure DOM measurement — reliable on iOS Safari.
 function fitHeadlineMobile() {
   const controls = document.querySelector(".panel--controls");
   if (!controls) return;
 
   const vpH = () => window.visualViewport?.height || window.innerHeight;
 
-  const fits = () => {
-    // Force a sync layout read, then check if the controls panel's
-    // bottom edge is still within the visible viewport.
+  // Two separate constraint checks
+  const fitsH = () => {
+    // Force sync layout by touching offsetHeight, then compare widths.
+    void stageText.offsetHeight;
+    return stageText.scrollWidth <= stageText.clientWidth + 0.5;
+  };
+  const fitsV = () => {
     void stageText.offsetHeight;
     return controls.getBoundingClientRect().bottom <= vpH() + 0.5;
   };
+  const fits = () => fitsH() && fitsV();
 
   const MIN = 16;
   const MAX = 260;
 
+  // Clamp to MIN if even that's overflowing (very unusual).
+  stageText.style.fontSize = `${MIN}px`;
+  if (!fits()) return;
+
+  // Binary search the largest size that still fits both constraints.
   let lo = MIN;
   let hi = MAX;
-  // Is even MIN too big? If yes, just clamp to MIN.
-  stageText.style.fontSize = `${MIN}px`;
-  if (!fits()) {
-    // content at smallest is already overflowing — bail
-    return;
-  }
-
-  // Binary search the largest size that still fits.
-  for (let i = 0; i < 22; i++) {
+  for (let i = 0; i < 24; i++) {
     const mid = (lo + hi) / 2;
     stageText.style.fontSize = `${mid}px`;
     if (fits()) lo = mid;
