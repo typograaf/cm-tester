@@ -93,9 +93,16 @@ async function loadFont(exp) {
   const buf = await res.arrayBuffer();
 
   const family = `CM-${exp.id}`;
-  const fontFace = new FontFace(family, buf, { weight: "700", style: "normal" });
+  const fontFace = new FontFace(family, buf, {
+    weight: "700",
+    style: "normal",
+    display: "block", // don't paint with fallback while CM is loading
+  });
   await fontFace.load();
   document.fonts.add(fontFace);
+  // Wait for the browser's internal font metrics to settle before
+  // fitHeadline measures scrollWidth etc.
+  await document.fonts.ready;
 
   let features = [];
   try {
@@ -366,6 +373,10 @@ async function init() {
   }
 
   await setExploration(1);
+  // First fit pass has run inside setExploration → applyTypography →
+  // fitHeadline. Reveal the headline now.
+  stageText.classList.add("is-ready");
+
   for (const exp of EXPLORATIONS.slice(1)) {
     loadFont(exp).catch((e) => console.warn(e));
   }

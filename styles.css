@@ -193,7 +193,12 @@ html, body {
   word-break: break-word;
   white-space: pre-line;
   font-feature-settings: normal;
+  /* Hide until the font is loaded and the first fit pass has run —
+     prevents a big-then-small flash on load. */
+  opacity: 0;
+  transition: opacity 0.1s ease;
 }
+.stage-text.is-ready { opacity: 1; }
 .stage-text:focus { caret-color: var(--green); }
 
 .stage-footer {
