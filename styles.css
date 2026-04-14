@@ -240,10 +240,22 @@ html, body {
   min-width: 0;
 }
 
-/* Let Random String keep its intrinsic width, and let the feature row
-   flow to a new line when the sliders want more space. */
+/* Layout inside the control bar:
+   Row 1: Random String + Leading + Tracking sliders
+   Row 2: feature toggles (always wraps to its own row so sliders keep room)
+   At very wide viewports (≥1700px) it all fits on one row. */
 .panel--controls > .pill { flex: 0 0 auto; }
-.panel--controls > .features { flex: 0 1 auto; }
+.panel--controls > .features {
+  flex: 0 0 100%;            /* wrap to its own row */
+  justify-content: flex-start;
+  flex-wrap: wrap;           /* and let the pills themselves wrap if needed */
+}
+
+@media (min-width: 1700px) {
+  .panel--controls > .features {
+    flex: 0 0 auto;          /* room for single-row layout */
+  }
+}
 
 .slider > span {
   font-weight: 500;          /* Medium */
@@ -292,10 +304,10 @@ html, body {
   html { font-size: 9px; }
   .app { padding: 2rem; gap: 1.6rem; }
   .panel { border-radius: 2.8rem; }
-  .panel--stage { min-height: 48rem; padding: 3.2rem; gap: 4.8rem; }
-  .panel--topbar,
-  .panel--controls { height: auto; padding: 1.6rem 2rem; flex-wrap: wrap; gap: 1.6rem; }
-  .sliders { flex-direction: column; align-items: stretch; }
+  .panel--stage { padding: 3.2rem; gap: 4.8rem; }
+  .panel--topbar { height: auto; padding: 1.6rem 2rem; flex-wrap: wrap; gap: 1.6rem; }
+  .panel--controls { padding: 1.6rem 2rem; gap: 1.6rem; row-gap: 1.6rem; column-gap: 1.6rem; }
+  .sliders { flex-direction: column; align-items: stretch; min-width: 0; }
   .stage-footer { flex-direction: column; align-items: flex-start; gap: 2.4rem; }
   .stage-text { font-size: 8.5rem; max-width: 100%; }
   .stage-mark { font-size: 5rem; }
