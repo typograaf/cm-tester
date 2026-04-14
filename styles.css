@@ -11,8 +11,17 @@
 }
 
 /* -----------------------------------------------------------------------
-   Design tokens (from Figma)
+   Proportional scaling
+
+   Figma frame is 1920 x 1217. We set 1rem = 10px at a 1920px viewport,
+   so every px value in Figma is (n / 10)rem. The whole layout then
+   scales proportionally with the viewport width. Below ~1344px the
+   scale stops at 7px so the UI stays readable.
    ----------------------------------------------------------------------- */
+
+html {
+  font-size: clamp(7px, calc(100vw / 192), 10px);
+}
 
 :root {
   --dark-green: #004c2b;
@@ -21,13 +30,13 @@
   --bg: #f1f3f2;
   --white: #ffffff;
   --pill-bg: #f5f5f5;
-  --radius: 48px;
 
-  /* body type spec — BE Cause, 24px / 1.6 / +0.02em, dlig on */
-  --body-size: 24px;
-  --body-track: 0.02em;
+  --radius: 4.8rem;          /* 48 */
+  --body-size: 2.4rem;       /* 24 */
+  --body-track: 0.02em;      /* 0.48 / 24 */
 
   --ui: "BE Cause", -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
+  --cm: "CM", system-ui, sans-serif;
 }
 
 /* -----------------------------------------------------------------------
@@ -50,8 +59,8 @@ html, body {
 .app {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  padding: 38px;
+  gap: 2.4rem;               /* 24 */
+  padding: 3.8rem;           /* 38 */
   min-height: 100vh;
 }
 
@@ -65,37 +74,38 @@ html, body {
   width: 100%;
 }
 
-.panel--topbar {
+.panel--topbar,
+.panel--controls {
   display: flex;
   align-items: center;
+  height: 8.9rem;            /* 89 */
+  padding: 0 4.8rem;         /* 48 */
+}
+
+.panel--topbar {
   justify-content: space-between;
-  gap: 24px;
-  height: 89px;
-  padding: 24px 48px;
-  flex-wrap: wrap;
+  gap: 1.2rem;
+}
+
+.panel--controls {
+  gap: 6rem;                 /* 60 — measured between Random/Sliders/Features */
 }
 
 .panel--stage {
   flex: 1 0 auto;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: clamp(48px, 8vw, 120px);
-  padding: clamp(32px, 5vw, 72px);
-  min-height: 500px;
-}
-
-.panel--controls {
-  display: flex;
-  align-items: center;
-  gap: 48px;
-  padding: 24px 48px;
-  min-height: 89px;
-  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12rem;                /* 120 */
+  padding: 7.2rem;           /* 72 */
+  min-height: 91.5rem;       /* 915 */
 }
 
 /* -----------------------------------------------------------------------
    Pills (shared)
+
+   Figma pills are 41 tall with px-24. That's tighter than a naive
+   padding+line-height gives, so we fix the height and flex-center.
    ----------------------------------------------------------------------- */
 
 .pill,
@@ -105,26 +115,29 @@ html, body {
   font-family: var(--ui);
   font-weight: 700;
   font-size: var(--body-size);
-  line-height: 1.6;
+  line-height: 1;
   letter-spacing: var(--body-track);
   color: var(--dark-green);
   background: var(--pill-bg);
-  border: 2px solid transparent;
-  padding: 12px 24px;
-  border-radius: 93px;
+  border: 0;
+  height: 4.1rem;            /* 41 */
+  padding: 0 2.4rem;         /* 24 horizontal */
+  border-radius: 9.3rem;     /* 93 */
   cursor: pointer;
   white-space: nowrap;
-  transition: background .15s, border-color .15s, color .15s, transform .1s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .15s, color .15s;
   font-feature-settings: "dlig" 1;
 }
 .pill:hover,
 .explorations button:hover,
 .case-toggle button:hover,
-.features button:hover { border-color: var(--mint); }
+.features button:hover {
+  background: #eceeed;
+}
 
-.pill--primary { background: var(--pill-bg); }
-
-/* active state */
 .explorations button.is-active,
 .case-toggle button.is-active,
 .features button.is-on,
@@ -133,28 +146,27 @@ html, body {
   color: var(--white);
 }
 
-/* -----------------------------------------------------------------------
-   Top bar
-   ----------------------------------------------------------------------- */
-
-.explorations { display: flex; gap: 12px; flex-wrap: wrap; }
-.case-toggle  { display: flex; gap: 12px; }
+.explorations,
+.case-toggle,
+.features {
+  display: flex;
+  gap: 1.2rem;               /* 12 */
+}
 
 /* -----------------------------------------------------------------------
    Stage
    ----------------------------------------------------------------------- */
 
 .stage-text {
-  font-family: "CM", system-ui, sans-serif;
+  font-family: var(--cm);
   font-weight: 700;
   color: var(--dark-green);
-  /* 144px at wide viewports, scales down to 48 */
-  font-size: clamp(48px, 11vw, 144px);
+  font-size: 14.4rem;        /* 144 */
   line-height: 0.87;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.01em;   /* -1.44 / 144 */
+  max-width: 72.6rem;        /* 726 — matches Figma headline width */
   width: 100%;
   outline: none;
-  word-break: normal;
   overflow-wrap: break-word;
   font-feature-settings: normal;
 }
@@ -164,15 +176,14 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
+  gap: 2.4rem;
   width: 100%;
 }
 
 .stage-caption {
   margin: 0;
-  max-width: 308px;
-  /* BE Cause Medium, 24/1.2, +0.02em, dlig on */
-  font-weight: 500;
+  max-width: 30.8rem;        /* 308 */
+  font-weight: 500;          /* BE Cause Medium */
   font-size: var(--body-size);
   line-height: 1.2;
   letter-spacing: var(--body-track);
@@ -182,53 +193,55 @@ html, body {
 .stage-brand {
   display: flex;
   align-items: center;
-  gap: 24px;
-  height: 63px;
+  gap: 2.4rem;               /* 24 */
+  height: 6.3rem;            /* 63 — matches logo */
 }
 .stage-mark {
-  font-family: "CM", system-ui, sans-serif;
+  font-family: var(--cm);
   font-weight: 700;
-  font-size: 48px;
-  /* Match the logo box height so flex-centering lines them up visually */
-  line-height: 63px;
+  font-size: 4.8rem;         /* 48 */
+  line-height: 1;
   color: var(--dark-green);
   text-transform: uppercase;
   white-space: nowrap;
   font-feature-settings: normal;
   display: inline-flex;
   align-items: center;
+  height: 100%;
 }
 .stage-logo {
-  width: 63px;
-  height: 63px;
+  width: 6.3rem;             /* 63 */
+  height: 6.3rem;
   flex: 0 0 auto;
   display: block;
-  filter: drop-shadow(10px 10px 30px rgba(0, 0, 0, 0.1));
+  filter: drop-shadow(1rem 1rem 3rem rgba(0, 0, 0, 0.1));
 }
 
 /* -----------------------------------------------------------------------
    Sliders
+
+   Figma: slider group 799 wide, each (label 24 Medium 1.2) + (track 4 tall),
+   label and track share a row via align-items:center.
    ----------------------------------------------------------------------- */
 
 .sliders {
   display: flex;
   flex: 1 1 auto;
-  gap: 48px;
+  gap: 4.8rem;               /* 48 between the two sliders */
   align-items: center;
-  min-width: 320px;
+  min-width: 0;
 }
 
 .slider {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 2.4rem;               /* 24 between label and track */
   flex: 1 1 0;
-  min-width: 180px;
+  min-width: 0;
 }
 
 .slider > span {
-  /* BE Cause Medium, 24/1.2, +0.02em, dlig on */
-  font-weight: 500;
+  font-weight: 500;          /* Medium */
   font-size: var(--body-size);
   line-height: 1.2;
   letter-spacing: var(--body-track);
@@ -241,49 +254,44 @@ html, body {
   -webkit-appearance: none;
   appearance: none;
   flex: 1 1 0;
-  height: 4px;
+  height: 0.4rem;            /* 4 */
   background: var(--mint);
-  border-radius: 138px;
+  border-radius: 13.8rem;    /* 138 */
   outline: none;
   cursor: pointer;
 }
 .slider input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 36px;
-  height: 18px;
+  width: 3.6rem;             /* 36 */
+  height: 1.8rem;            /* 18 */
   background: var(--green);
-  border-radius: 79px;
+  border-radius: 7.9rem;     /* 79 */
   border: none;
   cursor: pointer;
 }
 .slider input[type="range"]::-moz-range-thumb {
-  width: 36px;
-  height: 18px;
+  width: 3.6rem;
+  height: 1.8rem;
   background: var(--green);
-  border-radius: 79px;
+  border-radius: 7.9rem;
   border: none;
   cursor: pointer;
 }
 
 /* -----------------------------------------------------------------------
-   Features
+   Narrow-viewport collapse (below the clamp floor)
    ----------------------------------------------------------------------- */
 
-.features { display: flex; gap: 12px; flex-wrap: wrap; }
-
-/* -----------------------------------------------------------------------
-   Responsive
-   ----------------------------------------------------------------------- */
-
-/* Only collapse things below real mobile widths */
-@media (max-width: 600px) {
-  .app { padding: 16px; gap: 16px; }
-  .panel { border-radius: 28px; }
-  .panel--stage { min-height: 280px; }
-  .panel--controls,
-  .panel--topbar { padding: 16px 20px; gap: 16px; height: auto; }
-  .sliders { flex-direction: column; gap: 16px; align-items: stretch; min-width: 0; }
-  .slider { min-width: 0; }
-  .stage-footer { flex-direction: column; align-items: flex-start; gap: 24px; }
+@media (max-width: 700px) {
+  html { font-size: 9px; }
+  .app { padding: 2rem; gap: 1.6rem; }
+  .panel { border-radius: 2.8rem; }
+  .panel--stage { min-height: 48rem; padding: 3.2rem; gap: 4.8rem; }
+  .panel--topbar,
+  .panel--controls { height: auto; padding: 1.6rem 2rem; flex-wrap: wrap; gap: 1.6rem; }
+  .sliders { flex-direction: column; align-items: stretch; }
+  .stage-footer { flex-direction: column; align-items: flex-start; gap: 2.4rem; }
+  .stage-text { font-size: 8.5rem; max-width: 100%; }
+  .stage-mark { font-size: 5rem; }
 }
