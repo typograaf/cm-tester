@@ -74,31 +74,31 @@ html, body {
   width: 100%;
 }
 
-.panel--topbar,
-.panel--controls {
+.panel--topbar {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   height: 8.9rem;            /* 89 */
   padding: 0 4.8rem;         /* 48 */
-}
-
-.panel--topbar {
-  justify-content: space-between;
   gap: 1.2rem;
 }
 
 .panel--controls {
-  gap: 6rem;                 /* 60 — measured between Random/Sliders/Features */
+  display: flex;
+  flex-wrap: wrap;           /* wrap when sliders get squeezed */
+  align-items: center;
+  min-height: 8.9rem;        /* 89 — base row height */
+  padding: 2.4rem 4.8rem;    /* 24 / 48, so wrapped rows breathe */
+  row-gap: 2.4rem;
+  column-gap: 6rem;          /* 60 — Figma gap between groups */
 }
 
 .panel--stage {
-  flex: 1 0 auto;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  gap: 12rem;                /* 120 */
-  padding: 7.2rem;           /* 72 */
-  min-height: 91.5rem;       /* 915 */
+  gap: 12rem;                /* 120 between headline + footer */
+  padding: 7.2rem;           /* 72 all sides */
+  /* No min-height / no flex-grow — box hugs its content */
 }
 
 /* -----------------------------------------------------------------------
@@ -226,10 +226,10 @@ html, body {
 
 .sliders {
   display: flex;
-  flex: 1 1 auto;
+  flex: 1 1 48rem;           /* grab at least 480px before letting features wrap */
   gap: 4.8rem;               /* 48 between the two sliders */
   align-items: center;
-  min-width: 0;
+  min-width: 32rem;          /* hard floor so each slider track stays usable */
 }
 
 .slider {
@@ -239,6 +239,11 @@ html, body {
   flex: 1 1 0;
   min-width: 0;
 }
+
+/* Let Random String keep its intrinsic width, and let the feature row
+   flow to a new line when the sliders want more space. */
+.panel--controls > .pill { flex: 0 0 auto; }
+.panel--controls > .features { flex: 0 1 auto; }
 
 .slider > span {
   font-weight: 500;          /* Medium */
