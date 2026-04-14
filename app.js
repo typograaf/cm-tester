@@ -314,51 +314,43 @@ function fitHeadlineDesktop() {
   stageText.style.fontSize = `${lo}em`;
 }
 
-// Mobile: no size slider — pick the largest font-size where the widest
-// explicit line fits the stage width AND the whole page fits in the
-// viewport. Uses a canvas to measure line widths exactly (much more
-// reliable on iOS Safari than DOM scrollWidth comparisons).
+// Mobile: soft-wrap enabled on the headline. Binary search for the
+// largest font-size where the controls panel's bottom edge still sits
+// inside the viewport. Pure DOM measurement (getBoundingClientRect)
+// since that's reliable on iOS Safari where canvas font timing isn't.
 function fitHeadlineMobile() {
-  const record = state.loaded.get(state.activeExp);
-  if (!record) return;
+  const controls = document.querySelector(".panel--controls");
+  if (!controls) return;
 
-  const text = stageText.textContent || "";
-  const lines = text.split("\n");
-  if (!lines.length) return;
+  const vpH = () => window.visualViewport?.height || window.innerHeight;
 
-  // Canvas measurement at a known test size
-  const TEST = 100;
-  const canvas = fitHeadlineMobile._canvas ||
-    (fitHeadlineMobile._canvas = document.createElement("canvas"));
-  const ctx = canvas.getContext("2d");
-  ctx.font = `700 ${TEST}px "${record.family}", system-ui, sans-serif`;
+  const fits = () => {
+    // Force a sync layout read, then check if the controls panel's
+    // bottom edge is still within the visible viewport.
+    void stageText.offsetHeight;
+    return controls.getBoundingClientRect().bottom <= vpH() + 0.5;
+  };
 
-  let maxLineWidth = 0;
-  for (const line of lines) {
-    const w = ctx.measureText(line).width;
-    if (w > maxLineWidth) maxLineWidth = w;
+  const MIN = 16;
+  const MAX = 260;
+
+  let lo = MIN;
+  let hi = MAX;
+  // Is even MIN too big? If yes, just clamp to MIN.
+  stageText.style.fontSize = `${MIN}px`;
+  if (!fits()) {
+    // content at smallest is already overflowing — bail
+    return;
   }
-  if (!maxLineWidth) return;
 
-  const availableWidth = stageText.clientWidth;
-  if (!availableWidth) return;
-
-  // Largest size where the widest line still fits.
-  // A 2% safety margin keeps it from clipping at the edge.
-  let size = (availableWidth / maxLineWidth) * TEST * 0.98;
-
-  // Apply, then shrink if vertical overflow (controls would be pushed off).
-  stageText.style.fontSize = `${size}px`;
-  let guard = 0;
-  while (
-    document.documentElement.scrollHeight > window.innerHeight + 1 &&
-    size > 16 &&
-    guard < 30
-  ) {
-    size *= 0.95;
-    stageText.style.fontSize = `${size}px`;
-    guard++;
+  // Binary search the largest size that still fits.
+  for (let i = 0; i < 22; i++) {
+    const mid = (lo + hi) / 2;
+    stageText.style.fontSize = `${mid}px`;
+    if (fits()) lo = mid;
+    else hi = mid;
   }
+  stageText.style.fontSize = `${lo}px`;
 }
 
 async function setExploration(id) {
@@ -399,9 +391,12 @@ async function init() {
   }
 
   await setExploration(1);
-  // First fit pass has run inside setExploration → applyTypography →
-  // fitHeadline. Reveal the headline now.
-  stageText.classList.add("is-ready");
+  // Run fit one more time on the next frame — gives iOS Safari a tick
+  // to settle layout after the font becomes usable — then reveal the app.
+  requestAnimationFrame(() => {
+    fitHeadline();
+    document.documentElement.classList.remove("loading");
+  });
 
   for (const exp of EXPLORATIONS.slice(1)) {
     loadFont(exp).catch((e) => console.warn(e));
