@@ -410,14 +410,18 @@ async function init() {
   // `.loading` class is still on <html> — good enough as a best guess.
   await setExploration(1);
 
-  // Reveal the app BEFORE the definitive fit pass, then do the fit
-  // after two animation frames so layout is fully settled.
+  // Reveal the app before the definitive fit passes.
   document.documentElement.classList.remove("loading");
+
+  // Run fit at several moments to catch iOS Safari timing quirks
+  // (pull-to-refresh in particular, where innerHeight reads vary
+  // while the URL bar / scroll state settles).
   requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      fitHeadline();
-    });
+    requestAnimationFrame(fitHeadline);
   });
+  setTimeout(fitHeadline, 150);
+  setTimeout(fitHeadline, 500);
+  window.addEventListener("load", fitHeadline, { once: true });
 
   for (const exp of EXPLORATIONS.slice(1)) {
     loadFont(exp).catch((e) => console.warn(e));
