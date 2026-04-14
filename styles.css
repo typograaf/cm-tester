@@ -60,8 +60,12 @@ html, body {
 }
 
 /* While the page is booting (fonts loading, first fit pass running)
-   hide the entire app so there's no fallback-font flash on iOS. */
-html.loading .app { visibility: hidden; }
+   hide the entire app so there's no fallback-font flash. Use opacity
+   (not visibility) so iOS Safari still computes layout correctly —
+   visibility: hidden can cause scrollWidth / clientWidth reads to
+   return stale values on iOS. */
+html.loading .app { opacity: 0; }
+.app { transition: opacity 0.15s ease; }
 
 .app {
   display: flex;
