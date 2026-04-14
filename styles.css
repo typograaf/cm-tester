@@ -1,3 +1,20 @@
+/* -----------------------------------------------------------------------
+   Fonts
+   ----------------------------------------------------------------------- */
+
+@font-face {
+  font-family: "BE Cause";
+  src: url("fonts/BECauseVF.woff2") format("woff2-variations"),
+       url("fonts/BECauseVF.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* -----------------------------------------------------------------------
+   Design tokens (from Figma)
+   ----------------------------------------------------------------------- */
+
 :root {
   --dark-green: #004c2b;
   --green: #1ca84a;
@@ -6,7 +23,17 @@
   --white: #ffffff;
   --pill-bg: #f5f5f5;
   --radius: 48px;
+
+  /* body type spec — BE Cause, 24px / 1.6 / +0.02em, dlig on */
+  --body-size: 24px;
+  --body-track: 0.02em;
+
+  --ui: "BE Cause", -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
 }
+
+/* -----------------------------------------------------------------------
+   Base
+   ----------------------------------------------------------------------- */
 
 * { box-sizing: border-box; }
 
@@ -15,8 +42,10 @@ html, body {
   padding: 0;
   min-height: 100vh;
   background: var(--bg);
-  font-family: -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
+  font-family: var(--ui);
+  font-feature-settings: "dlig" 1;
   color: var(--dark-green);
+  -webkit-font-smoothing: antialiased;
 }
 
 .app {
@@ -27,74 +56,26 @@ html, body {
   min-height: 100vh;
 }
 
-/* top row */
-.toprow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 24px;
-  flex-wrap: wrap;
-}
+/* -----------------------------------------------------------------------
+   Panels
+   ----------------------------------------------------------------------- */
 
-/* exploration switcher */
-.explorations {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-/* preset strings */
-.presets {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-.presets button {
-  font: inherit;
-  font-weight: 500;
-  font-size: 16px;
-  color: var(--dark-green);
-  background: var(--white);
-  border: 2px solid transparent;
-  padding: 12px 20px;
-  border-radius: 93px;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background .15s, color .15s, border-color .15s;
-  max-width: 340px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.presets button:hover { border-color: var(--mint); }
-.presets button.is-active {
-  background: var(--green);
-  color: var(--white);
-}
-.explorations button {
-  font: inherit;
-  font-weight: 700;
-  font-size: 18px;
-  letter-spacing: 0.02em;
-  color: var(--dark-green);
-  background: var(--white);
-  border: none;
-  padding: 14px 24px;
-  border-radius: 93px;
-  cursor: pointer;
-  transition: background .15s, color .15s, transform .1s;
-}
-.explorations button:hover { transform: translateY(-1px); }
-.explorations button.is-active {
-  background: var(--dark-green);
-  color: var(--white);
-}
-
-/* panels */
 .panel {
   background: var(--white);
   border-radius: var(--radius);
   width: 100%;
 }
+
+.panel--topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  height: 89px;
+  padding: 24px 48px;
+  flex-wrap: wrap;
+}
+
 .panel--stage {
   flex: 1 0 auto;
   display: flex;
@@ -105,6 +86,79 @@ html, body {
   min-height: 500px;
 }
 
+.panel--controls {
+  display: flex;
+  align-items: center;
+  gap: 48px;
+  padding: 24px 48px;
+  min-height: 89px;
+  flex-wrap: wrap;
+}
+
+/* -----------------------------------------------------------------------
+   Pills (shared)
+   ----------------------------------------------------------------------- */
+
+.pill,
+.explorations button,
+.case-toggle button,
+.features button {
+  font-family: var(--ui);
+  font-weight: 700;
+  font-size: var(--body-size);
+  line-height: 1.6;
+  letter-spacing: var(--body-track);
+  color: var(--dark-green);
+  background: var(--pill-bg);
+  border: 2px solid transparent;
+  padding: 12px 24px;
+  border-radius: 93px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .15s, border-color .15s, color .15s, transform .1s;
+  font-feature-settings: "dlig" 1;
+}
+.pill:hover,
+.explorations button:hover,
+.case-toggle button:hover,
+.features button:hover { border-color: var(--mint); }
+
+.pill--primary { background: var(--pill-bg); }
+
+/* active state */
+.explorations button.is-active,
+.case-toggle button.is-active,
+.features button.is-on,
+.pill.is-active {
+  background: var(--green);
+  color: var(--white);
+}
+
+/* -----------------------------------------------------------------------
+   Top bar
+   ----------------------------------------------------------------------- */
+
+.explorations { display: flex; gap: 12px; flex-wrap: wrap; }
+.case-toggle  { display: flex; gap: 12px; }
+
+/* -----------------------------------------------------------------------
+   Stage
+   ----------------------------------------------------------------------- */
+
+.stage-text {
+  font-family: "CM", system-ui, sans-serif;
+  font-weight: 700;
+  color: var(--dark-green);
+  font-size: 144px;
+  line-height: 0.87;
+  letter-spacing: -0.01em;
+  width: 100%;
+  outline: none;
+  word-break: break-word;
+  font-feature-settings: normal;
+}
+.stage-text:focus { caret-color: var(--green); }
+
 .stage-footer {
   display: flex;
   align-items: center;
@@ -112,13 +166,22 @@ html, body {
   gap: 24px;
   width: 100%;
 }
+
 .stage-caption {
   margin: 0;
   max-width: 308px;
-  font-size: 20px;
+  /* BE Cause Medium, 24/1.2, +0.02em, dlig on */
+  font-weight: 500;
+  font-size: var(--body-size);
   line-height: 1.2;
-  letter-spacing: 0.02em;
+  letter-spacing: var(--body-track);
   color: var(--dark-green);
+}
+
+.stage-brand {
+  display: flex;
+  align-items: center;
+  gap: 24px;
 }
 .stage-mark {
   font-family: "CM", system-ui, sans-serif;
@@ -130,32 +193,17 @@ html, body {
   white-space: nowrap;
   font-feature-settings: normal;
 }
-
-/* stage text */
-.stage-text {
-  font-family: "CM", system-ui, sans-serif;
-  font-weight: 700;
-  color: var(--dark-green);
-  font-size: 144px;
-  line-height: 0.87;
-  letter-spacing: -0.01em;
-  width: 100%;
-  outline: none;
-  word-break: break-word;
-  /* updated dynamically */
-  font-feature-settings: normal;
+.stage-logo {
+  width: 63px;
+  height: 63px;
+  flex: 0 0 auto;
+  display: block;
+  filter: drop-shadow(10px 10px 30px rgba(0, 0, 0, 0.1));
 }
-.stage-text:focus { caret-color: var(--green); }
 
-/* controls */
-.panel--controls {
-  display: flex;
-  align-items: center;
-  gap: 48px;
-  padding: 24px 48px;
-  min-height: 89px;
-  flex-wrap: wrap;
-}
+/* -----------------------------------------------------------------------
+   Sliders
+   ----------------------------------------------------------------------- */
 
 .sliders {
   display: flex;
@@ -172,15 +220,18 @@ html, body {
   flex: 1 1 0;
   min-width: 180px;
 }
+
 .slider > span {
+  /* BE Cause Medium, 24/1.2, +0.02em, dlig on */
   font-weight: 500;
-  font-size: 20px;
-  letter-spacing: 0.02em;
+  font-size: var(--body-size);
+  line-height: 1.2;
+  letter-spacing: var(--body-track);
   color: var(--dark-green);
   white-space: nowrap;
+  font-feature-settings: "dlig" 1;
 }
 
-/* custom range */
 .slider input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
@@ -210,39 +261,30 @@ html, body {
   cursor: pointer;
 }
 
-/* feature toggles */
-.features {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-.features button {
-  font: inherit;
-  font-weight: 700;
-  font-size: 20px;
-  letter-spacing: 0.02em;
-  color: var(--dark-green);
-  background: var(--pill-bg);
-  border: 2px solid transparent;
-  padding: 12px 24px;
-  border-radius: 93px;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background .15s, border-color .15s, color .15s;
-}
-.features button:hover { border-color: var(--mint); }
-.features button.is-on {
-  background: var(--green);
-  color: var(--white);
-}
+/* -----------------------------------------------------------------------
+   Features
+   ----------------------------------------------------------------------- */
 
-/* mobile-ish */
+.features { display: flex; gap: 12px; flex-wrap: wrap; }
+
+/* -----------------------------------------------------------------------
+   Responsive
+   ----------------------------------------------------------------------- */
+
 @media (max-width: 900px) {
   .app { padding: 16px; gap: 16px; }
   .panel { border-radius: 28px; }
-  .panel--stage { padding: 32px; min-height: 300px; }
+  .panel--stage { padding: 32px; min-height: 300px; gap: 48px; }
   .stage-text { font-size: 72px; }
-  .panel--controls { padding: 16px 24px; gap: 24px; }
-  .sliders { flex-direction: column; gap: 16px; align-items: stretch; }
+  .panel--controls,
+  .panel--topbar { padding: 16px 24px; gap: 16px; height: auto; }
+  .sliders { flex-direction: column; gap: 16px; align-items: stretch; min-width: 0; }
   .slider { min-width: 0; }
+  .pill,
+  .explorations button,
+  .case-toggle button,
+  .features button {
+    font-size: 18px;
+    padding: 10px 18px;
+  }
 }
