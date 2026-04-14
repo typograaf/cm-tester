@@ -398,7 +398,12 @@ html.loading .app { visibility: hidden; }
     gap: 0;
     border-radius: 3rem;
     text-align: center;
-    align-items: center;
+    /* Do NOT set align-items: center here. In a flex column, that
+       collapses children to their content width, which makes
+       stage-text.clientWidth report ~150px instead of the real panel
+       inner width — so fit computes a tiny font. Keep the default
+       `stretch` so stage-text fills the full panel width, and center
+       the text via text-align above. */
     justify-content: center;
     margin: 0;
     flex: 1 1 auto;           /* grow to fill vertical space */
