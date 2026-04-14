@@ -433,11 +433,16 @@ html, body {
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 1.6rem;
+    gap: 1.2rem;
     width: 100%;
     min-width: 0;
+    flex: 0 0 auto;
   }
-  .slider { min-width: 0; }
+  .slider {
+    min-width: 0;
+    flex: 0 0 auto;           /* don't stretch vertically */
+    gap: 1.6rem;              /* tighten label→track gap on mobile */
+  }
 
   /* Features in its own white panel below */
   .panel--controls > .features {
