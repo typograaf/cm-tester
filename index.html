@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CM Typeface Tester</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app">
+    <!-- top row: exploration switcher + preset strings -->
+    <nav class="toprow">
+      <div class="explorations" id="explorations"></div>
+      <div class="presets" id="presets"></div>
+    </nav>
+
+    <!-- big text panel -->
+    <section class="panel panel--stage">
+      <div
+        class="stage-text"
+        id="stageText"
+        contenteditable="true"
+        spellcheck="false"
+      >Leef gerust zonder bang te zijn om op je gezicht te gaan.</div>
+
+      <div class="stage-footer">
+        <p class="stage-caption">Zonder handen verzekerd zijn voor je tanden? Check CM.be</p>
+        <div class="stage-mark" id="stageMark">LEEF GERUST.</div>
+      </div>
+    </section>
+
+    <!-- control bar -->
+    <section class="panel panel--controls">
+      <div class="sliders">
+        <label class="slider">
+          <span>Leading</span>
+          <input type="range" id="leading" min="0.6" max="2" step="0.01" value="0.87" />
+        </label>
+        <label class="slider">
+          <span>Tracking</span>
+          <input type="range" id="tracking" min="-0.1" max="0.2" step="0.005" value="-0.01" />
+        </label>
+        <label class="slider">
+          <span>Size</span>
+          <input type="range" id="fontsize" min="32" max="240" step="1" value="144" />
+        </label>
+      </div>
+      <div class="features" id="features"></div>
+    </section>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
