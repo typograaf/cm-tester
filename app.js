@@ -385,24 +385,38 @@ async function init() {
   renderExplorations();
   renderCaseToggle();
 
+  const isMobile = () => window.matchMedia("(max-width: 900px)").matches;
+
   leadingInput.addEventListener("input", applyTypography);
   trackingInput.addEventListener("input", applyTypography);
   sizeInput.addEventListener("input", applyTypography);
   randomBtn.addEventListener("click", pickRandomString);
 
-  // Re-fit whenever the user types or the window resizes
-  stageText.addEventListener("input", fitHeadline);
-  window.addEventListener("resize", fitHeadline);
-  if (document.fonts && document.fonts.ready) {
-    document.fonts.ready.then(fitHeadline);
-  }
+  // Re-fit on typing only on desktop. On mobile, the iOS keyboard
+  // opening triggers layout changes that would collapse the headline.
+  stageText.addEventListener("input", () => {
+    if (!isMobile()) fitHeadline();
+  });
 
+  // Re-fit on resize only on desktop. On iOS the "resize" event fires
+  // when the software keyboard opens/closes, which would shrink the
+  // headline unnecessarily.
+  window.addEventListener("resize", () => {
+    if (!isMobile()) fitHeadline();
+  });
+
+  // Load the initial exploration. setExploration → applyTypography →
+  // fitHeadline will run a first-pass fit, but it happens while the
+  // `.loading` class is still on <html> — good enough as a best guess.
   await setExploration(1);
-  // Run fit one more time on the next frame — gives iOS Safari a tick
-  // to settle layout after the font becomes usable — then reveal the app.
+
+  // Reveal the app BEFORE the definitive fit pass, then do the fit
+  // after two animation frames so layout is fully settled.
+  document.documentElement.classList.remove("loading");
   requestAnimationFrame(() => {
-    fitHeadline();
-    document.documentElement.classList.remove("loading");
+    requestAnimationFrame(() => {
+      fitHeadline();
+    });
   });
 
   for (const exp of EXPLORATIONS.slice(1)) {
