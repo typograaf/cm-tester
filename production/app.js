@@ -464,17 +464,22 @@ function renderStageOutline() {
     }
   }
 
-  const anchorR = Math.max(2, fontSizePx * 0.022);
-  const strokeW = Math.max(0.6, fontSizePx * 0.008);
+  // Stroked deep-green outlines with a 10% deep-green fill — ghosted
+  // letterforms with a clear edge. Anchor points are small dark-green
+  // circles. On dark bg, swap to mint/white for legibility.
+  const anchorR = Math.max(1.5, fontSizePx * 0.012);
+  const strokeW = Math.max(0.8, fontSizePx * 0.01);
 
   const isDark = stagePanel.dataset.bg === "dark";
-  const color = isDark ? "#FFFFFF" : "#004C2B";
+  const strokeColor = isDark ? "#D7F394" : "#1CA84A";
+  const fillColor = isDark ? "rgba(215,243,148,0.12)" : "rgba(28,168,74,0.1)";
+  const anchorColor = isDark ? "#FFFFFF" : "#004C2B";
 
   const parts = [];
   parts.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMinYMin meet">`);
-  parts.push(`<path d="${dParts.join(" ")}" fill="none" stroke="${color}" stroke-width="${strokeW}" stroke-linejoin="round" stroke-linecap="round"/>`);
+  parts.push(`<path d="${dParts.join(" ")}" fill="${fillColor}" fill-rule="evenodd" stroke="${strokeColor}" stroke-width="${strokeW}" stroke-linejoin="round" stroke-linecap="round"/>`);
   for (const a of anchors) {
-    parts.push(`<circle cx="${f(a.x)}" cy="${f(a.y)}" r="${f(anchorR)}" fill="${color}"/>`);
+    parts.push(`<circle cx="${f(a.x)}" cy="${f(a.y)}" r="${f(anchorR)}" fill="${anchorColor}"/>`);
   }
   parts.push(`</svg>`);
 
