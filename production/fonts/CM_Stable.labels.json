@@ -4,7 +4,7 @@
     "label": "Double Storey g",
     "sample": "g",
     "substitutions": {
-      "g": 143
+      "g": 144
     }
   },
   "ss02": {
@@ -13,7 +13,7 @@
     "sample": "Aa",
     "substitutions": {
       "A": 69,
-      "a": 144
+      "a": 145
     }
   },
   "ss03": {
@@ -29,7 +29,7 @@
     "label": "Crossed t",
     "sample": "t",
     "substitutions": {
-      "t": 145
+      "t": 146
     }
   },
   "ss05": {
@@ -38,10 +38,17 @@
     "sample": "jft",
     "substitutions": {
       "J": 71,
-      "f": 146,
-      "j": 147,
-      "r": 148,
-      "t": 149
+      "f": 147,
+      "j": 148,
+      "r": 149,
+      "t": 150
+    }
+  },
+  "ss06": {
+    "label": "Spurless G",
+    "sample": "G",
+    "substitutions": {
+      "G": 72
     }
   }
 }
