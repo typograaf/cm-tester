@@ -476,8 +476,10 @@ button::-moz-focus-inner { border: 0; }
 .panel--stage[data-mode="outline"] .stage-text {
   color: transparent;
   -webkit-text-stroke: 0;
-  caret-color: var(--white);
-  /* Single character centred in the panel */
+  /* Single character centred in the panel — caret hidden so a
+     blinking line doesn't sit next to the letter. Solid mode keeps
+     its normal caret. */
+  caret-color: transparent;
   text-align: center;
   white-space: nowrap;
 }

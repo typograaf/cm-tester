@@ -466,22 +466,29 @@ function renderStageOutline() {
   // Outline mode is always a single character — centre it in the
   // SVG box (horizontally + vertically by cap-height midpoint) and
   // place metric lines (cap / x-height / baseline / descender) at
-  // their real font-metric offsets.
+  // their real font-metric offsets. Substitutions are resolved by
+  // direct glyph-index lookup (the same trick as the SS glyph
+  // preview); opentype.js's feature engine doesn't reliably apply
+  // ss-substitutions on this font's CFF/post v3.0 setup.
   const allCommands = [];
   const metricLines = [];
   const onlyChar = lines.length === 1 ? lines[0] : null;
   if (onlyChar) {
+    let glyph = null;
+    for (const tag of Object.keys(state.featureState)) {
+      if (!state.featureState[tag]) continue;
+      const subs = (state.ssLabels[tag] || {}).substitutions || {};
+      if (typeof subs[onlyChar] === "number") {
+        glyph = ot.glyphs.get(subs[onlyChar]);
+        break;
+      }
+    }
+    if (!glyph) glyph = ot.charToGlyph(onlyChar);
+
     const capPx = capUnits * fontSizePx / upm;
     const xhPx = xhUnits * fontSizePx / upm;
     const descPx = descUnits * fontSizePx / upm;
-    let advancePx;
-    try {
-      advancePx = ot.getAdvanceWidth(onlyChar, fontSizePx, {
-        features, letterSpacing: trackingEm,
-      });
-    } catch (_) {
-      advancePx = ot.getAdvanceWidth(onlyChar, fontSizePx);
-    }
+    const advancePx = (glyph.advanceWidth || 0) * fontSizePx / upm;
     const xOff = (W - advancePx) / 2;
     const baselineY = H / 2 + capPx / 2;
     metricLines.push(baselineY - capPx);   // cap line
@@ -489,14 +496,7 @@ function renderStageOutline() {
     metricLines.push(baselineY);           // baseline
     metricLines.push(baselineY + descPx);  // descender line
 
-    let path;
-    try {
-      path = ot.getPath(onlyChar, xOff, baselineY, fontSizePx, {
-        features, letterSpacing: trackingEm, kerning: true,
-      });
-    } catch (_) {
-      path = ot.getPath(onlyChar, xOff, baselineY, fontSizePx);
-    }
+    const path = glyph.getPath(xOff, baselineY, fontSizePx);
     allCommands.push(...path.commands);
   } else {
     for (let i = 0; i < lines.length; i++) {
