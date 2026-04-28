@@ -1,2 +1,5 @@
 .DS_Store
 node_modules/
+
+# Runtime logs (sync script + LaunchAgent)
+scripts/*.log
