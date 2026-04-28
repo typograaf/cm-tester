@@ -611,21 +611,21 @@ function renderStageOutline() {
       stroke: "#1CA84A",
       fill:   "rgba(28,168,74,0.10)",
       anchor: "#004C2B",
-      metric: "#E5EDEA",
+      metric: "#1CA84A",
       overshoot: "rgba(28,168,74,0.05)",   // 5% deep green
     },
     mint: {
       stroke: "#004C2B",
       fill:   "rgba(0,76,43,0.08)",
       anchor: "#004C2B",
-      metric: "rgba(0,76,43,0.18)",
+      metric: "#004C2B",
       overshoot: "rgba(0,76,43,0.05)",
     },
     dark: {
       stroke: "#D7F394",
       fill:   "rgba(215,243,148,0.10)",
       anchor: "#FFFFFF",
-      metric: "rgba(255,255,255,0.18)",
+      metric: "#D7F394",
       overshoot: "rgba(215,243,148,0.05)", // 5% mint on dark green
     },
   };
@@ -650,11 +650,11 @@ function renderStageOutline() {
   parts.push(`<path d="${dParts.join(" ")}" fill="${fillColor}" fill-rule="evenodd" stroke="${strokeColor}" stroke-width="${strokeW}" stroke-linejoin="round" stroke-linecap="round"/>`);
   if (showHandles) {
     for (const l of ctrlLines) {
-      parts.push(`<line x1="${f(l.x1)}" y1="${f(l.y1)}" x2="${f(l.x2)}" y2="${f(l.y2)}" stroke="${anchorColor}" stroke-width="${handleStrokeW}" stroke-opacity="0.5"/>`);
+      parts.push(`<line x1="${f(l.x1)}" y1="${f(l.y1)}" x2="${f(l.x2)}" y2="${f(l.y2)}" stroke="${anchorColor}" stroke-width="${handleStrokeW}"/>`);
     }
     const half = ctrlSize / 2;
     for (const p of ctrlPoints) {
-      parts.push(`<rect x="${f(p.x - half)}" y="${f(p.y - half)}" width="${ctrlSize}" height="${ctrlSize}" fill="${anchorColor}" fill-opacity="0.75"/>`);
+      parts.push(`<rect x="${f(p.x - half)}" y="${f(p.y - half)}" width="${ctrlSize}" height="${ctrlSize}" fill="${anchorColor}"/>`);
     }
   }
   for (const a of anchors) {
