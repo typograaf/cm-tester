@@ -375,19 +375,23 @@ function setOutlineMode(mode) {
   if (state.outlineMode && !wasOutline) {
     // Save the multi-line solid text so we can restore it later, and
     // collapse to the first non-whitespace character for the single-
-    // letter outline view.
+    // letter outline view. Mode change implicitly resets size — we
+    // want it to fill the panel rather than honour a stale slider
+    // value tuned for the multi-line headline.
     state.savedStageText = stageText.textContent;
+    state.savedSizeOverride = state.userSizeOverride;
+    state.userSizeOverride = false;
     const flat = stageText.textContent.replace(/\s+/g, "");
     stageText.textContent = (flat || "g").charAt(0);
   } else if (!state.outlineMode && wasOutline) {
     if (typeof state.savedStageText === "string") {
       stageText.textContent = state.savedStageText;
     }
+    state.userSizeOverride = !!state.savedSizeOverride;
     stageOutlineEl.innerHTML = "";
   }
 
-  if (!state.userSizeOverride) autoFitHeadlineSlider();
-  fitHeadline();
+  refitStage();
   if (state.outlineMode) renderStageOutline();
 }
 
@@ -612,90 +616,90 @@ function fitHeadline() {
   }
 }
 
-// Fit the headline INSIDE the stage panel. Always grows up to fill
-// the available room (capped by the slider's value), and shrinks when
-// content is too tall — so a long string wrapping to many lines still
-// fits, while at large viewports the headline grows to fill instead
-// of staying tiny in a corner. Never measures the whole document.
-function fitHeadlineDesktop() {
-  const sliderMax = parseFloat(sizeInput.value) || 14.4;
-  const MIN = 2;
-
-  const measureAvail = () => {
-    const ps = getComputedStyle(stagePanel);
-    const padT = parseFloat(ps.paddingTop) || 0;
-    const padB = parseFloat(ps.paddingBottom) || 0;
-    const minGap = parseFloat(ps.rowGap || ps.gap) || 0;
-    const footerEl = stagePanel.querySelector(".stage-footer");
-    const footerH = footerEl ? footerEl.offsetHeight : 0;
-    const wrap = stageText.parentElement;
-    return {
-      W: wrap.clientWidth,
-      H: stagePanel.clientHeight - padT - padB - minGap - footerH,
-    };
+// Measure the available stage box (panel inner minus padding, minus
+// the footer if it's currently visible).
+function measureStageAvail() {
+  const ps = getComputedStyle(stagePanel);
+  const padT = parseFloat(ps.paddingTop) || 0;
+  const padB = parseFloat(ps.paddingBottom) || 0;
+  const minGap = parseFloat(ps.rowGap || ps.gap) || 0;
+  const footerEl = stagePanel.querySelector(".stage-footer");
+  const footerVisible = footerEl && getComputedStyle(footerEl).display !== "none";
+  const footerH = footerVisible ? footerEl.offsetHeight : 0;
+  const gapH = footerVisible ? minGap : 0;
+  const wrap = stageText.parentElement;
+  return {
+    W: wrap.clientWidth,
+    H: stagePanel.clientHeight - padT - padB - gapH - footerH,
   };
+}
+
+// Find the largest em the headline can be without overflowing the
+// stage panel given the current text. Used to size the slider's
+// real-time range so the entire slider track maps to a visible
+// change in headline size.
+function computeMaxFitEm() {
+  const HARD_MAX = 200;
+  const MIN = 4;
+  const savedFs = stageText.style.fontSize;
 
   const fits = () => {
     void stageText.offsetHeight;
-    const { W, H } = measureAvail();
+    const { W, H } = measureStageAvail();
     return stageText.scrollHeight <= H + 1
         && stageText.scrollWidth <= W + 1;
   };
 
-  // Binary search for the largest em ≤ sliderMax that still fits.
-  // If sliderMax already fits, we keep it.
-  stageText.style.fontSize = `${sliderMax}em`;
+  stageText.style.fontSize = `${HARD_MAX}em`;
   void stageText.offsetHeight;
-  if (fits()) return;
+  if (fits()) {
+    stageText.style.fontSize = savedFs;
+    return HARD_MAX;
+  }
 
   let lo = MIN;
-  let hi = sliderMax;
+  let hi = HARD_MAX;
   for (let i = 0; i < 22; i++) {
     const mid = (lo + hi) / 2;
     stageText.style.fontSize = `${mid}em`;
     if (fits()) lo = mid;
     else hi = mid;
   }
-  stageText.style.fontSize = `${lo}em`;
+  stageText.style.fontSize = savedFs;
+  return lo;
 }
 
-// Compute a sensible default headline size for the current panel —
-// roughly fills 95% of the available panel height with the current
-// number of lines. Used on initial load and when the user hasn't
-// manually touched the size slider yet, so the headline scales with
-// the viewport instead of staying pinned at 14.4em.
-function autoFitHeadlineSlider() {
-  if (window.matchMedia("(max-width: 900px)").matches) return;
-  const ps = getComputedStyle(stagePanel);
-  const padT = parseFloat(ps.paddingTop) || 0;
-  const padB = parseFloat(ps.paddingBottom) || 0;
-  const minGap = parseFloat(ps.rowGap || ps.gap) || 0;
-  const baseFontSize = parseFloat(ps.fontSize) || 10;
-  const footerEl = stagePanel.querySelector(".stage-footer");
-  const footerVisible = footerEl &&
-    getComputedStyle(footerEl).display !== "none";
-  const footerH = footerVisible ? footerEl.offsetHeight : 0;
-  const gapH = footerVisible ? minGap : 0;
-
-  const availH = stagePanel.clientHeight - padT - padB - gapH - footerH;
-  if (availH <= 0) return;
-
-  // Outline mode is always a single character that wants to FILL the
-  // panel (100% minus padding); solid mode aims for ~95% so the
-  // multi-line headline has a touch of breathing room.
-  const lines = state.outlineMode
-    ? 1
-    : Math.max(2, stageText.textContent.split("\n").length);
-  const fillRatio = state.outlineMode ? 1.0 : 0.95;
-  const idealPx = (availH * fillRatio) / (lines * 0.87);
-  let idealEm = idealPx / baseFontSize;
+// Recompute the slider range so it spans 4em → max-that-fits, then
+// apply either the user's last value (clamped) or an auto-fit value
+// for the current mode. Replaces the previous fitHeadlineDesktop +
+// autoFitHeadlineSlider pair.
+function refitStage() {
+  if (window.matchMedia("(max-width: 900px)").matches) {
+    fitHeadlineMobile();
+    return;
+  }
+  const max = computeMaxFitEm();
+  sizeInput.max = max.toFixed(1);
 
   const sliderMin = parseFloat(sizeInput.min) || 4;
-  const sliderMaxAttr = parseFloat(sizeInput.max) || 60;
-  idealEm = Math.min(sliderMaxAttr, Math.max(sliderMin, idealEm));
+  let value;
+  if (state.userSizeOverride) {
+    value = parseFloat(sizeInput.value) || max;
+  } else {
+    const fillRatio = state.outlineMode ? 1.0 : 0.95;
+    value = max * fillRatio;
+  }
+  value = Math.min(max, Math.max(sliderMin, value));
+  sizeInput.value = value.toFixed(1);
 
-  sizeInput.value = idealEm.toFixed(1);
+  stageText.style.fontSize = `${value}em`;
 }
+
+// Kept for the mobile branch only.
+function fitHeadlineDesktop() {
+  refitStage();
+}
+function autoFitHeadlineSlider() { /* handled inside refitStage */ }
 
 function fitHeadlineMobile() {
   const panel = stageText.parentElement;
@@ -758,7 +762,11 @@ async function init() {
   trackingInput.addEventListener("input", applyTypography);
   sizeInput.addEventListener("input", () => {
     state.userSizeOverride = true;
-    applyTypography();
+    // Slider value is already inside the dynamic range — just apply
+    // it. Skipping the binary search keeps the drag responsive.
+    const v = parseFloat(sizeInput.value) || 14.4;
+    stageText.style.fontSize = `${v}em`;
+    if (state.outlineMode) renderStageOutline();
   });
   randomBtn.addEventListener("click", pickRandomString);
 
@@ -788,15 +796,13 @@ async function init() {
       }
     }
     if (!window.matchMedia("(max-width: 900px)").matches) {
-      if (!state.userSizeOverride) autoFitHeadlineSlider();
-      fitHeadline();
+      refitStage();
       if (state.outlineMode) renderStageOutline();
     }
   });
   window.addEventListener("resize", () => {
     if (!window.matchMedia("(max-width: 900px)").matches) {
-      if (!state.userSizeOverride) autoFitHeadlineSlider();
-      fitHeadline();
+      refitStage();
       if (state.outlineMode) renderStageOutline();
     }
   });
@@ -840,8 +846,7 @@ async function init() {
   if (typeof ResizeObserver !== "undefined") {
     const ro = new ResizeObserver(() => {
       if (!editing) {
-        if (!state.userSizeOverride) autoFitHeadlineSlider();
-        fitHeadline();
+        refitStage();
         if (state.outlineMode) renderStageOutline();
       }
     });
