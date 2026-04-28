@@ -608,22 +608,25 @@ function renderStageOutline() {
   const bg = state.outlineMode ? "dark" : (stagePanel.dataset.bg || "white");
   const palette = {
     white: {
-      stroke: "#1CA84A",                 // deep green outline
-      fill:   "rgba(28,168,74,0.10)",    // 10% deep green
-      anchor: "#004C2B",                 // dark green
-      metric: "#E5EDEA",                 // pale grey-green
+      stroke: "#1CA84A",
+      fill:   "rgba(28,168,74,0.10)",
+      anchor: "#004C2B",
+      metric: "#E5EDEA",
+      overshoot: "rgba(28,168,74,0.05)",   // 5% deep green
     },
     mint: {
-      stroke: "#004C2B",                 // dark green outline reads well on mint
+      stroke: "#004C2B",
       fill:   "rgba(0,76,43,0.08)",
       anchor: "#004C2B",
       metric: "rgba(0,76,43,0.18)",
+      overshoot: "rgba(0,76,43,0.05)",
     },
     dark: {
-      stroke: "#D7F394",                 // mint outline on dark green
+      stroke: "#D7F394",
       fill:   "rgba(215,243,148,0.10)",
       anchor: "#FFFFFF",
       metric: "rgba(255,255,255,0.18)",
+      overshoot: "rgba(215,243,148,0.05)", // 5% mint on dark green
     },
   };
   const c = palette[bg] || palette.white;
@@ -631,10 +634,16 @@ function renderStageOutline() {
   const fillColor = c.fill;
   const anchorColor = c.anchor;
   const metricColor = c.metric;
+  const overshootColor = c.overshoot;
 
   const parts = [];
   parts.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMinYMin meet">`);
-  // Metric lines drawn first so the path stroke sits on top of them.
+  // Overshoot bands first (under everything), then metric lines, then
+  // path stroke on top so the outline reads cleanly above them.
+  for (const b of overshootBands) {
+    if (b.h <= 0) continue;
+    parts.push(`<rect x="0" y="${f(b.y)}" width="${W}" height="${f(b.h)}" fill="${overshootColor}"/>`);
+  }
   for (const y of metricLines) {
     parts.push(`<line x1="0" y1="${f(y)}" x2="${W}" y2="${f(y)}" stroke="${metricColor}" stroke-width="1"/>`);
   }
