@@ -45,6 +45,7 @@
     }
   },
   "ss06": {
+    "description": "A spurless “G” is a little more dynamic, but less structurally sound than its spurred brother. This is mostly a matter of preference.",
     "label": "Spurless G",
     "sample": "G",
     "substitutions": {
