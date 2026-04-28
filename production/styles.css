@@ -55,14 +55,35 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Hard minimum browser dimensions — below these the page scrolls
-   instead of letting the layout collapse. */
-body {
-  min-width: 1280px;
-  min-height: 800px;
+/* The desktop layout needs at least 1280×800 to look right. Below
+   that we show a friendly "make your window bigger" overlay
+   instead of trying to stack the panels into a mobile layout. */
+.too-narrow {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--bg);
+  align-items: center;
+  justify-content: center;
+  padding: 4rem;
+  text-align: center;
 }
-.app {
-  min-height: 800px;
+.too-narrow p {
+  margin: 0;
+  font-family: var(--ui);
+  font-weight: 500;
+  font-variation-settings: "wght" 500, "wdth" 60;
+  font-size: 22px;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+  color: var(--dark-green);
+  max-width: 22em;
+}
+
+@media (max-width: 1279px), (max-height: 799px) {
+  .app { display: none; }
+  .too-narrow { display: flex; }
 }
 
 html.loading .app { opacity: 0; }
@@ -552,29 +573,5 @@ button::-moz-focus-inner { border: 0; }
    Mobile (≤900px) — stack vertically, drop guideline preview
    ------------------------------------------------------------------ */
 
-@media (max-width: 900px) {
-  html { font-size: 8px; }
-
-  .app {
-    flex-direction: column;
-    padding: 1.6rem;
-    gap: 1.6rem;
-  }
-  .col--left { gap: 1.6rem; }
-
-  .panel--feature,
-  .panel--controls,
-  .panel--stage { padding: 4rem; border-radius: 3.2rem; }
-
-  .feature-detail {
-    flex-direction: column;
-    gap: 4rem;
-  }
-  .detail-info { width: 100%; }
-  .glyph-preview { height: 18rem; }
-  .gp-glyph { font-size: 16rem; }
-
-  .panel--stage { font-size: 1rem; padding: 3.2em; gap: 3.2em; }
-  .stage-text { font-size: 8em; }
-  .stage-footer { flex-direction: column; align-items: flex-start; gap: 2em; }
-}
+/* No mobile/stacked fallback — when the viewport is too small the
+   .too-narrow overlay above takes over instead. */
