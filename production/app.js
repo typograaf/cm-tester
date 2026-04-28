@@ -223,9 +223,21 @@ function renderSSPills() {
     btn.addEventListener("click", () => {
       state.featureState[feat.tag] = !state.featureState[feat.tag];
       state.focusedSS = feat.tag;
+      // In outline mode, jump the preview letter to this SS's
+      // sample so the toggle is immediately visible (e.g. clicking
+      // "Spurless G" shows the G, "Crossed t" shows the t).
+      if (state.outlineMode) {
+        const meta = state.ssLabels[feat.tag] || {};
+        const sample = (meta.sample || "").trim();
+        if (sample) stageText.textContent = sample.charAt(0);
+      }
       renderSSPills();
       renderDetail();
       applyTypography();
+      if (state.outlineMode) {
+        refitStage();
+        renderStageOutline();
+      }
     });
     ssPillsEl.appendChild(btn);
   }
