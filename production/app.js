@@ -802,11 +802,25 @@ async function init() {
   setBackground("#FFFFFF");
   setOutlineMode("solid");
 
+  // Block backspace/delete in outline mode — one letter must always
+  // be on screen. (Replacing it via typing still works because that
+  // path goes through input, not a destructive keydown.)
+  stageText.addEventListener("keydown", (e) => {
+    if (!state.outlineMode) return;
+    if (e.key === "Backspace" || e.key === "Delete") {
+      e.preventDefault();
+    }
+  });
+
   stageText.addEventListener("input", () => {
-    // In outline mode keep just the latest single character.
+    // In outline mode keep just the latest single character — and
+    // never let the field go empty (defensive in case some other
+    // path clears it).
     if (state.outlineMode) {
       const flat = stageText.textContent.replace(/\s+/g, "");
-      if (flat.length > 1) {
+      if (flat.length === 0) {
+        stageText.textContent = OUTLINE_DEFAULT_CHAR;
+      } else if (flat.length > 1) {
         stageText.textContent = flat.charAt(flat.length - 1);
         const range = document.createRange();
         range.selectNodeContents(stageText);
