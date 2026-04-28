@@ -148,6 +148,18 @@ def extract(path: str) -> dict[str, dict]:
             if label:
                 entry["label"] = label
 
+        # Description (custom convention: at name table id 1000 + N
+        # for ssNN / cvNN). Add in Glyphs via Font Info → Custom
+        # Parameters → "Add Names".
+        try:
+            num = int(tag[2:])
+        except ValueError:
+            num = 0
+        if num:
+            desc = lookup_name(name, 1000 + num)
+            if desc:
+                entry["description"] = desc
+
         # Auto-pick a default sample character + collect every
         # substitution this feature applies, as a {char: target_index}
         # map. The front-end uses this map to render multi-character
@@ -184,13 +196,12 @@ def main() -> int:
     src, dst = sys.argv[1], sys.argv[2]
     data = extract(src)
 
-    # Preserve manually-edited fields. `label` and `sample` start
-    # auto-extracted from the font but the human-readable name and the
-    # preview string are editorial choices (e.g. "Lowercaps E" vs
-    # "Lowercaps e", "Aa" vs just "a", "jft" instead of one letter).
-    # `description` is always human-authored. Anything else added by
-    # hand also survives a sync.
-    PRESERVED_FIELDS = ("label", "sample", "description")
+    # Field-by-field merge with the existing JSON:
+    #   label, sample → JSON always wins (editorial overrides like
+    #     "Lowercaps E" instead of "Lowercaps e", or "Aa" instead of
+    #     the auto-picked "a")
+    #   description   → font wins (nameID 1000+N), JSON only fills the
+    #     gap when the font doesn't carry one
     if os.path.exists(dst):
         try:
             with open(dst, "r", encoding="utf-8") as f:
@@ -199,9 +210,11 @@ def main() -> int:
                 prev = existing.get(tag) or {}
                 if not isinstance(prev, dict):
                     continue
-                for field in PRESERVED_FIELDS:
+                for field in ("label", "sample"):
                     if prev.get(field):
                         entry[field] = prev[field]
+                if not entry.get("description") and prev.get("description"):
+                    entry["description"] = prev["description"]
         except (OSError, ValueError):
             pass
 
