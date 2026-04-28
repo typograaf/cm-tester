@@ -441,34 +441,54 @@ function renderStageOutline() {
     allCommands.push(...path.commands);
   }
 
-  // Build path d-attribute and collect on-curve anchor points only.
+  // Build path d-attribute, collect on-curve anchors, and (for big
+  // headlines) also collect bezier control points + handle segments.
   const dParts = [];
   const anchors = [];
+  const ctrlPoints = [];
+  const ctrlLines = [];
+  let curX = 0;
+  let curY = 0;
   const f = (n) => n.toFixed(2);
 
   for (const cmd of allCommands) {
     if (cmd.type === "M") {
       dParts.push(`M${f(cmd.x)},${f(cmd.y)}`);
       anchors.push({ x: cmd.x, y: cmd.y });
+      curX = cmd.x; curY = cmd.y;
     } else if (cmd.type === "L") {
       dParts.push(`L${f(cmd.x)},${f(cmd.y)}`);
       anchors.push({ x: cmd.x, y: cmd.y });
+      curX = cmd.x; curY = cmd.y;
     } else if (cmd.type === "C") {
       dParts.push(`C${f(cmd.x1)},${f(cmd.y1)} ${f(cmd.x2)},${f(cmd.y2)} ${f(cmd.x)},${f(cmd.y)}`);
+      ctrlPoints.push({ x: cmd.x1, y: cmd.y1 });
+      ctrlPoints.push({ x: cmd.x2, y: cmd.y2 });
+      ctrlLines.push({ x1: curX, y1: curY, x2: cmd.x1, y2: cmd.y1 });
+      ctrlLines.push({ x1: cmd.x2, y1: cmd.y2, x2: cmd.x, y2: cmd.y });
       anchors.push({ x: cmd.x, y: cmd.y });
+      curX = cmd.x; curY = cmd.y;
     } else if (cmd.type === "Q") {
       dParts.push(`Q${f(cmd.x1)},${f(cmd.y1)} ${f(cmd.x)},${f(cmd.y)}`);
+      ctrlPoints.push({ x: cmd.x1, y: cmd.y1 });
+      ctrlLines.push({ x1: curX, y1: curY, x2: cmd.x1, y2: cmd.y1 });
+      ctrlLines.push({ x1: cmd.x1, y1: cmd.y1, x2: cmd.x, y2: cmd.y });
       anchors.push({ x: cmd.x, y: cmd.y });
+      curX = cmd.x; curY = cmd.y;
     } else if (cmd.type === "Z") {
       dParts.push("Z");
     }
   }
 
-  // Stroked deep-green outlines with a 10% deep-green fill — ghosted
-  // letterforms with a clear edge. Anchor points are small dark-green
-  // circles. On dark bg, swap to mint/white for legibility.
-  const anchorR = Math.max(1.5, fontSizePx * 0.012);
-  const strokeW = Math.max(0.8, fontSizePx * 0.01);
+  // Constant pixel sizes — never scale with font size, so the outline
+  // reads the same at 100px or 400px headlines. Bezier handles only
+  // appear once the text is big enough that they wouldn't clutter.
+  const anchorR = 3;
+  const strokeW = 1.5;
+  const handleStrokeW = 0.75;
+  const ctrlSize = 4;
+  const HANDLES_THRESHOLD = 200;
+  const showHandles = fontSizePx >= HANDLES_THRESHOLD;
 
   const isDark = stagePanel.dataset.bg === "dark";
   const strokeColor = isDark ? "#D7F394" : "#1CA84A";
@@ -478,8 +498,17 @@ function renderStageOutline() {
   const parts = [];
   parts.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMinYMin meet">`);
   parts.push(`<path d="${dParts.join(" ")}" fill="${fillColor}" fill-rule="evenodd" stroke="${strokeColor}" stroke-width="${strokeW}" stroke-linejoin="round" stroke-linecap="round"/>`);
+  if (showHandles) {
+    for (const l of ctrlLines) {
+      parts.push(`<line x1="${f(l.x1)}" y1="${f(l.y1)}" x2="${f(l.x2)}" y2="${f(l.y2)}" stroke="${anchorColor}" stroke-width="${handleStrokeW}" stroke-opacity="0.5"/>`);
+    }
+    const half = ctrlSize / 2;
+    for (const p of ctrlPoints) {
+      parts.push(`<rect x="${f(p.x - half)}" y="${f(p.y - half)}" width="${ctrlSize}" height="${ctrlSize}" fill="${anchorColor}" fill-opacity="0.75"/>`);
+    }
+  }
   for (const a of anchors) {
-    parts.push(`<circle cx="${f(a.x)}" cy="${f(a.y)}" r="${f(anchorR)}" fill="${anchorColor}"/>`);
+    parts.push(`<circle cx="${f(a.x)}" cy="${f(a.y)}" r="${anchorR}" fill="${anchorColor}"/>`);
   }
   parts.push(`</svg>`);
 
