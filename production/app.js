@@ -549,16 +549,40 @@ function renderStageOutline() {
   const HANDLES_THRESHOLD = 200;
   const showHandles = fontSizePx >= HANDLES_THRESHOLD;
 
-  const isDark = stagePanel.dataset.bg === "dark";
-  const strokeColor = isDark ? "#D7F394" : "#1CA84A";
-  const fillColor = isDark ? "rgba(215,243,148,0.12)" : "rgba(28,168,74,0.1)";
-  const anchorColor = isDark ? "#FFFFFF" : "#004C2B";
+  // Per-bg colour scheme. Metric lines + handles + anchors all
+  // adapt so they stay legible against any preview background.
+  const bg = stagePanel.dataset.bg || "white";
+  const palette = {
+    white: {
+      stroke: "#1CA84A",                 // deep green outline
+      fill:   "rgba(28,168,74,0.10)",    // 10% deep green
+      anchor: "#004C2B",                 // dark green
+      metric: "#E5EDEA",                 // pale grey-green
+    },
+    mint: {
+      stroke: "#004C2B",                 // dark green outline reads well on mint
+      fill:   "rgba(0,76,43,0.08)",
+      anchor: "#004C2B",
+      metric: "rgba(0,76,43,0.18)",
+    },
+    dark: {
+      stroke: "#D7F394",                 // mint outline on dark green
+      fill:   "rgba(215,243,148,0.10)",
+      anchor: "#FFFFFF",
+      metric: "rgba(255,255,255,0.18)",
+    },
+  };
+  const c = palette[bg] || palette.white;
+  const strokeColor = c.stroke;
+  const fillColor = c.fill;
+  const anchorColor = c.anchor;
+  const metricColor = c.metric;
 
   const parts = [];
   parts.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMinYMin meet">`);
   // Metric lines drawn first so the path stroke sits on top of them.
   for (const y of metricLines) {
-    parts.push(`<line x1="0" y1="${f(y)}" x2="${W}" y2="${f(y)}" stroke="#E5EDEA" stroke-width="1"/>`);
+    parts.push(`<line x1="0" y1="${f(y)}" x2="${W}" y2="${f(y)}" stroke="${metricColor}" stroke-width="1"/>`);
   }
   parts.push(`<path d="${dParts.join(" ")}" fill="${fillColor}" fill-rule="evenodd" stroke="${strokeColor}" stroke-width="${strokeW}" stroke-linejoin="round" stroke-linecap="round"/>`);
   if (showHandles) {
@@ -656,12 +680,14 @@ function autoFitHeadlineSlider() {
   const availH = stagePanel.clientHeight - padT - padB - gapH - footerH;
   if (availH <= 0) return;
 
-  // Outline mode is always a single character that wants to fill the
-  // panel; otherwise size for the actual line count of the headline.
+  // Outline mode is always a single character that wants to FILL the
+  // panel (100% minus padding); solid mode aims for ~95% so the
+  // multi-line headline has a touch of breathing room.
   const lines = state.outlineMode
     ? 1
     : Math.max(2, stageText.textContent.split("\n").length);
-  const idealPx = (availH * 0.95) / (lines * 0.87);
+  const fillRatio = state.outlineMode ? 1.0 : 0.95;
+  const idealPx = (availH * fillRatio) / (lines * 0.87);
   let idealEm = idealPx / baseFontSize;
 
   const sliderMin = parseFloat(sizeInput.min) || 4;
