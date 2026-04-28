@@ -513,12 +513,22 @@ function renderStageOutline() {
     }
     if (!glyph) glyph = ot.charToGlyph(onlyChar);
 
-    const capPx = capUnits * fontSizePx / upm;
-    const xhPx = xhUnits * fontSizePx / upm;
-    const descPx = descUnits * fontSizePx / upm;
-    const advancePx = (glyph.advanceWidth || 0) * fontSizePx / upm;
+    const ov = (state.font && state.font.overshoots) || { cap: 0, xh: 0, baseline: 0, descender: 0 };
+    const u2px = fontSizePx / upm;
+    const capPx = capUnits * u2px;
+    const xhPx = xhUnits * u2px;
+    const descPx = descUnits * u2px;
+    const capOvPx = ov.cap * u2px;
+    const descOvPx = ov.descender * u2px;
+    const advancePx = (glyph.advanceWidth || 0) * u2px;
     const xOff = (W - advancePx) / 2;
-    const baselineY = H / 2 + capPx / 2;
+    // Centre by the VISUAL extent (cap-overshoot top → descender-
+    // overshoot bottom) so the rendered letter has equal padding
+    // above and below regardless of where the typographic baseline
+    // sits relative to the cap midpoint.
+    const visualH = capPx + descPx + capOvPx + descOvPx;
+    const visualTop = (H - visualH) / 2;
+    const baselineY = visualTop + capOvPx + capPx;
     metricLines.push(baselineY - capPx);   // cap line
     metricLines.push(baselineY - xhPx);    // x-height line
     metricLines.push(baselineY);           // baseline
@@ -526,14 +536,10 @@ function renderStageOutline() {
 
     // Overshoot bands — the small zones outside the metric lines
     // where round glyphs extend so they optically match flat ones.
-    const ov = state.font && state.font.overshoots ? state.font.overshoots : null;
-    if (ov) {
-      const u2px = fontSizePx / upm;
-      overshootBands.push({ y: baselineY - capPx - ov.cap * u2px, h: ov.cap * u2px });
-      overshootBands.push({ y: baselineY - xhPx - ov.xh * u2px,  h: ov.xh * u2px });
-      overshootBands.push({ y: baselineY,                         h: ov.baseline * u2px });
-      overshootBands.push({ y: baselineY + descPx,                h: ov.descender * u2px });
-    }
+    overshootBands.push({ y: baselineY - capPx - capOvPx, h: capOvPx });
+    overshootBands.push({ y: baselineY - xhPx - ov.xh * u2px, h: ov.xh * u2px });
+    overshootBands.push({ y: baselineY,                       h: ov.baseline * u2px });
+    overshootBands.push({ y: baselineY + descPx,              h: descOvPx });
 
     const path = glyph.getPath(xOff, baselineY, fontSizePx);
     allCommands.push(...path.commands);
@@ -737,6 +743,36 @@ function refitStage() {
     fitHeadlineMobile();
     return;
   }
+
+  // Outline mode: bypass the line-height-based fit. Size the glyph
+  // by REAL font metrics (cap + descender + overshoots) so the
+  // visible letter — including its descender bowl — sits inside the
+  // panel with padding above and below instead of running flush to
+  // the bottom edge.
+  if (state.outlineMode) {
+    const ot = state.font && state.font.parsed;
+    const ov = state.font && state.font.overshoots;
+    if (ot && ov) {
+      const upm = ot.unitsPerEm;
+      const os2 = ot.tables.os2 || {};
+      const capUnits = os2.sCapHeight || ot.ascender;
+      const descUnits = Math.abs(os2.sTypoDescender || ot.descender);
+      const visualUnits = capUnits + descUnits + ov.cap + ov.descender;
+
+      const { H } = measureStageAvail();
+      const baseFontSize = parseFloat(getComputedStyle(stagePanel).fontSize) || 10;
+      // 90% fill = 5% padding above the cap-overshoot, 5% below the descender-overshoot.
+      const fillRatio = 0.9;
+      const fontSizePx = (H * fillRatio * upm) / visualUnits;
+      const fontSizeEm = fontSizePx / baseFontSize;
+
+      sizeInput.max = fontSizeEm.toFixed(1);
+      sizeInput.value = fontSizeEm.toFixed(1);
+      stageText.style.fontSize = `${fontSizeEm}em`;
+      return;
+    }
+  }
+
   const max = computeMaxFitEm();
   sizeInput.max = max.toFixed(1);
 
@@ -745,7 +781,7 @@ function refitStage() {
   if (state.userSizeOverride) {
     value = parseFloat(sizeInput.value) || max;
   } else {
-    const fillRatio = state.outlineMode ? 1.0 : 0.95;
+    const fillRatio = 0.95;
     value = max * fillRatio;
   }
   value = Math.min(max, Math.max(sliderMin, value));
