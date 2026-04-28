@@ -896,6 +896,25 @@ async function init() {
     }
   });
 
+  // In outline mode, intercept typing anywhere on the page so the
+  // user doesn't have to click into the (transparent) stage-text
+  // first. Any printable single-character key replaces the preview;
+  // backspace/delete are silently swallowed; modifier combos and
+  // navigation keys (Tab, Shift, arrows) pass through.
+  document.addEventListener("keydown", (e) => {
+    if (!state.outlineMode) return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key === "Backspace" || e.key === "Delete") {
+      e.preventDefault();
+      return;
+    }
+    if (e.key.length !== 1) return;
+    e.preventDefault();
+    stageText.textContent = e.key;
+    refitStage();
+    renderStageOutline();
+  });
+
   stageText.addEventListener("input", () => {
     // In outline mode keep just the latest single character — and
     // never let the field go empty (defensive in case some other
