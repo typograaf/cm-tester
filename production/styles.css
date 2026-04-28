@@ -477,6 +477,20 @@ button::-moz-focus-inner { border: 0; }
   color: transparent;
   -webkit-text-stroke: 0;
   caret-color: var(--green);
+  /* Single character centred in the panel */
+  text-align: center;
+  white-space: nowrap;
+}
+/* Outline mode focuses on one character — hide the brand footer and
+   let the stage-text-wrap take the whole panel so the letter sits at
+   the visual centre. */
+.panel--stage[data-mode="outline"] .stage-footer { display: none; }
+.panel--stage[data-mode="outline"] .stage-text-wrap {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
 }
 
 .stage-footer {

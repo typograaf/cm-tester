@@ -365,13 +365,30 @@ function setBackground(hex) {
 }
 
 function setOutlineMode(mode) {
+  const wasOutline = state.outlineMode;
   state.outlineMode = mode === "outline";
   for (const btn of outlineToggleEl.querySelectorAll(".ot-btn")) {
     btn.classList.toggle("is-active", btn.dataset.mode === mode);
   }
   stagePanel.dataset.mode = mode;
+
+  if (state.outlineMode && !wasOutline) {
+    // Save the multi-line solid text so we can restore it later, and
+    // collapse to the first non-whitespace character for the single-
+    // letter outline view.
+    state.savedStageText = stageText.textContent;
+    const flat = stageText.textContent.replace(/\s+/g, "");
+    stageText.textContent = (flat || "g").charAt(0);
+  } else if (!state.outlineMode && wasOutline) {
+    if (typeof state.savedStageText === "string") {
+      stageText.textContent = state.savedStageText;
+    }
+    stageOutlineEl.innerHTML = "";
+  }
+
+  if (!state.userSizeOverride) autoFitHeadlineSlider();
+  fitHeadline();
   if (state.outlineMode) renderStageOutline();
-  else stageOutlineEl.innerHTML = "";
 }
 
 // Build an SVG over the stage text with: the glyph path stroked,
@@ -423,22 +440,48 @@ function renderStageOutline() {
     { script: "latn", tags: featTags },
   ];
 
+  // Outline mode is always a single character — centre it in the
+  // SVG box (horizontally + vertically by cap-height midpoint).
   const allCommands = [];
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    if (!line) continue;
-    const baselineY = i * lineHeightPx + halfLeading + ascenderPx;
-    let path;
+  const onlyChar = lines.length === 1 ? lines[0] : null;
+  if (onlyChar) {
+    const cap_px = ot.tables.os2 && ot.tables.os2.sCapHeight
+      ? ot.tables.os2.sCapHeight * fontSizePx / upm
+      : fontSizePx * 0.7;
+    let advancePx;
     try {
-      path = ot.getPath(line, 0, baselineY, fontSizePx, {
-        features,
-        letterSpacing: trackingEm,
-        kerning: true,
+      advancePx = ot.getAdvanceWidth(onlyChar, fontSizePx, {
+        features, letterSpacing: trackingEm,
       });
     } catch (_) {
-      path = ot.getPath(line, 0, baselineY, fontSizePx);
+      advancePx = ot.getAdvanceWidth(onlyChar, fontSizePx);
+    }
+    const xOff = (W - advancePx) / 2;
+    const baselineY = H / 2 + cap_px / 2;
+    let path;
+    try {
+      path = ot.getPath(onlyChar, xOff, baselineY, fontSizePx, {
+        features, letterSpacing: trackingEm, kerning: true,
+      });
+    } catch (_) {
+      path = ot.getPath(onlyChar, xOff, baselineY, fontSizePx);
     }
     allCommands.push(...path.commands);
+  } else {
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (!line) continue;
+      const baselineY = i * lineHeightPx + halfLeading + ascenderPx;
+      let path;
+      try {
+        path = ot.getPath(line, 0, baselineY, fontSizePx, {
+          features, letterSpacing: trackingEm, kerning: true,
+        });
+      } catch (_) {
+        path = ot.getPath(line, 0, baselineY, fontSizePx);
+      }
+      allCommands.push(...path.commands);
+    }
   }
 
   // Build path d-attribute, collect on-curve anchors, and (for big
@@ -677,6 +720,21 @@ async function init() {
   setOutlineMode("solid");
 
   stageText.addEventListener("input", () => {
+    // In outline mode keep just the latest single character.
+    if (state.outlineMode) {
+      const flat = stageText.textContent.replace(/\s+/g, "");
+      if (flat.length > 1) {
+        stageText.textContent = flat.charAt(flat.length - 1);
+        const range = document.createRange();
+        range.selectNodeContents(stageText);
+        range.collapse(false);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+      } else if (flat.length !== stageText.textContent.length) {
+        stageText.textContent = flat;
+      }
+    }
     if (!window.matchMedia("(max-width: 900px)").matches) {
       if (!state.userSizeOverride) autoFitHeadlineSlider();
       fitHeadline();
