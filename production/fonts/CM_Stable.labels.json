@@ -1,0 +1,47 @@
+{
+  "ss01": {
+    "description": "A double storey g adds personality, but makes the overall feel of the face slightly less consistent.",
+    "label": "Double Storey g",
+    "sample": "g",
+    "substitutions": {
+      "g": 143
+    }
+  },
+  "ss02": {
+    "description": "A single storey a gives the feel of the face more consistent, but takes away some of the horizontal focus and overall visual interest.",
+    "label": "Single Storey Aa",
+    "sample": "Aa",
+    "substitutions": {
+      "A": 69,
+      "a": 144
+    }
+  },
+  "ss03": {
+    "description": "The lowercaps e brings in more of a fun feeling, but adds complexity and negative space to a letter that usually provides structure.",
+    "label": "Lowercaps E",
+    "sample": "E",
+    "substitutions": {
+      "E": 70
+    }
+  },
+  "ss04": {
+    "description": "The crossed t adds a visual reference to the original logo, but takes away some of the consistency in the letter group jft.",
+    "label": "Crossed t",
+    "sample": "t",
+    "substitutions": {
+      "t": 145
+    }
+  },
+  "ss05": {
+    "description": "Straight terminals bring more harmony to the typeface, but remove the 13 degree anchor that's present throughout the typeface.",
+    "label": "Straight terminals",
+    "sample": "jft",
+    "substitutions": {
+      "J": 71,
+      "f": 146,
+      "j": 147,
+      "r": 148,
+      "t": 149
+    }
+  }
+}

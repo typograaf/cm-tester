@@ -1,0 +1,554 @@
+/* ------------------------------------------------------------------
+   Fonts
+   ------------------------------------------------------------------ */
+
+@font-face {
+  font-family: "BE Cause";
+  src: url("fonts/BECauseVF.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ------------------------------------------------------------------
+   Proportional scaling
+
+   Figma frame is 1920 x 991 and the design renders at that scale.
+   1rem tracks the SMALLER of width-/192 (1920w → 10px) and
+   height-/99.1 (991h → 10px), so the layout scales up on larger
+   monitors AND down on smaller ones, never letting one dimension
+   overflow. Floor at 7px so everything stays legible on tight
+   viewports.
+   ------------------------------------------------------------------ */
+
+html {
+  font-size: max(7px, min(calc(100vw / 192), calc(100vh / 99.1)));
+}
+
+:root {
+  --dark-green: #004c2b;
+  --green: #1ca84a;
+  --mint: #d7f394;
+  --slider-track: #e5edea;
+  --bg: #f1f3f2;
+  --white: #ffffff;
+  --pill-bg: #f5f5f5;
+
+  --radius: 4.8rem;          /* 48 */
+  --body-size: 1.8rem;       /* 18 */
+  --body-track: 0.02em;      /* +2 in font units at 18 */
+
+  --ui: "BE Cause", -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
+  --cm: "CM-Stable", system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100svh;
+  background: var(--bg);
+  font-family: var(--ui);
+  font-feature-settings: "dlig" 1;
+  color: var(--dark-green);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Hard minimum browser dimensions — below these the page scrolls
+   instead of letting the layout collapse. */
+body {
+  min-width: 1280px;
+  min-height: 800px;
+}
+.app {
+  min-height: 800px;
+}
+
+html.loading .app { opacity: 0; }
+.app { transition: opacity 0.15s ease; }
+
+/* ------------------------------------------------------------------
+   App shell — two columns
+   ------------------------------------------------------------------ */
+
+.app {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  /* Outer page padding matches the gap between panels — same
+     visual rhythm inside and out. */
+  gap: 2.4rem;               /* 24 */
+  padding: 2.4rem;           /* 24 */
+  /* Pin the layout to the viewport so a long description in the
+     top-left detail panel can't push the bottom-left controls below
+     the fold. fitHeadline + hyphens keep content from overflowing. */
+  height: 100svh;
+}
+
+.col--left {
+  display: flex;
+  flex-direction: column;
+  gap: 2.4rem;               /* 24 */
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;             /* let inner panels honour the viewport cap */
+}
+
+.panel {
+  background: var(--white);
+  border-radius: var(--radius);
+}
+
+/* ------------------------------------------------------------------
+   Top-left panel: SS pills + feature detail
+   ------------------------------------------------------------------ */
+
+/* Top panel grows to fill the column so the bottom controls panel
+   anchors to the bottom. SS pills sit at the top, the feature
+   detail block sits at the bottom with the same Figma proportions
+   (268px tall at the reference viewport) — extra column height
+   becomes breathing room between the two via space-between. */
+.panel--feature {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 7.2rem;
+  padding: 7.2rem;
+}
+
+.ss-pills {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;               /* 6 */
+}
+
+/* Figma proportions: detail-info 296 : glyph 398 (glyph wider).
+   Row height pinned to 26.8rem (= Figma 268, scales with rem) so
+   the description sits naturally below the title group instead of
+   drifting to the bottom of a tall column. */
+.feature-detail {
+  display: grid;
+  grid-template-columns: 296fr 398fr;
+  grid-template-rows: 26.8rem;
+  gap: 7.2rem;
+  align-items: stretch;
+  flex: 0 0 auto;
+  min-height: 0;
+}
+
+.detail-info {
+  /* Sizes to its content. With description line-clamped (4 lines)
+     and overflow hidden, content height stays predictable across
+     SSes — the glyph preview's aspect-ratio drives the row min, and
+     detail-info matches when its content needs more room. */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 2.4rem;
+  color: var(--dark-green);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.detail-info__top {
+  display: flex;
+  flex-direction: column;
+  gap: 2.4rem;
+}
+
+.detail-info__tag {
+  margin: 0;
+  font: 400 var(--body-size)/1.4 var(--ui);
+  font-variation-settings: "wght" 500, "wdth" 60;
+  letter-spacing: var(--body-track);
+}
+
+.detail-info__title {
+  margin: 0;
+  font: 700 4rem/0.95 var(--cm);
+  letter-spacing: -0.01em;
+  color: var(--dark-green);
+  /* Long titles can wrap to two lines but only at word boundaries —
+     no mid-word breaks like "Lowerc / aps e". */
+  overflow-wrap: normal;
+  word-break: keep-all;
+}
+
+.detail-info__desc {
+  margin: 0;
+  font: 400 var(--body-size)/1.4 var(--ui);
+  font-variation-settings: "wght" 500, "wdth" 60;
+  letter-spacing: var(--body-track);
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  overflow-wrap: break-word;
+  /* No line-clamp — the parent detail-info has plenty of room from
+     the flex-grown feature-detail row. detail-info still has
+     overflow: hidden as a final safety, but in practice all 5
+     descriptions fit comfortably without ellipsis. */
+}
+
+/* Glyph preview (right half of feature panel)
+   The SVG inside is built by JS so its viewBox + metric lines + glyph
+   baseline track the live font's metrics (UPM, cap, x-height,
+   descender). The container only needs to give the SVG room. */
+
+/* Glyph preview cell — no aspect-ratio constraint, since that gives
+   the cell an intrinsic min-width that makes it overflow its 3fr
+   share of the grid. min-width: 0 lets it shrink to exactly its fr
+   share. JS sizes the SVG path inside to fit both width and height. */
+.glyph-preview {
+  width: 100%;
+  min-width: 0;
+}
+.glyph-preview svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* Allow the path to extend slightly past the descender line — fonts
+     typically include a few units of overshoot below sTypoDescender. */
+  overflow: visible;
+}
+
+/* ------------------------------------------------------------------
+   Pills — shared (SS pills, case toggle, Random String)
+   ------------------------------------------------------------------ */
+
+.pill,
+.ss-pill,
+.case-toggle button {
+  font-family: var(--ui);
+  font-weight: 700;
+  font-variation-settings: "wght" 700, "wdth" 60;
+  font-size: var(--body-size);
+  line-height: 1.6;
+  letter-spacing: var(--body-track);
+  color: var(--dark-green);
+  background: var(--pill-bg);
+  border: 0;
+  padding: 1.2rem 2.4rem;
+  border-radius: 9.3rem;
+  cursor: pointer;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .15s, color .15s;
+  font-feature-settings: "dlig" 1;
+}
+.pill:hover,
+.ss-pill:hover,
+.case-toggle button:hover { background: #eceeed; }
+
+.pill.is-active,
+.ss-pill.is-active,
+.case-toggle button.is-active {
+  background: var(--green);
+  color: var(--white);
+}
+
+/* Suppress browser focus rings — selection state is already conveyed
+   by .is-active (filled green) and the live detail panel preview. */
+button { outline: none; }
+button:focus,
+button:focus-visible { outline: none; box-shadow: none; }
+button::-moz-focus-inner { border: 0; }
+
+.case-toggle {
+  display: inline-flex;
+  gap: 0.6rem;
+}
+
+/* ------------------------------------------------------------------
+   Bottom-left panel: controls
+   ------------------------------------------------------------------ */
+
+.panel--controls {
+  display: flex;
+  flex-direction: column;
+  gap: 4.8rem;               /* 48 */
+  padding: 7.2rem;           /* 72 */
+}
+
+.sliders-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 2.4rem;               /* 24 */
+  width: 100%;
+}
+
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 2.4rem;               /* 24 */
+}
+.slider-row > span {
+  font: 400 var(--body-size)/1.4 var(--ui);
+  font-variation-settings: "wght" 500, "wdth" 60;
+  letter-spacing: var(--body-track);
+  color: var(--dark-green);
+  white-space: nowrap;
+  min-width: 6.8rem;          /* align tracks with each other */
+}
+.slider-row input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1 1 0;
+  height: 0.4rem;             /* 4 */
+  background: var(--slider-track);
+  border-radius: 13.8rem;
+  outline: none;
+  cursor: pointer;
+}
+.slider-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 3.6rem;              /* 36 */
+  height: 1.8rem;             /* 18 */
+  background: var(--green);
+  border-radius: 7.9rem;
+  border: 0;
+  cursor: pointer;
+}
+.slider-row input[type="range"]::-moz-range-thumb {
+  width: 3.6rem;
+  height: 1.8rem;
+  background: var(--green);
+  border-radius: 7.9rem;
+  border: 0;
+  cursor: pointer;
+}
+
+.controls-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2.4rem;
+  flex-wrap: wrap;
+}
+.case-and-random {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+}
+.preview-actions {
+  display: flex;
+  gap: 1.2rem;
+  align-items: center;
+}
+
+/* Background swatches (group) — pill-shaped tray with 3 dots */
+.bg-swatches {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--pill-bg);
+  padding: 1.2rem;
+  border-radius: 9.3rem;
+}
+.bg-swatch {
+  width: 2.4rem;             /* 24 */
+  height: 2.4rem;
+  border-radius: 50%;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  position: relative;
+}
+.bg-swatch[data-bg="#FFFFFF"] {
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+/* No selection ring on the swatch — the active state is communicated
+   by the live preview panel background changing to that color. */
+
+/* Outline toggle — pill-shaped tray with solid + dashed dots */
+.outline-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--pill-bg);
+  padding: 1.2rem;
+  border-radius: 9.3rem;
+}
+.ot-btn {
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.ot-btn .ot-dot {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--dark-green);
+}
+.ot-btn .ot-ring {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 1.5px dashed var(--dark-green);
+  box-sizing: border-box;
+}
+.ot-btn.is-active .ot-dot,
+.ot-btn.is-active .ot-ring {
+  /* keep visual identity; selection state on the parent */
+}
+/* No selection ring on the mode buttons — the active state is
+   communicated by the live preview switching between solid and
+   outline rendering. */
+
+/* ------------------------------------------------------------------
+   Right panel: stage / preview
+   ------------------------------------------------------------------ */
+
+.panel--stage {
+  flex: 1 1 0;
+  min-width: 50rem;          /* 500 */
+  /* Stage uses em-based interior values (gap/padding/captions/mark)
+     so they all scale from this single base. With chrome at 100%
+     Figma scale, base = 1rem so em = rem here. */
+  font-size: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12em;                 /* minimum — extra space distributes via space-between */
+  padding: 7.2em;
+  border-radius: 4.8em;
+  background: var(--white);
+  transition: background 0.2s ease;
+}
+.panel--stage[data-bg="dark"]  { background: var(--dark-green); }
+.panel--stage[data-bg="dark"]  .stage-text,
+.panel--stage[data-bg="dark"]  .stage-caption,
+.panel--stage[data-bg="dark"]  .stage-mark { color: var(--white); }
+.panel--stage[data-bg="mint"]  { background: var(--mint); }
+
+.stage-text {
+  font-family: var(--cm);
+  font-weight: 700;
+  color: var(--dark-green);
+  font-size: 14.4em;          /* 144 default */
+  line-height: 0.87;
+  letter-spacing: -0.01em;
+  width: 100%;
+  outline: none;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: pre-line;
+  font-feature-settings: normal;
+}
+.stage-text:focus { caret-color: var(--green); }
+
+/* Outline mode: stage-text stays in the DOM (so contenteditable still
+   works) but is rendered transparent. The stage-outline SVG sits
+   absolutely on top, drawing the path stroke + on-curve anchors +
+   off-curve control handles read from opentype.js commands. */
+
+.stage-text-wrap {
+  position: relative;
+  width: 100%;
+}
+.stage-outline {
+  display: none;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.stage-outline svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.panel--stage[data-mode="outline"] .stage-outline { display: block; }
+.panel--stage[data-mode="outline"] .stage-text {
+  color: transparent;
+  -webkit-text-stroke: 0;
+  caret-color: var(--green);
+}
+
+.stage-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2.4em;
+  width: 100%;
+}
+.stage-caption {
+  margin: 0;
+  font-weight: 400;
+  font-variation-settings: "wght" 500, "wdth" 60;
+  font-size: 2.4em;
+  line-height: 1.2;
+  letter-spacing: var(--body-track);
+  color: var(--dark-green);
+}
+.stage-brand {
+  display: flex;
+  align-items: center;
+  gap: 2.4em;
+  height: 6.3em;
+}
+.stage-mark {
+  font-family: var(--cm);
+  font-weight: 700;
+  font-size: 4.8em;
+  line-height: 1;
+  color: var(--dark-green);
+  text-transform: uppercase;
+  white-space: nowrap;
+  font-feature-settings: normal;
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
+}
+.stage-logo {
+  width: 6.3em;
+  height: 6.3em;
+  flex: 0 0 auto;
+  display: block;
+  filter: drop-shadow(1em 1em 3em rgba(0, 0, 0, 0.1));
+}
+
+/* ------------------------------------------------------------------
+   Mobile (≤900px) — stack vertically, drop guideline preview
+   ------------------------------------------------------------------ */
+
+@media (max-width: 900px) {
+  html { font-size: 8px; }
+
+  .app {
+    flex-direction: column;
+    padding: 1.6rem;
+    gap: 1.6rem;
+  }
+  .col--left { gap: 1.6rem; }
+
+  .panel--feature,
+  .panel--controls,
+  .panel--stage { padding: 4rem; border-radius: 3.2rem; }
+
+  .feature-detail {
+    flex-direction: column;
+    gap: 4rem;
+  }
+  .detail-info { width: 100%; }
+  .glyph-preview { height: 18rem; }
+  .gp-glyph { font-size: 16rem; }
+
+  .panel--stage { font-size: 1rem; padding: 3.2em; gap: 3.2em; }
+  .stage-text { font-size: 8em; }
+  .stage-footer { flex-direction: column; align-items: flex-start; gap: 2em; }
+}

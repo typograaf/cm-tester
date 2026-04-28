@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en" class="loading">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>CM Typeface Tester — Production</title>
+  <link rel="stylesheet" href="styles.css?v=20260428y" />
+</head>
+<body>
+  <main class="app">
+    <div class="col col--left">
+      <!-- Top: SS pills + feature detail (info text + glyph preview) -->
+      <section class="panel panel--feature">
+        <div class="ss-pills" id="ssPills"></div>
+
+        <div class="feature-detail">
+          <div class="detail-info">
+            <div class="detail-info__top">
+              <p class="detail-info__tag" id="ssTag">SS01</p>
+              <h2 class="detail-info__title" id="ssTitle">Double Storey g</h2>
+            </div>
+            <p class="detail-info__desc" id="ssDesc"></p>
+          </div>
+
+          <div class="glyph-preview" id="glyphPreview">
+            <!-- SVG (metric lines + glyph path) injected at runtime so
+                 line positions map 1:1 to the live font's metrics -->
+          </div>
+        </div>
+      </section>
+
+      <!-- Bottom: sliders + case toggle / random + preview actions -->
+      <section class="panel panel--controls">
+        <div class="sliders-stack">
+          <label class="slider-row">
+            <span>Leading</span>
+            <input type="range" id="leading" min="0.6" max="2" step="0.01" value="0.87" />
+          </label>
+          <label class="slider-row">
+            <span>Tracking</span>
+            <input type="range" id="tracking" min="-0.1" max="0.2" step="0.005" value="-0.01" />
+          </label>
+          <label class="slider-row">
+            <span>Size</span>
+            <input type="range" id="fontsize" min="4" max="60" step="0.1" value="14.4" />
+          </label>
+        </div>
+
+        <div class="controls-bottom">
+          <div class="case-and-random">
+            <div class="case-toggle" id="caseToggle"></div>
+            <button class="pill" id="randomString" type="button">Random String</button>
+          </div>
+
+          <div class="preview-actions">
+            <div class="bg-swatches" id="bgSwatches">
+              <button class="bg-swatch" type="button" data-bg="#004C2B" aria-label="Dark green background"></button>
+              <button class="bg-swatch is-active" type="button" data-bg="#FFFFFF" aria-label="White background"></button>
+              <button class="bg-swatch" type="button" data-bg="#D7F394" aria-label="Mint green background"></button>
+            </div>
+            <div class="outline-toggle" id="outlineToggle">
+              <button class="ot-btn ot-btn--solid is-active" type="button" data-mode="solid" aria-label="Solid preview">
+                <span class="ot-dot"></span>
+              </button>
+              <button class="ot-btn ot-btn--outline" type="button" data-mode="outline" aria-label="Outline preview">
+                <span class="ot-ring"></span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Right: stage / preview -->
+    <section class="panel panel--stage" id="stagePanel">
+      <div class="stage-text-wrap">
+        <div
+          class="stage-text"
+          id="stageText"
+          contenteditable="plaintext-only"
+          spellcheck="false"
+        >Leef gerust
+zonder bang
+te zijn om op
+je gezicht
+te gaan.</div>
+        <div class="stage-outline" id="stageOutline"></div>
+      </div>
+
+      <div class="stage-footer">
+        <p class="stage-caption">Zonder handen verzekerd zijn<br />voor je tanden? Check CM.be</p>
+        <div class="stage-brand">
+          <div class="stage-mark" id="stageMark">LEEF GERUST.</div>
+          <img class="stage-logo" src="assets/logo.png" alt="CM" width="63" height="63" />
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="app.js?v=20260428y"></script>
+</body>
+</html>
