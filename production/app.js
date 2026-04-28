@@ -400,8 +400,12 @@ function renderStageOutline() {
   const ot = state.font?.parsed;
   if (!ot || !state.outlineMode) return;
 
-  const W = stageText.clientWidth;
-  const H = stageText.clientHeight;
+  // Outline mode shows a single letter centred in the wrap box, so
+  // measure the wrap (the full available panel area) rather than the
+  // stage-text element which is only as tall as one line of text.
+  const wrap = stageText.parentElement; // .stage-text-wrap
+  const W = wrap.clientWidth;
+  const H = wrap.clientHeight;
   if (W <= 0 || H <= 0) return;
 
   const cs = getComputedStyle(stageText);
@@ -420,6 +424,10 @@ function renderStageOutline() {
   const lines = text.split("\n");
 
   const upm = ot.unitsPerEm;
+  const os2 = ot.tables.os2 || {};
+  const capUnits = os2.sCapHeight || ot.ascender;
+  const xhUnits = os2.sxHeight || capUnits * 0.5;
+  const descUnits = Math.abs(os2.sTypoDescender || ot.descender);
   // Match the browser's intra-line text positioning: the line box has
   // height lineHeightPx, with the font's ascender + descender centred
   // inside it. Half-leading is (lineHeightPx - emBoxPx) / 2.
@@ -441,13 +449,16 @@ function renderStageOutline() {
   ];
 
   // Outline mode is always a single character — centre it in the
-  // SVG box (horizontally + vertically by cap-height midpoint).
+  // SVG box (horizontally + vertically by cap-height midpoint) and
+  // place metric lines (cap / x-height / baseline / descender) at
+  // their real font-metric offsets.
   const allCommands = [];
+  const metricLines = [];
   const onlyChar = lines.length === 1 ? lines[0] : null;
   if (onlyChar) {
-    const cap_px = ot.tables.os2 && ot.tables.os2.sCapHeight
-      ? ot.tables.os2.sCapHeight * fontSizePx / upm
-      : fontSizePx * 0.7;
+    const capPx = capUnits * fontSizePx / upm;
+    const xhPx = xhUnits * fontSizePx / upm;
+    const descPx = descUnits * fontSizePx / upm;
     let advancePx;
     try {
       advancePx = ot.getAdvanceWidth(onlyChar, fontSizePx, {
@@ -457,7 +468,12 @@ function renderStageOutline() {
       advancePx = ot.getAdvanceWidth(onlyChar, fontSizePx);
     }
     const xOff = (W - advancePx) / 2;
-    const baselineY = H / 2 + cap_px / 2;
+    const baselineY = H / 2 + capPx / 2;
+    metricLines.push(baselineY - capPx);   // cap line
+    metricLines.push(baselineY - xhPx);    // x-height line
+    metricLines.push(baselineY);           // baseline
+    metricLines.push(baselineY + descPx);  // descender line
+
     let path;
     try {
       path = ot.getPath(onlyChar, xOff, baselineY, fontSizePx, {
@@ -540,6 +556,10 @@ function renderStageOutline() {
 
   const parts = [];
   parts.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMinYMin meet">`);
+  // Metric lines drawn first so the path stroke sits on top of them.
+  for (const y of metricLines) {
+    parts.push(`<line x1="0" y1="${f(y)}" x2="${W}" y2="${f(y)}" stroke="#E5EDEA" stroke-width="1"/>`);
+  }
   parts.push(`<path d="${dParts.join(" ")}" fill="${fillColor}" fill-rule="evenodd" stroke="${strokeColor}" stroke-width="${strokeW}" stroke-linejoin="round" stroke-linecap="round"/>`);
   if (showHandles) {
     for (const l of ctrlLines) {
@@ -628,13 +648,19 @@ function autoFitHeadlineSlider() {
   const minGap = parseFloat(ps.rowGap || ps.gap) || 0;
   const baseFontSize = parseFloat(ps.fontSize) || 10;
   const footerEl = stagePanel.querySelector(".stage-footer");
-  const footerH = footerEl ? footerEl.offsetHeight : 0;
+  const footerVisible = footerEl &&
+    getComputedStyle(footerEl).display !== "none";
+  const footerH = footerVisible ? footerEl.offsetHeight : 0;
+  const gapH = footerVisible ? minGap : 0;
 
-  const availH = stagePanel.clientHeight - padT - padB - minGap - footerH;
+  const availH = stagePanel.clientHeight - padT - padB - gapH - footerH;
   if (availH <= 0) return;
 
-  const lines = Math.max(2, stageText.textContent.split("\n").length);
-  // line-height on stageText is 0.87
+  // Outline mode is always a single character that wants to fill the
+  // panel; otherwise size for the actual line count of the headline.
+  const lines = state.outlineMode
+    ? 1
+    : Math.max(2, stageText.textContent.split("\n").length);
   const idealPx = (availH * 0.95) / (lines * 0.87);
   let idealEm = idealPx / baseFontSize;
 
