@@ -18,6 +18,17 @@ const PRESETS = [
   "Leef gerust\nzonder bang\nte zijn om op\nje gezicht\nte gaan.",
 ];
 
+// Solid mode "fresh load" defaults — restored when leaving outline mode.
+const REFRESH_TEXT = "Leef gerust\nzonder bang\nte zijn om op\nje gezicht\nte gaan.";
+const REFRESH_LEADING = "0.87";
+const REFRESH_TRACKING = "-0.01";
+const REFRESH_BG = "#FFFFFF";
+
+// Random letter charset for outline mode's "Random String" button.
+const BASIC_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+const OUTLINE_DEFAULT_CHAR = "S";
+
 const CASE_MODES = [
   { id: "upper", label: "TT", transform: "uppercase" },
   { id: "lower", label: "tt", transform: "lowercase" },
@@ -371,26 +382,26 @@ function setOutlineMode(mode) {
     btn.classList.toggle("is-active", btn.dataset.mode === mode);
   }
   stagePanel.dataset.mode = mode;
+  document.documentElement.classList.toggle("outline-mode", state.outlineMode);
 
   if (state.outlineMode && !wasOutline) {
-    // Save the multi-line solid text so we can restore it later, and
-    // collapse to the first non-whitespace character for the single-
-    // letter outline view. Mode change implicitly resets size — we
-    // want it to fill the panel rather than honour a stale slider
-    // value tuned for the multi-line headline.
-    state.savedStageText = stageText.textContent;
-    state.savedSizeOverride = state.userSizeOverride;
+    // Entering outline mode — single letter, dark bg, 100% size,
+    // sliders hidden.
     state.userSizeOverride = false;
-    const flat = stageText.textContent.replace(/\s+/g, "");
-    stageText.textContent = (flat || "g").charAt(0);
+    stageText.textContent = OUTLINE_DEFAULT_CHAR;
   } else if (!state.outlineMode && wasOutline) {
-    if (typeof state.savedStageText === "string") {
-      stageText.textContent = state.savedStageText;
-    }
-    state.userSizeOverride = !!state.savedSizeOverride;
+    // Leaving outline mode — reset solid-mode state to a fresh-load
+    // baseline (text, leading, tracking, bg). Keeps the user's
+    // current SS pill selections so they don't lose their context.
+    stageText.textContent = REFRESH_TEXT;
+    leadingInput.value = REFRESH_LEADING;
+    trackingInput.value = REFRESH_TRACKING;
+    state.userSizeOverride = false;
+    setBackground(REFRESH_BG);
     stageOutlineEl.innerHTML = "";
   }
 
+  applyTypography();
   refitStage();
   if (state.outlineMode) renderStageOutline();
 }
@@ -553,9 +564,9 @@ function renderStageOutline() {
   const HANDLES_THRESHOLD = 200;
   const showHandles = fontSizePx >= HANDLES_THRESHOLD;
 
-  // Per-bg colour scheme. Metric lines + handles + anchors all
-  // adapt so they stay legible against any preview background.
-  const bg = stagePanel.dataset.bg || "white";
+  // Outline mode is locked to the dark green bg — always use that
+  // palette regardless of any data-bg the swatch trail left behind.
+  const bg = state.outlineMode ? "dark" : (stagePanel.dataset.bg || "white");
   const palette = {
     white: {
       stroke: "#1CA84A",                 // deep green outline
@@ -745,12 +756,24 @@ function fitHeadlineMobile() {
 }
 
 function pickRandomString() {
+  if (state.outlineMode) {
+    // Outline mode: pick a random basic-Latin letter (or digit).
+    const current = stageText.textContent;
+    let next = current;
+    for (let i = 0; i < 8 && next === current; i++) {
+      next = BASIC_LETTERS.charAt(Math.floor(Math.random() * BASIC_LETTERS.length));
+    }
+    stageText.textContent = next;
+    refitStage();
+    renderStageOutline();
+    return;
+  }
   const current = stageText.textContent.trim();
   const pool = PRESETS.filter((s) => s !== current);
   const options = pool.length ? pool : PRESETS;
   const next = options[Math.floor(Math.random() * options.length)];
   stageText.textContent = next;
-  fitHeadline();
+  refitStage();
 }
 
 // -------- init ----------------------------------------------------------
