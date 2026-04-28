@@ -119,7 +119,34 @@ async function loadFont() {
     console.warn(`feature discovery failed:`, err);
   }
 
-  state.font = { family, features, parsed };
+  // Probe a few round glyphs to learn the font's actual overshoot
+  // amounts (where round letters extend past the metric lines so they
+  // optically read the same size as flat-topped ones). Used by the
+  // outline-mode overshoot bands.
+  const overshoots = { cap: 0, xh: 0, baseline: 0, descender: 0 };
+  if (parsed) {
+    const os2 = parsed.tables.os2 || {};
+    const capUnits = os2.sCapHeight || parsed.ascender;
+    const xhUnits = os2.sxHeight || capUnits * 0.5;
+    const descUnits = Math.abs(os2.sTypoDescender || parsed.descender);
+    const probe = (ch, kind) => {
+      try {
+        const g = parsed.charToGlyph(ch);
+        if (!g || !g.advanceWidth) return;
+        const bb = g.getBoundingBox();
+        if (kind === "cap")     overshoots.cap = Math.max(overshoots.cap, bb.y2 - capUnits);
+        if (kind === "xh")      overshoots.xh  = Math.max(overshoots.xh,  bb.y2 - xhUnits);
+        if (kind === "base")    overshoots.baseline = Math.max(overshoots.baseline, -bb.y1);
+        if (kind === "desc")    overshoots.descender = Math.max(overshoots.descender, -bb.y1 - descUnits);
+      } catch (_) {}
+    };
+    probe("O", "cap");
+    probe("o", "xh");
+    probe("o", "base");
+    for (const ch of "gpqy") probe(ch, "desc");
+  }
+
+  state.font = { family, features, parsed, overshoots };
 
   // Pre-compute the widest sample across all SSes (in font units), so
   // the glyph preview can use one consistent scale for every SS — a
@@ -472,6 +499,7 @@ function renderStageOutline() {
   // ss-substitutions on this font's CFF/post v3.0 setup.
   const allCommands = [];
   const metricLines = [];
+  const overshootBands = [];
   const onlyChar = lines.length === 1 ? lines[0] : null;
   if (onlyChar) {
     let glyph = null;
@@ -495,6 +523,17 @@ function renderStageOutline() {
     metricLines.push(baselineY - xhPx);    // x-height line
     metricLines.push(baselineY);           // baseline
     metricLines.push(baselineY + descPx);  // descender line
+
+    // Overshoot bands — the small zones outside the metric lines
+    // where round glyphs extend so they optically match flat ones.
+    const ov = state.font && state.font.overshoots ? state.font.overshoots : null;
+    if (ov) {
+      const u2px = fontSizePx / upm;
+      overshootBands.push({ y: baselineY - capPx - ov.cap * u2px, h: ov.cap * u2px });
+      overshootBands.push({ y: baselineY - xhPx - ov.xh * u2px,  h: ov.xh * u2px });
+      overshootBands.push({ y: baselineY,                         h: ov.baseline * u2px });
+      overshootBands.push({ y: baselineY + descPx,                h: ov.descender * u2px });
+    }
 
     const path = glyph.getPath(xOff, baselineY, fontSizePx);
     allCommands.push(...path.commands);
