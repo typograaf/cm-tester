@@ -723,8 +723,10 @@ function computeMaxFitEm() {
   const fits = () => {
     void stageText.offsetHeight;
     const { W, H } = measureStageAvail();
-    return stageText.scrollHeight <= H + 1
-        && stageText.scrollWidth <= W + 1;
+    // No tolerance on the upper bound — the slider max value gets
+    // applied directly, so any +1px slack here means the slider's
+    // ceiling overflows the panel by a hair. Be strict.
+    return stageText.scrollHeight <= H && stageText.scrollWidth <= W;
   };
 
   stageText.style.fontSize = `${HARD_MAX}em`;

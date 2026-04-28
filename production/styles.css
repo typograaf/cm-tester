@@ -53,6 +53,10 @@ html, body {
   font-feature-settings: "dlig" 1;
   color: var(--dark-green);
   -webkit-font-smoothing: antialiased;
+  /* Lock both axes — .app pins to 100svh and the too-narrow overlay
+     handles small viewports, so any sub-pixel slack from the size
+     slider can't cause the page to scroll. */
+  overflow: hidden;
 }
 
 /* The desktop layout needs at least 1280×800 to look right. Below
