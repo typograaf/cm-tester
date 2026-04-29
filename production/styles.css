@@ -92,8 +92,11 @@ html, body {
   .too-narrow { display: flex; }
 }
 
-html.loading .app { opacity: 0; }
-.app { transition: opacity 0.15s ease; }
+/* Hide via visibility (not opacity) so the initial reveal doesn't
+   promote .app to a composited layer — that layer's paint bounds
+   would clip text descenders/ascenders during the fade-in and they'd
+   "pop in" once the layer was dropped. */
+html.loading .app { visibility: hidden; }
 
 /* ------------------------------------------------------------------
    App shell — two columns
@@ -660,18 +663,17 @@ button::-moz-focus-inner { border: 0; }
   display: grid;
   animation: stage-fade .25s ease;
 }
+/* Note: .stage-text-wrap and .stage-footer are deliberately *not*
+   animated — opacity animations on text containers cause the
+   browser to clip descenders/ascenders to the composited layer and
+   "pop" them in once the animation lands. The grid is fine because
+   each cell already has overflow: hidden. */
 .panel--stage[data-mode="overview"][data-bg="dark"] .stage-grid__cell {
   background: var(--dark-green);
   color: var(--white);
 }
 .panel--stage[data-mode="overview"][data-bg="mint"] .stage-grid__cell {
   background: var(--mint);
-}
-
-/* Fade the type sample back in when leaving overview / outline. */
-.panel--stage[data-mode="random"] .stage-text-wrap,
-.panel--stage[data-mode="random"] .stage-footer {
-  animation: stage-fade .25s ease;
 }
 
 @keyframes stage-fade {
