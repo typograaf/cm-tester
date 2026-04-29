@@ -4,15 +4,16 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>CM Typeface Tester — Production</title>
-  <link rel="stylesheet" href="styles.css?v=20260428as" />
+  <link rel="stylesheet" href="styles.css?v=20260429a" />
 </head>
 <body>
   <main class="app">
     <div class="col col--left">
-      <!-- Top: SS pills + feature detail (info text + glyph preview) -->
-      <section class="panel panel--feature">
-        <div class="ss-pills" id="ssPills"></div>
+      <!-- Top: SS pills (8 toggles, 2 rows of 4) -->
+      <div class="ss-pills" id="ssPills"></div>
 
+      <!-- Feature panel: SS info + glyph preview -->
+      <section class="panel panel--feature">
         <div class="feature-detail">
           <div class="detail-info">
             <div class="detail-info__top">
@@ -29,7 +30,7 @@
         </div>
       </section>
 
-      <!-- Bottom: sliders + case toggle / random + preview actions -->
+      <!-- Sliders panel -->
       <section class="panel panel--controls">
         <div class="sliders-stack">
           <label class="slider-row">
@@ -45,32 +46,30 @@
             <input type="range" id="fontsize" min="4" max="160" step="0.1" value="14.4" />
           </label>
         </div>
-
-        <div class="controls-bottom">
-          <div class="case-and-random">
-            <div class="case-toggle" id="caseToggle"></div>
-            <button class="pill" id="randomString" type="button">Random String</button>
-          </div>
-
-          <div class="preview-actions">
-            <div class="bg-swatches" id="bgSwatches">
-              <button class="bg-swatch" type="button" data-bg="#004C2B" aria-label="Dark green background"></button>
-              <button class="bg-swatch is-active" type="button" data-bg="#FFFFFF" aria-label="White background"></button>
-              <button class="bg-swatch" type="button" data-bg="#D7F394" aria-label="Mint green background"></button>
-            </div>
-            <div class="outline-toggle" id="outlineToggle">
-              <button class="ot-btn ot-btn--solid is-active" type="button" data-mode="solid" aria-label="Solid preview">
-                <span class="ot-dot"></span>
-              </button>
-              <button class="ot-btn ot-btn--outline" type="button" data-mode="outline" aria-label="Outline preview">
-                <svg class="ot-ring" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                  <path d="M12.0031 20.8C12.8867 20.7997 13.6035 21.5156 13.6039 22.3992C13.6042 23.2829 12.8883 23.9997 12.0047 24H11.9953C11.1117 23.9997 10.3958 23.2829 10.3961 22.3992C10.3965 21.5156 11.1133 20.7997 11.9969 20.8H12.0031ZM3.5125 18.2195C4.13758 17.5949 5.1504 17.5952 5.775 18.2203C5.77656 18.2219 5.77812 18.2234 5.77969 18.225C6.40477 18.8496 6.40506 19.8624 5.78047 20.4875C5.15587 21.1125 4.14304 21.1129 3.51797 20.4883C3.51588 20.4862 3.5138 20.4841 3.51172 20.482C2.88714 19.857 2.88746 18.8441 3.5125 18.2195ZM18.225 18.2203C18.8496 17.5952 19.8624 17.5949 20.4875 18.2195C21.1125 18.8441 21.1129 19.857 20.4883 20.482C20.4862 20.4841 20.4841 20.4862 20.482 20.4883C19.857 21.1129 18.8441 21.1125 18.2195 20.4875C17.5949 19.8624 17.5952 18.8496 18.2203 18.225C18.2219 18.2234 18.2234 18.2219 18.225 18.2203ZM0 11.9953C0.000341225 11.1117 0.717126 10.3958 1.60078 10.3961C2.48436 10.3965 3.20034 11.1133 3.2 11.9969V12.0031C3.20034 12.8867 2.48436 13.6035 1.60078 13.6039C0.717126 13.6042 0.000341225 12.8883 0 12.0047V11.9953ZM20.8 11.9969C20.7997 11.1133 21.5156 10.3965 22.3992 10.3961C23.2829 10.3958 23.9997 11.1117 24 11.9953V12.0047C23.9997 12.8883 23.2829 13.6042 22.3992 13.6039C21.5156 13.6035 20.7997 12.8867 20.8 12.0031V11.9969ZM3.51797 3.51172C4.14304 2.88714 5.15587 2.88746 5.78047 3.5125C6.40506 4.13758 6.40477 5.1504 5.77969 5.775C5.77812 5.77656 5.77656 5.77812 5.775 5.77969C5.1504 6.40477 4.13758 6.40506 3.5125 5.78047C2.88746 5.15587 2.88714 4.14304 3.51172 3.51797C3.5138 3.51588 3.51588 3.5138 3.51797 3.51172ZM18.2195 3.5125C18.8441 2.88746 19.857 2.88714 20.482 3.51172C20.4841 3.5138 20.4862 3.51588 20.4883 3.51797C21.1129 4.14304 21.1125 5.15587 20.4875 5.78047C19.8624 6.40506 18.8496 6.40477 18.225 5.77969C18.2234 5.77812 18.2219 5.77656 18.2203 5.775C17.5952 5.1504 17.5949 4.13758 18.2195 3.5125ZM12.0047 0C12.8883 0.000341225 13.6042 0.717126 13.6039 1.60078C13.6035 2.48436 12.8867 3.20034 12.0031 3.2H11.9969C11.1133 3.20034 10.3965 2.48436 10.3961 1.60078C10.3958 0.717126 11.1117 0.000341225 11.9953 0H12.0047Z"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
       </section>
+
+      <!-- Bottom action bar: case, mode toggles, swatches, outline-toggle -->
+      <div class="action-bar">
+        <div class="case-toggle" id="caseToggle"></div>
+        <button class="pill pill--mode is-active" id="randomString" type="button" data-mode="random">Random String</button>
+        <button class="pill pill--mode" id="glyphOverview" type="button" data-mode="overview">Glyph Overview</button>
+
+        <div class="bg-swatches" id="bgSwatches">
+          <button class="bg-swatch" type="button" data-bg="#004C2B" aria-label="Dark green background"></button>
+          <button class="bg-swatch is-active" type="button" data-bg="#FFFFFF" aria-label="White background"></button>
+          <button class="bg-swatch" type="button" data-bg="#D7F394" aria-label="Mint green background"></button>
+        </div>
+        <div class="outline-toggle" id="outlineToggle">
+          <button class="ot-btn ot-btn--solid is-active" type="button" data-mode="solid" aria-label="Solid preview">
+            <span class="ot-dot"></span>
+          </button>
+          <button class="ot-btn ot-btn--outline" type="button" data-mode="outline" aria-label="Outline preview">
+            <svg class="ot-ring" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M12.0031 20.8C12.8867 20.7997 13.6035 21.5156 13.6039 22.3992C13.6042 23.2829 12.8883 23.9997 12.0047 24H11.9953C11.1117 23.9997 10.3958 23.2829 10.3961 22.3992C10.3965 21.5156 11.1133 20.7997 11.9969 20.8H12.0031ZM3.5125 18.2195C4.13758 17.5949 5.1504 17.5952 5.775 18.2203C5.77656 18.2219 5.77812 18.2234 5.77969 18.225C6.40477 18.8496 6.40506 19.8624 5.78047 20.4875C5.15587 21.1125 4.14304 21.1129 3.51797 20.4883C3.51588 20.4862 3.5138 20.4841 3.51172 20.482C2.88714 19.857 2.88746 18.8441 3.5125 18.2195ZM18.225 18.2203C18.8496 17.5952 19.8624 17.5949 20.4875 18.2195C21.1125 18.8441 21.1129 19.857 20.4883 20.482C20.4862 20.4841 20.4841 20.4862 20.482 20.4883C19.857 21.1129 18.8441 21.1125 18.2195 20.4875C17.5949 19.8624 17.5952 18.8496 18.2203 18.225C18.2219 18.2234 18.2234 18.2219 18.225 18.2203ZM0 11.9953C0.000341225 11.1117 0.717126 10.3958 1.60078 10.3961C2.48436 10.3965 3.20034 11.1133 3.2 11.9969V12.0031C3.20034 12.8867 2.48436 13.6035 1.60078 13.6039C0.717126 13.6042 0.000341225 12.8883 0 12.0047V11.9953ZM20.8 11.9969C20.7997 11.1133 21.5156 10.3965 22.3992 10.3961C23.2829 10.3958 23.9997 11.1117 24 11.9953V12.0047C23.9997 12.8883 23.2829 13.6042 22.3992 13.6039C21.5156 13.6035 20.7997 12.8867 20.8 12.0031V11.9969ZM3.51797 3.51172C4.14304 2.88714 5.15587 2.88746 5.78047 3.5125C6.40506 4.13758 6.40477 5.1504 5.77969 5.775C5.77812 5.77656 5.77656 5.77812 5.775 5.77969C5.1504 6.40477 4.13758 6.40506 3.5125 5.78047C2.88746 5.15587 2.88714 4.14304 3.51172 3.51797C3.5138 3.51588 3.51588 3.5138 3.51797 3.51172ZM18.2195 3.5125C18.8441 2.88746 19.857 2.88714 20.482 3.51172C20.4841 3.5138 20.4862 3.51588 20.4883 3.51797C21.1129 4.14304 21.1125 5.15587 20.4875 5.78047C19.8624 6.40506 18.8496 6.40477 18.225 5.77969C18.2234 5.77812 18.2219 5.77656 18.2203 5.775C17.5952 5.1504 17.5949 4.13758 18.2195 3.5125ZM12.0047 0C12.8883 0.000341225 13.6042 0.717126 13.6039 1.60078C13.6035 2.48436 12.8867 3.20034 12.0031 3.2H11.9969C11.1133 3.20034 10.3965 2.48436 10.3961 1.60078C10.3958 0.717126 11.1117 0.000341225 11.9953 0H12.0047Z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Right: stage / preview -->
@@ -96,6 +95,9 @@ te gaan.</div>
           <img class="stage-logo" src="assets/logo.png" alt="CM" width="63" height="63" />
         </div>
       </div>
+
+      <!-- Glyph overview grid: 6 cols × 9 rows, populated at runtime -->
+      <div class="stage-grid" id="stageGrid"></div>
     </section>
   </main>
 
@@ -103,6 +105,6 @@ te gaan.</div>
     <p>Make your browser window a bit bigger to see the CM typeface tester.</p>
   </div>
 
-  <script type="module" src="app.js?v=20260428as"></script>
+  <script type="module" src="app.js?v=20260429a"></script>
 </body>
 </html>

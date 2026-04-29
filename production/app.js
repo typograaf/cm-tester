@@ -55,9 +55,14 @@ const state = {
   font: null, // { family, features }
   ssLabels: {}, // { ss01: { label, sample }, ... }
   focusedSS: null,
-  outlineMode: false,
+  // "random" = preset type sample, "overview" = 6×9 letter grid,
+  // "outline" = single-letter outline preview.
+  stageMode: "random",
+  outlineMode: false, // legacy alias kept in sync with stageMode==="outline"
   userSizeOverride: false, // true once the user moves the size slider
 };
+
+const GRID_LETTERS = "AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz.,";
 
 // -------- DOM refs -------------------------------------------------------
 
@@ -78,6 +83,8 @@ const glyphPreviewEl = $("glyphPreview");
 const bgSwatchesEl = $("bgSwatches");
 const outlineToggleEl = $("outlineToggle");
 const stageOutlineEl = $("stageOutline");
+const stageGridEl = $("stageGrid");
+const overviewBtn = $("glyphOverview");
 
 // -------- font loading --------------------------------------------------
 
@@ -209,6 +216,18 @@ function discoverFeatures(font) {
 
 // -------- render --------------------------------------------------------
 
+// Toggle-switch icon (active vs inactive variant). Knob position
+// flips so the switch reads visually as on/off; colors are baked in
+// via the `track` class so CSS can re-skin them.
+function ssPillIcon(active) {
+  const cx = active ? 13 : 6;
+  return `
+    <svg class="ss-pill__icon" viewBox="0 0 19 12" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <rect class="track" width="19" height="12" rx="6"/>
+      <circle class="knob" cx="${cx}" cy="6" r="4"/>
+    </svg>`;
+}
+
 function renderSSPills() {
   ssPillsEl.innerHTML = "";
   if (!state.font) return;
@@ -216,10 +235,11 @@ function renderSSPills() {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "ss-pill";
-    btn.textContent = feat.label;
+    const isActive = !!state.featureState[feat.tag];
+    btn.classList.toggle("is-active", isActive);
     btn.title = feat.tag;
     btn.dataset.tag = feat.tag;
-    btn.classList.toggle("is-active", !!state.featureState[feat.tag]);
+    btn.innerHTML = `${ssPillIcon(isActive)}<span>${feat.label}</span>`;
     btn.addEventListener("click", () => {
       state.featureState[feat.tag] = !state.featureState[feat.tag];
       state.focusedSS = feat.tag;
@@ -237,6 +257,8 @@ function renderSSPills() {
       if (state.outlineMode) {
         refitStage();
         renderStageOutline();
+      } else if (state.stageMode === "overview") {
+        renderStageGrid();
       }
     });
     ssPillsEl.appendChild(btn);
@@ -395,6 +417,13 @@ function applyTypography() {
   stageMark.style.letterSpacing = `${trackingInput.value}em`;
   stageMark.style.fontFeatureSettings = fft;
 
+  // Glyph overview cells inherit the live font so SS toggles update the
+  // grid in real time.
+  if (stageGridEl) {
+    stageGridEl.style.fontFamily = family;
+    stageGridEl.style.fontFeatureSettings = fft;
+  }
+
   // Detail panel title also uses the live font once it's loaded. The
   // glyph preview SVG is rasterized from the parsed font directly, so
   // it doesn't need the @font-face family.
@@ -414,21 +443,34 @@ function setBackground(hex) {
   if (state.outlineMode) renderStageOutline();
 }
 
-function setOutlineMode(mode) {
-  const wasOutline = state.outlineMode;
+// Three-way stage mode: "random" (preset type sample), "overview"
+// (6×9 letter grid), or "outline" (single-letter outline preview).
+// Keeps state.outlineMode in sync as a legacy alias for the rest of
+// the file that still reads it.
+function setStageMode(mode) {
+  const wasOutline = state.stageMode === "outline";
+  state.stageMode = mode;
   state.outlineMode = mode === "outline";
-  for (const btn of outlineToggleEl.querySelectorAll(".ot-btn")) {
-    btn.classList.toggle("is-active", btn.dataset.mode === mode);
-  }
-  stagePanel.dataset.mode = mode;
-  document.documentElement.classList.toggle("outline-mode", state.outlineMode);
 
-  if (state.outlineMode && !wasOutline) {
+  // Update mode-pill active states (Random / Glyph Overview).
+  randomBtn.classList.toggle("is-active", mode === "random");
+  overviewBtn.classList.toggle("is-active", mode === "overview");
+  // Outline-toggle: solid btn = any non-outline mode, outline btn = outline.
+  for (const btn of outlineToggleEl.querySelectorAll(".ot-btn")) {
+    const isOutlineBtn = btn.dataset.mode === "outline";
+    btn.classList.toggle("is-active", isOutlineBtn ? mode === "outline" : mode !== "outline");
+  }
+
+  // Drive mode-specific stage CSS (background, hidden sections).
+  stagePanel.dataset.mode = mode;
+  document.documentElement.classList.toggle("outline-mode", mode === "outline");
+
+  if (mode === "outline" && !wasOutline) {
     // Entering outline mode — single letter, dark bg, 100% size,
     // sliders hidden.
     state.userSizeOverride = false;
     stageText.textContent = OUTLINE_DEFAULT_CHAR;
-  } else if (!state.outlineMode && wasOutline) {
+  } else if (mode !== "outline" && wasOutline) {
     // Leaving outline mode — reset solid-mode state to a fresh-load
     // baseline (text, leading, tracking, bg). Keeps the user's
     // current SS pill selections so they don't lose their context.
@@ -442,7 +484,32 @@ function setOutlineMode(mode) {
 
   applyTypography();
   refitStage();
-  if (state.outlineMode) renderStageOutline();
+  if (mode === "outline") renderStageOutline();
+  if (mode === "overview") renderStageGrid();
+}
+
+// Legacy entry-point used by the outline-toggle solid/outline buttons —
+// "solid" returns to the random preset mode (the previous default).
+function setOutlineMode(mode) {
+  setStageMode(mode === "outline" ? "outline" : "random");
+}
+
+// Build the 6×9 grid of glyph cells for Glyph Overview mode. The grid
+// is static markup; the live font features apply through inherited
+// font-feature-settings + font-family on each cell.
+function renderStageGrid() {
+  if (!stageGridEl) return;
+  if (stageGridEl.childElementCount === GRID_LETTERS.length) {
+    // Already built — just refresh font features (handled by applyTypography).
+    return;
+  }
+  stageGridEl.innerHTML = "";
+  for (const ch of GRID_LETTERS) {
+    const cell = document.createElement("div");
+    cell.className = "stage-grid__cell";
+    cell.textContent = ch;
+    stageGridEl.appendChild(cell);
+  }
 }
 
 // Build an SVG over the stage text with: the glyph path stroked,
@@ -758,6 +825,10 @@ function refitStage() {
     return;
   }
 
+  // Overview mode: the grid sizes itself via CSS grid + flex, no
+  // headline fit needed.
+  if (state.stageMode === "overview") return;
+
   // Outline mode: bypass the line-height-based fit. Size the glyph
   // by REAL font metrics (cap + descender + overshoots) so the
   // visible letter — including its descender bowl — sits inside the
@@ -889,7 +960,20 @@ async function init() {
     stageText.style.fontSize = `${v}em`;
     if (state.outlineMode) renderStageOutline();
   });
-  randomBtn.addEventListener("click", pickRandomString);
+  randomBtn.addEventListener("click", () => {
+    // Clicking Random always randomizes the type sample. If we're in
+    // a different stage mode (overview/outline), switch back to random
+    // first — then randomize on the next user click.
+    if (state.stageMode !== "random") {
+      setStageMode("random");
+      pickRandomString();
+    } else {
+      pickRandomString();
+    }
+  });
+  overviewBtn.addEventListener("click", () => {
+    if (state.stageMode !== "overview") setStageMode("overview");
+  });
 
   for (const btn of bgSwatchesEl.querySelectorAll(".bg-swatch")) {
     btn.addEventListener("click", () => setBackground(btn.dataset.bg));
@@ -898,7 +982,7 @@ async function init() {
     btn.addEventListener("click", () => setOutlineMode(btn.dataset.mode));
   }
   setBackground("#FFFFFF");
-  setOutlineMode("solid");
+  setStageMode("random");
 
   // Block backspace/delete in outline mode — one letter must always
   // be on screen. (Replacing it via typing still works because that

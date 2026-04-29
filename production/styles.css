@@ -105,8 +105,8 @@ html.loading .app { opacity: 0; }
   align-items: stretch;
   /* Outer page padding matches the gap between panels — same
      visual rhythm inside and out. */
-  gap: 2.4rem;               /* 24 */
-  padding: 2.4rem;           /* 24 */
+  gap: 1.2rem;               /* 12 */
+  padding: 1.2rem;           /* 12 */
   /* Pin the layout to the viewport so a long description in the
      top-left detail panel can't push the bottom-left controls below
      the fold. fitHeadline + hyphens keep content from overflowing. */
@@ -116,7 +116,7 @@ html.loading .app { opacity: 0; }
 .col--left {
   display: flex;
   flex-direction: column;
-  gap: 2.4rem;               /* 24 */
+  gap: 1.2rem;               /* 12 */
   flex: 1 1 0;
   min-width: 0;
   min-height: 0;             /* let inner panels honour the viewport cap */
@@ -128,30 +128,60 @@ html.loading .app { opacity: 0; }
 }
 
 /* ------------------------------------------------------------------
-   Top-left panel: SS pills + feature detail
+   Top row: SS pills (8 toggle pills, 2 rows of 4 at typical width)
    ------------------------------------------------------------------ */
 
-/* Top panel grows to fill the column so the bottom controls panel
-   anchors to the bottom. SS pills sit at the top, the feature
-   detail block sits at the bottom with the same Figma proportions
-   (268px tall at the reference viewport) — extra column height
-   becomes breathing room between the two via space-between. */
+.ss-pills {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 1.2rem;               /* 12 */
+  width: 100%;
+}
+
+.ss-pill {
+  flex: 1 1 0;
+  min-width: 20rem;          /* 200 */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2rem;               /* 12 */
+  background: var(--white);
+  color: var(--dark-green);
+  border: 0;
+  padding: 1.2rem;           /* 12 */
+  border-radius: 9.3rem;
+  cursor: pointer;
+  font-family: var(--ui);
+  font-weight: 700;
+  font-variation-settings: "wght" 700, "wdth" 60;
+  font-size: var(--body-size);
+  line-height: 1.6;
+  letter-spacing: var(--body-track);
+  font-feature-settings: "dlig" 1;
+  white-space: nowrap;
+  transition: background .15s, color .15s;
+}
+.ss-pill__icon {
+  width: 1.9rem;             /* 19 */
+  height: 1.2rem;            /* 12 */
+  flex: 0 0 auto;
+  display: block;
+}
+.ss-pill__icon rect.track     { fill: var(--pill-bg); transition: fill .15s; }
+.ss-pill__icon circle.knob    { fill: var(--white); transition: cx .15s; }
+.ss-pill.is-active .ss-pill__icon rect.track { fill: var(--green); }
+.ss-pill:hover { background: #f7f8f7; }
+
+/* Feature panel — info + glyph preview, stretched to fill column */
 .panel--feature {
   flex: 1 1 0;
   min-height: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 7.2rem;
+  justify-content: flex-end;
   padding: 7.2rem;
-}
-
-.ss-pills {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.6rem;               /* 6 */
 }
 
 /* Figma proportions: detail-info 296 : glyph 398 (glyph wider).
@@ -248,7 +278,6 @@ html.loading .app { opacity: 0; }
    ------------------------------------------------------------------ */
 
 .pill,
-.ss-pill,
 .case-toggle button {
   font-family: var(--ui);
   font-weight: 700;
@@ -257,7 +286,7 @@ html.loading .app { opacity: 0; }
   line-height: 1.6;
   letter-spacing: var(--body-track);
   color: var(--dark-green);
-  background: var(--pill-bg);
+  background: var(--white);
   border: 0;
   padding: 1.2rem 2.4rem;
   border-radius: 9.3rem;
@@ -269,16 +298,18 @@ html.loading .app { opacity: 0; }
   transition: background .15s, color .15s;
   font-feature-settings: "dlig" 1;
 }
+/* Action-bar TT/tt pills are tighter — uniform 12px padding per Figma. */
+.action-bar .case-toggle button { padding: 1.2rem; min-width: 4.8rem; }
+.action-bar .pill--mode { padding: 1.2rem; }
 .pill:hover,
-.ss-pill:hover,
-.case-toggle button:hover { background: #eceeed; }
+.case-toggle button:hover { background: #f7f8f7; }
 
 .pill.is-active,
-.ss-pill.is-active,
 .case-toggle button.is-active {
   background: var(--green);
   color: var(--white);
 }
+.pill.is-active:hover { background: #1ca84a; }
 
 /* Suppress browser focus rings — selection state is already conveyed
    by .is-active (filled green) and the live detail panel preview. */
@@ -293,13 +324,10 @@ button::-moz-focus-inner { border: 0; }
 }
 
 /* ------------------------------------------------------------------
-   Bottom-left panel: controls
+   Sliders panel — Leading / Tracking / Size
    ------------------------------------------------------------------ */
 
 .panel--controls {
-  display: flex;
-  flex-direction: column;
-  gap: 4.8rem;               /* 48 */
   padding: 7.2rem;           /* 72 */
 }
 
@@ -352,22 +380,21 @@ button::-moz-focus-inner { border: 0; }
   cursor: pointer;
 }
 
-.controls-bottom {
+/* ------------------------------------------------------------------
+   Action bar — sits on the page bg below the sliders panel.
+   Holds case toggle, mode pills (Random / Glyph Overview),
+   bg-swatches tray, outline-toggle tray.
+   ------------------------------------------------------------------ */
+.action-bar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 2.4rem;
-  flex-wrap: wrap;
-}
-.case-and-random {
-  display: flex;
-  gap: 0.6rem;
-  align-items: center;
-}
-.preview-actions {
-  display: flex;
+  align-items: stretch;
   gap: 1.2rem;
-  align-items: center;
+}
+/* The two mode pills (Random / Glyph Overview) share the remaining
+   horizontal space equally so they fill the row. */
+.action-bar .pill--mode {
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 /* Background swatches (group) — pill-shaped tray with 3 dots */
@@ -375,37 +402,38 @@ button::-moz-focus-inner { border: 0; }
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
-  background: var(--pill-bg);
+  background: var(--white);
   padding: 1.2rem;
   border-radius: 9.3rem;
 }
 .bg-swatch {
-  width: 2.4rem;             /* 24 */
-  height: 2.4rem;
+  aspect-ratio: 1 / 1;
+  height: 100%;
   border-radius: 50%;
   border: 0;
   padding: 0;
   cursor: pointer;
   position: relative;
+  flex: 0 0 auto;
 }
 .bg-swatch[data-bg="#FFFFFF"] {
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+  background: var(--pill-bg) !important;
 }
 /* No selection ring on the swatch — the active state is communicated
    by the live preview panel background changing to that color. */
 
-/* Outline toggle — pill-shaped tray with solid + dashed dots */
+/* Outline toggle — pill-shaped tray with solid dot + dotted-ring icon */
 .outline-toggle {
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
-  background: var(--pill-bg);
+  background: var(--white);
   padding: 1.2rem;
   border-radius: 9.3rem;
 }
 .ot-btn {
-  width: 2.4rem;
-  height: 2.4rem;
+  aspect-ratio: 1 / 1;
+  height: 100%;
   border-radius: 50%;
   border: 0;
   padding: 0;
@@ -414,6 +442,7 @@ button::-moz-focus-inner { border: 0; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex: 0 0 auto;
 }
 .ot-btn .ot-dot {
   width: 100%;
@@ -422,8 +451,8 @@ button::-moz-focus-inner { border: 0; }
   background: var(--dark-green);
 }
 .ot-btn .ot-ring {
-  width: 100%;
-  height: 100%;
+  width: 73%;                /* Figma: 30/41 ≈ 0.73 of the dot's size */
+  height: 73%;
   display: block;
   color: var(--dark-green);
 }
@@ -529,7 +558,46 @@ button::-moz-focus-inner { border: 0; }
    sliders are irrelevant — type is locked to 100% size with the dark
    green bg. Hide them. */
 .outline-mode .bg-swatches,
-.outline-mode .sliders-stack { display: none; }
+.outline-mode .panel--controls { display: none; }
+
+/* ------------------------------------------------------------------
+   Glyph Overview mode — replaces the type sample with a 6×9 grid
+   of all letters. Each cell is a small white pill; the panel itself
+   loses its background and padding so the cards sit on the page bg.
+   ------------------------------------------------------------------ */
+.stage-grid {
+  display: none;
+  flex: 1 1 0;
+  width: 100%;
+  min-height: 0;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-rows: repeat(9, minmax(0, 1fr));
+  gap: 1.2rem;
+}
+.stage-grid__cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--white);
+  border-radius: 2.4rem;
+  padding: 1rem;
+  font-family: var(--cm);
+  font-weight: 700;
+  color: var(--dark-green);
+  line-height: 0.87;
+  letter-spacing: -0.01em;
+  font-size: 7.2rem;
+  overflow: hidden;
+}
+
+.panel--stage[data-mode="overview"] {
+  background: transparent;
+  padding: 0;
+  gap: 0;
+}
+.panel--stage[data-mode="overview"] .stage-text-wrap,
+.panel--stage[data-mode="overview"] .stage-footer { display: none; }
+.panel--stage[data-mode="overview"] .stage-grid { display: grid; }
 
 .stage-footer {
   display: flex;
