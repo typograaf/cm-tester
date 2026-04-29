@@ -496,7 +496,11 @@ button::-moz-focus-inner { border: 0; }
   padding: 7.2em;
   border-radius: 4.8em;
   background: var(--white);
-  transition: background 0.25s ease, padding 0.25s ease, gap 0.25s ease;
+  /* Only ease the background — animating padding/gap during a mode
+     swap caused layout thrash that re-triggered the size-fit probe
+     (which momentarily sets font-size: 200em) and showed a giant L
+     flickering during the transition. */
+  transition: background 0.25s ease;
 }
 .panel--stage[data-bg="dark"]  { background: var(--dark-green); }
 .panel--stage[data-bg="dark"]  .stage-text,
