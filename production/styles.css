@@ -333,6 +333,13 @@ button::-moz-focus-inner { border: 0; }
 
 .panel--controls {
   padding: 7.2rem;           /* 72 */
+  /* Vertical collapse animation when the stage is in outline /
+     overview mode and the sliders are irrelevant. max-height +
+     padding-y + opacity ease together so the panel grows or shrinks
+     instead of popping. */
+  max-height: 60rem;
+  overflow: hidden;
+  transition: max-height .3s ease, padding .3s ease, opacity .25s ease;
 }
 
 .sliders-stack {
@@ -415,6 +422,13 @@ button::-moz-focus-inner { border: 0; }
   background: var(--white);
   padding: 1.2rem;
   border-radius: 9.3rem;
+  /* Horizontal collapse when outline mode locks the bg to dark
+     green and the swatches become irrelevant. max-width + padding-x
+     + opacity ease together so the tray slides closed rather than
+     popping out. */
+  max-width: 30rem;
+  overflow: hidden;
+  transition: max-width .3s ease, padding .3s ease, opacity .25s ease;
 }
 .bg-swatch {
   width: 3.2rem;             /* matches the pill's text line-box (2 × 1.6) */
@@ -575,8 +589,18 @@ button::-moz-focus-inner { border: 0; }
 /* In outline mode the bg-swatches and the leading/tracking/size
    sliders are irrelevant — type is locked to 100% size with the dark
    green bg. Hide them. */
-.outline-mode .bg-swatches,
-.outline-mode .panel--controls { display: none; }
+.outline-mode .bg-swatches {
+  max-width: 0;
+  padding-left: 0;
+  padding-right: 0;
+  opacity: 0;
+}
+.outline-mode .panel--controls {
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  opacity: 0;
+}
 
 /* ------------------------------------------------------------------
    Glyph Overview mode — replaces the type sample with a 6×9 grid
@@ -643,8 +667,14 @@ button::-moz-focus-inner { border: 0; }
 }
 
 /* Sliders are irrelevant when the stage is showing the static glyph
-   grid — hide the whole sliders panel. */
-.overview-mode .panel--controls { display: none; }
+   grid — collapse the whole sliders panel. (Animated via the
+   max-height + padding + opacity transition declared above.) */
+.overview-mode .panel--controls {
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  opacity: 0;
+}
 
 .stage-footer {
   display: flex;
