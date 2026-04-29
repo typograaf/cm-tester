@@ -149,7 +149,15 @@ html.loading .app { opacity: 0; }
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.6rem;               /* 6 */
+  gap: 0.48rem;              /* 6 * 0.8 */
+}
+
+/* SS pills run at 80% of the shared pill scale — the SS row has many
+   buttons and was crowding the panel. */
+.ss-pill {
+  font-size: calc(var(--body-size) * 0.8);
+  padding: 0.96rem 1.92rem;
+  border-radius: 7.44rem;
 }
 
 /* Figma proportions: detail-info 296 : glyph 398 (glyph wider).
