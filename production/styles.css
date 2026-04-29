@@ -172,8 +172,8 @@ html.loading .app { opacity: 0; }
   flex: 0 0 auto;
   display: block;
 }
-.ss-pill__icon rect.track     { fill: var(--pill-bg); transition: fill .15s; }
-.ss-pill__icon circle.knob    { fill: var(--white); transition: cx .15s; }
+.ss-pill__icon rect.track  { fill: var(--pill-bg); transition: fill .2s ease; }
+.ss-pill__icon circle.knob { fill: var(--white); transition: cx .2s ease; }
 .ss-pill.is-active .ss-pill__icon rect.track { fill: var(--green); }
 .ss-pill:hover { background: #f7f8f7; }
 
@@ -602,21 +602,41 @@ button::-moz-focus-inner { border: 0; }
   letter-spacing: -0.01em;
   font-size: 7.2rem;
   overflow: hidden;
+  transition: background-color .25s ease, color .25s ease;
 }
 
+/* Overview mode: the panel chrome disappears so the white cards sit
+   directly on the page bg. Background swatches recolor the *cards*
+   (per-cell), not the panel underneath them. */
 .panel--stage[data-mode="overview"] {
-  /* White swatch keeps the panel transparent so the cards float on
-     the page bg; dark / mint swatches paint the panel underneath
-     the cards. */
   background: transparent;
   padding: 0;
   gap: 0;
 }
-.panel--stage[data-mode="overview"][data-bg="dark"] { background: var(--dark-green); }
-.panel--stage[data-mode="overview"][data-bg="mint"] { background: var(--mint); }
 .panel--stage[data-mode="overview"] .stage-text-wrap,
 .panel--stage[data-mode="overview"] .stage-footer { display: none; }
-.panel--stage[data-mode="overview"] .stage-grid { display: grid; }
+.panel--stage[data-mode="overview"] .stage-grid {
+  display: grid;
+  animation: stage-fade .25s ease;
+}
+.panel--stage[data-mode="overview"][data-bg="dark"] .stage-grid__cell {
+  background: var(--dark-green);
+  color: var(--mint);
+}
+.panel--stage[data-mode="overview"][data-bg="mint"] .stage-grid__cell {
+  background: var(--mint);
+}
+
+/* Fade the type sample back in when leaving overview / outline. */
+.panel--stage[data-mode="random"] .stage-text-wrap,
+.panel--stage[data-mode="random"] .stage-footer {
+  animation: stage-fade .25s ease;
+}
+
+@keyframes stage-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
 
 /* Sliders are irrelevant when the stage is showing the static glyph
    grid — hide the whole sliders panel. */

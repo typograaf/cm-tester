@@ -229,39 +229,55 @@ function ssPillIcon(active) {
 }
 
 function renderSSPills() {
-  ssPillsEl.innerHTML = "";
   if (!state.font) return;
-  for (const feat of state.font.features) {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "ss-pill";
-    const isActive = !!state.featureState[feat.tag];
-    btn.classList.toggle("is-active", isActive);
-    btn.title = feat.tag;
-    btn.dataset.tag = feat.tag;
-    btn.innerHTML = `${ssPillIcon(isActive)}<span>${feat.label}</span>`;
-    btn.addEventListener("click", () => {
-      state.featureState[feat.tag] = !state.featureState[feat.tag];
-      state.focusedSS = feat.tag;
-      // In outline mode, jump the preview letter to this SS's
-      // sample so the toggle is immediately visible (e.g. clicking
-      // "Spurless G" shows the G, "Crossed t" shows the t).
-      if (state.outlineMode) {
-        const meta = state.ssLabels[feat.tag] || {};
-        const sample = (meta.sample || "").trim();
-        if (sample) stageText.textContent = sample.charAt(0);
-      }
-      renderSSPills();
-      renderDetail();
-      applyTypography();
-      if (state.outlineMode) {
-        refitStage();
-        renderStageOutline();
-      } else if (state.stageMode === "overview") {
-        renderStageGrid();
-      }
-    });
-    ssPillsEl.appendChild(btn);
+  const features = state.font.features;
+
+  // Build the pills once. Subsequent calls only sync state on the
+  // existing DOM nodes — re-creating them every click would replace
+  // the toggle SVG mid-animation and CSS transitions would never fire.
+  if (ssPillsEl.childElementCount !== features.length) {
+    ssPillsEl.innerHTML = "";
+    for (const feat of features) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "ss-pill";
+      btn.title = feat.tag;
+      btn.dataset.tag = feat.tag;
+      btn.innerHTML = `${ssPillIcon(false)}<span>${feat.label}</span>`;
+      btn.addEventListener("click", () => onSSToggle(feat));
+      ssPillsEl.appendChild(btn);
+    }
+  }
+
+  // Sync active state + knob position without touching the DOM tree.
+  for (const btn of ssPillsEl.children) {
+    const tag = btn.dataset.tag;
+    const active = !!state.featureState[tag];
+    btn.classList.toggle("is-active", active);
+    const knob = btn.querySelector(".knob");
+    if (knob) knob.setAttribute("cx", active ? 13 : 6);
+  }
+}
+
+function onSSToggle(feat) {
+  state.featureState[feat.tag] = !state.featureState[feat.tag];
+  state.focusedSS = feat.tag;
+  // In outline mode, jump the preview letter to this SS's sample so
+  // the toggle is immediately visible (e.g. clicking "Spurless G"
+  // shows the G, "Crossed t" shows the t).
+  if (state.outlineMode) {
+    const meta = state.ssLabels[feat.tag] || {};
+    const sample = (meta.sample || "").trim();
+    if (sample) stageText.textContent = sample.charAt(0);
+  }
+  renderSSPills();
+  renderDetail();
+  applyTypography();
+  if (state.outlineMode) {
+    refitStage();
+    renderStageOutline();
+  } else if (state.stageMode === "overview") {
+    renderStageGrid();
   }
 }
 
