@@ -464,6 +464,7 @@ function setStageMode(mode) {
   // Drive mode-specific stage CSS (background, hidden sections).
   stagePanel.dataset.mode = mode;
   document.documentElement.classList.toggle("outline-mode", mode === "outline");
+  document.documentElement.classList.toggle("overview-mode", mode === "overview");
 
   if (mode === "outline" && !wasOutline) {
     // Entering outline mode — single letter, dark bg, 100% size,
