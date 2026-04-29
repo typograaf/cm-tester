@@ -53,6 +53,7 @@
     }
   },
   "ss07": {
+    "description": "A straight leg for the uppercase R gives a more geometric feel, but is a little less consistent with the uppercase A.",
     "label": "Straight Leg R",
     "sample": "R",
     "substitutions": {
@@ -60,6 +61,7 @@
     }
   },
   "ss08": {
+    "description": "A 13 degree angle within the aABPR crossbars instead of a horizontal one. This is more unique, but gives a more quirky feel.",
     "label": "Diagonal aABPR",
     "sample": "aABPR",
     "substitutions": {
