@@ -310,21 +310,27 @@ function swapDetailWithSlide(fromTag, toTag) {
 
   if (detailAnim) detailAnim.cancel();
 
-  detailAnim = featureDetailEl.animate(
+  const outAnim = featureDetailEl.animate(
     [
       { transform: "translateY(0)", opacity: 1 },
       { transform: `translateY(${outY})`, opacity: 0 },
     ],
     { duration: 180, easing: "cubic-bezier(0.4, 0, 1, 0.4)", fill: "forwards" },
   );
-  detailAnim.onfinish = () => {
+  detailAnim = outAnim;
+  outAnim.onfinish = () => {
+    // Drop the out anim's forwards persistence before starting the in
+    // anim. Otherwise, once the in anim finishes (even with forwards),
+    // the older finished out anim's "translateY(-100%)" sticks around
+    // and the new content vanishes.
+    outAnim.cancel();
     renderDetail();
     detailAnim = featureDetailEl.animate(
       [
         { transform: `translateY(${inY})`, opacity: 0 },
         { transform: "translateY(0)", opacity: 1 },
       ],
-      { duration: 220, easing: "cubic-bezier(0, 0.6, 0.4, 1)", fill: "none" },
+      { duration: 220, easing: "cubic-bezier(0, 0.6, 0.4, 1)", fill: "forwards" },
     );
   };
 }
