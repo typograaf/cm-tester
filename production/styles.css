@@ -625,7 +625,7 @@ button::-moz-focus-inner { border: 0; }
 }
 .panel--stage[data-mode="overview"][data-bg="dark"] .stage-grid__cell {
   background: var(--dark-green);
-  color: var(--mint);
+  color: var(--white);
 }
 .panel--stage[data-mode="overview"][data-bg="mint"] .stage-grid__cell {
   background: var(--mint);
