@@ -22,7 +22,9 @@
    ------------------------------------------------------------------ */
 
 html {
-  font-size: max(7px, min(calc(100vw / 192), calc(100vh / 99.1)));
+  /* Global 0.8x scale: divisors and floor multiplied by 1/0.8 and 0.8
+     respectively so every rem-based size shrinks proportionally. */
+  font-size: max(5.6px, min(calc(100vw / 240), calc(100vh / 123.875)));
 }
 
 :root {
@@ -149,15 +151,7 @@ html.loading .app { opacity: 0; }
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.48rem;              /* 6 * 0.8 */
-}
-
-/* SS pills run at 80% of the shared pill scale — the SS row has many
-   buttons and was crowding the panel. */
-.ss-pill {
-  font-size: calc(var(--body-size) * 0.8);
-  padding: 0.96rem 1.92rem;
-  border-radius: 7.44rem;
+  gap: 0.6rem;               /* 6 */
 }
 
 /* Figma proportions: detail-info 296 : glyph 398 (glyph wider).
