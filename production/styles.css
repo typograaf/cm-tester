@@ -37,8 +37,8 @@ html {
   --pill-bg: #f5f5f5;
 
   --radius: 4.8rem;          /* 48 */
-  --body-size: 1.8rem;       /* 18 */
-  --body-track: 0.02em;      /* +2 in font units at 18 */
+  --body-size: 2rem;         /* 20 */
+  --body-track: 0.02em;      /* +2 in font units */
 
   --ui: "BE Cause", -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
   --cm: "CM-Stable", system-ui, sans-serif;
@@ -164,8 +164,11 @@ html.loading .app { opacity: 0; }
   min-width: 0;
 }
 .ss-pill__icon {
-  width: 1.9rem;             /* 19 */
-  height: 1.2rem;            /* 12 */
+  /* Sized in em so the icon scales with the pill's font-size and
+     fills the text line-box vertically (1.6em = the line-height
+     box). 19:12 aspect ratio preserved from the Figma source. */
+  height: 1.6em;
+  width: calc(1.6em * 19 / 12);
   flex: 0 0 auto;
   display: block;
 }
@@ -408,8 +411,8 @@ button::-moz-focus-inner { border: 0; }
   border-radius: 9.3rem;
 }
 .bg-swatch {
-  width: 2.88rem;            /* matches the pill's text line-box (1.8 × 1.6) */
-  height: 2.88rem;
+  width: 3.2rem;             /* matches the pill's text line-box (2 × 1.6) */
+  height: 3.2rem;
   border-radius: 50%;
   border: 0;
   padding: 0;
@@ -433,8 +436,8 @@ button::-moz-focus-inner { border: 0; }
   border-radius: 9.3rem;
 }
 .ot-btn {
-  width: 2.88rem;            /* matches the pill's text line-box */
-  height: 2.88rem;
+  width: 3.2rem;             /* matches the pill's text line-box (2 × 1.6) */
+  height: 3.2rem;
   border-radius: 50%;
   border: 0;
   padding: 0;
