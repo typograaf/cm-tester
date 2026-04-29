@@ -132,16 +132,17 @@ html.loading .app { opacity: 0; }
    ------------------------------------------------------------------ */
 
 .ss-pills {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: stretch;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1.2rem;               /* 12 */
   width: 100%;
 }
+/* Orphan-row rule: when the last pill is alone on its row (counts of
+   9, 13, 17…), let it span the full 4-col width so the row reads as
+   intentional rather than a stranded button. */
+.ss-pill:last-child:nth-child(4n + 1) { grid-column: span 4; }
 
 .ss-pill {
-  flex: 1 1 0;
-  min-width: 20rem;          /* 200 */
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -161,6 +162,7 @@ html.loading .app { opacity: 0; }
   font-feature-settings: "dlig" 1;
   white-space: nowrap;
   transition: background .15s, color .15s;
+  min-width: 0;
 }
 .ss-pill__icon {
   width: 1.9rem;             /* 19 */
@@ -387,7 +389,7 @@ button::-moz-focus-inner { border: 0; }
    ------------------------------------------------------------------ */
 .action-bar {
   display: flex;
-  align-items: stretch;
+  align-items: center;
   gap: 1.2rem;
 }
 /* The two mode pills (Random / Glyph Overview) share the remaining
@@ -407,8 +409,8 @@ button::-moz-focus-inner { border: 0; }
   border-radius: 9.3rem;
 }
 .bg-swatch {
-  aspect-ratio: 1 / 1;
-  height: 100%;
+  width: 2.88rem;            /* matches the pill's text line-box (1.8 × 1.6) */
+  height: 2.88rem;
   border-radius: 50%;
   border: 0;
   padding: 0;
@@ -432,8 +434,8 @@ button::-moz-focus-inner { border: 0; }
   border-radius: 9.3rem;
 }
 .ot-btn {
-  aspect-ratio: 1 / 1;
-  height: 100%;
+  width: 2.88rem;            /* matches the pill's text line-box */
+  height: 2.88rem;
   border-radius: 50%;
   border: 0;
   padding: 0;
