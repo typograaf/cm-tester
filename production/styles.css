@@ -336,10 +336,16 @@ button::-moz-focus-inner { border: 0; }
   /* Vertical collapse animation when the stage is in outline /
      overview mode and the sliders are irrelevant. max-height +
      padding-y + opacity ease together so the panel grows or shrinks
-     instead of popping. */
+     instead of popping. The margin transition is what kills the
+     "double-gap" — when the panel sits at height 0, eating its
+     upper gap via negative margin-top closes the leftover space. */
   max-height: 60rem;
   overflow: hidden;
-  transition: max-height .3s ease, padding .3s ease, opacity .25s ease;
+  transition:
+    max-height .3s ease,
+    padding .3s ease,
+    margin .3s ease,
+    opacity .25s ease;
 }
 
 .sliders-stack {
@@ -424,11 +430,16 @@ button::-moz-focus-inner { border: 0; }
   border-radius: 9.3rem;
   /* Horizontal collapse when outline mode locks the bg to dark
      green and the swatches become irrelevant. max-width + padding-x
-     + opacity ease together so the tray slides closed rather than
-     popping out. */
+     + margin-left + opacity ease together so the tray slides closed
+     and eats one of the action-bar gaps so neighbours don't leave a
+     "double gap" hole. */
   max-width: 30rem;
   overflow: hidden;
-  transition: max-width .3s ease, padding .3s ease, opacity .25s ease;
+  transition:
+    max-width .3s ease,
+    padding .3s ease,
+    margin .3s ease,
+    opacity .25s ease;
 }
 .bg-swatch {
   width: 3.2rem;             /* matches the pill's text line-box (2 × 1.6) */
@@ -593,12 +604,14 @@ button::-moz-focus-inner { border: 0; }
   max-width: 0;
   padding-left: 0;
   padding-right: 0;
+  margin-left: -1.2rem;       /* eat the action-bar gap to its left */
   opacity: 0;
 }
 .outline-mode .panel--controls {
   max-height: 0;
   padding-top: 0;
   padding-bottom: 0;
+  margin-top: -1.2rem;        /* eat the col gap above */
   opacity: 0;
 }
 
@@ -673,6 +686,7 @@ button::-moz-focus-inner { border: 0; }
   max-height: 0;
   padding-top: 0;
   padding-bottom: 0;
+  margin-top: -1.2rem;        /* eat the col gap above */
   opacity: 0;
 }
 
