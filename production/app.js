@@ -85,6 +85,9 @@ const outlineToggleEl = $("outlineToggle");
 const stageOutlineEl = $("stageOutline");
 const stageGridEl = $("stageGrid");
 const overviewBtn = $("glyphOverview");
+const featureDetailEl = document.querySelector(".feature-detail");
+
+let detailAnim = null; // active slot-swap animation, if any
 
 // -------- font loading --------------------------------------------------
 
@@ -260,6 +263,7 @@ function renderSSPills() {
 }
 
 function onSSToggle(feat) {
+  const wasFocused = state.focusedSS;
   state.featureState[feat.tag] = !state.featureState[feat.tag];
   state.focusedSS = feat.tag;
   // In outline mode, jump the preview letter to this SS's sample so
@@ -271,14 +275,58 @@ function onSSToggle(feat) {
     if (sample) stageText.textContent = sample.charAt(0);
   }
   renderSSPills();
-  renderDetail();
   applyTypography();
+
+  const changedSS = wasFocused && wasFocused !== feat.tag;
+  if (changedSS) {
+    swapDetailWithSlide(wasFocused, feat.tag);
+  } else {
+    renderDetail();
+  }
+
   if (state.outlineMode) {
     refitStage();
     renderStageOutline();
   } else if (state.stageMode === "overview") {
     renderStageGrid();
   }
+}
+
+// Slot-style swap: the current detail card slides out, and once it's
+// gone the new one slides in from the opposite edge. Direction follows
+// the SS feature order so clicking a later set slides up, earlier
+// slides down — gives the row a felt sense of position.
+function swapDetailWithSlide(fromTag, toTag) {
+  if (!featureDetailEl) {
+    renderDetail();
+    return;
+  }
+  const features = state.font.features;
+  const fromIdx = features.findIndex((f) => f.tag === fromTag);
+  const toIdx = features.findIndex((f) => f.tag === toTag);
+  const goesUp = toIdx > fromIdx;
+  const outY = goesUp ? "-100%" : "100%";
+  const inY = goesUp ? "100%" : "-100%";
+
+  if (detailAnim) detailAnim.cancel();
+
+  detailAnim = featureDetailEl.animate(
+    [
+      { transform: "translateY(0)", opacity: 1 },
+      { transform: `translateY(${outY})`, opacity: 0 },
+    ],
+    { duration: 180, easing: "cubic-bezier(0.4, 0, 1, 0.4)", fill: "forwards" },
+  );
+  detailAnim.onfinish = () => {
+    renderDetail();
+    detailAnim = featureDetailEl.animate(
+      [
+        { transform: `translateY(${inY})`, opacity: 0 },
+        { transform: "translateY(0)", opacity: 1 },
+      ],
+      { duration: 220, easing: "cubic-bezier(0, 0.6, 0.4, 1)", fill: "none" },
+    );
+  };
 }
 
 function renderCaseToggle() {
