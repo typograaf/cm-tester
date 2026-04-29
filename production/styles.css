@@ -306,7 +306,7 @@ button::-moz-focus-inner { border: 0; }
 .sliders-stack {
   display: flex;
   flex-direction: column;
-  gap: 2.4rem;               /* 24 */
+  gap: 1.2rem;               /* 12 */
   width: 100%;
 }
 
