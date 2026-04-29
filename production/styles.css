@@ -524,6 +524,12 @@ button::-moz-focus-inner { border: 0; }
   padding: 7.2em;
   border-radius: 4.8em;
   background: var(--white);
+  /* Clip at the panel boundary. During a window resize the layout
+     commits the new (smaller) panel size before the resize observer
+     re-fits the font, so the old too-large font-size paints once
+     before JS catches up — without the clip, the headline briefly
+     escapes the panel and the user sees a "giant L" flash. */
+  overflow: hidden;
   /* Only ease the background — animating padding/gap during a mode
      swap caused layout thrash that re-triggered the size-fit probe
      (which momentarily sets font-size: 200em) and showed a giant L
