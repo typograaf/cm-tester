@@ -100,16 +100,16 @@ html.loading .app { opacity: 0; }
    ------------------------------------------------------------------ */
 
 .app {
-  display: flex;
-  flex-direction: row;
+  /* Grid (not flex) so the column split is exactly 50/50 regardless
+     of the right panel's content min-width — switching the stage
+     between random-string and glyph-overview modes used to shift the
+     seam because the random-mode footer's nowrap brand text inflated
+     the panel's min-content; locking the columns here pins it. */
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   align-items: stretch;
-  /* Outer page padding matches the gap between panels — same
-     visual rhythm inside and out. */
   gap: 1.2rem;               /* 12 */
   padding: 1.2rem;           /* 12 */
-  /* Pin the layout to the viewport so a long description in the
-     top-left detail panel can't push the bottom-left controls below
-     the fold. fitHeadline + hyphens keep content from overflowing. */
   height: 100svh;
 }
 
@@ -117,7 +117,6 @@ html.loading .app { opacity: 0; }
   display: flex;
   flex-direction: column;
   gap: 1.2rem;               /* 12 */
-  flex: 1 1 0;
   min-width: 0;
   min-height: 0;             /* let inner panels honour the viewport cap */
 }
@@ -145,7 +144,7 @@ html.loading .app { opacity: 0; }
 .ss-pill {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 1.2rem;               /* 12 */
   background: var(--white);
   color: var(--dark-green);
@@ -453,8 +452,8 @@ button::-moz-focus-inner { border: 0; }
   background: var(--dark-green);
 }
 .ot-btn .ot-ring {
-  width: 73%;                /* Figma: 30/41 ≈ 0.73 of the dot's size */
-  height: 73%;
+  width: 100%;
+  height: 100%;
   display: block;
   color: var(--dark-green);
 }
