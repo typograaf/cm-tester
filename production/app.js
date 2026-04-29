@@ -87,7 +87,12 @@ const stageGridEl = $("stageGrid");
 const overviewBtn = $("glyphOverview");
 const featureDetailEl = document.querySelector(".feature-detail");
 
-let detailAnim = null; // active slot-swap animation, if any
+// Slot-swap runs transform and opacity as separate animations so each
+// can have its own easing — opacity feels softer with ease-in-out
+// while the transform uses asymmetric eases (ease-in on exit,
+// ease-out on entry) for a punchier slide.
+let detailXformAnim = null;
+let detailOpacityAnim = null;
 
 // -------- font loading --------------------------------------------------
 
@@ -308,31 +313,44 @@ function swapDetailWithSlide(fromTag, toTag) {
   const outY = goesUp ? "-100%" : "100%";
   const inY = goesUp ? "100%" : "-100%";
 
-  if (detailAnim) detailAnim.cancel();
+  // Cancel any in-flight slot animations so a rapid click doesn't
+  // leave one of the two parallel tracks finished while the other
+  // runs (which would visually "freeze" the element half-faded).
+  cancelDetailAnims();
 
-  const outAnim = featureDetailEl.animate(
-    [
-      { transform: "translateY(0)", opacity: 1 },
-      { transform: `translateY(${outY})`, opacity: 0 },
-    ],
-    { duration: 180, easing: "cubic-bezier(0.4, 0, 1, 0.4)", fill: "forwards" },
+  // OUT: transform with ease-in (anticipates exit), opacity with
+  // ease-in-out so the fade reads as a gentle dissolve, not a clip.
+  detailXformAnim = featureDetailEl.animate(
+    [{ transform: "translateY(0)" }, { transform: `translateY(${outY})` }],
+    { duration: 200, easing: "cubic-bezier(0.55, 0, 0.85, 0.4)", fill: "forwards" },
   );
-  detailAnim = outAnim;
-  outAnim.onfinish = () => {
-    // Drop the out anim's forwards persistence before starting the in
-    // anim. Otherwise, once the in anim finishes (even with forwards),
-    // the older finished out anim's "translateY(-100%)" sticks around
-    // and the new content vanishes.
-    outAnim.cancel();
+  detailOpacityAnim = featureDetailEl.animate(
+    [{ opacity: 1 }, { opacity: 0 }],
+    { duration: 220, easing: "ease-in-out", fill: "forwards" },
+  );
+
+  detailXformAnim.onfinish = () => {
+    cancelDetailAnims();
     renderDetail();
-    detailAnim = featureDetailEl.animate(
-      [
-        { transform: `translateY(${inY})`, opacity: 0 },
-        { transform: "translateY(0)", opacity: 1 },
-      ],
-      { duration: 220, easing: "cubic-bezier(0, 0.6, 0.4, 1)", fill: "forwards" },
+    // IN: transform with ease-out (lands softly), opacity again
+    // ease-in-out and slightly longer than the transform so the
+    // text resolves a beat after it arrives.
+    detailXformAnim = featureDetailEl.animate(
+      [{ transform: `translateY(${inY})` }, { transform: "translateY(0)" }],
+      { duration: 240, easing: "cubic-bezier(0.2, 0.6, 0.3, 1)", fill: "forwards" },
+    );
+    detailOpacityAnim = featureDetailEl.animate(
+      [{ opacity: 0 }, { opacity: 1 }],
+      { duration: 280, easing: "ease-in-out", fill: "forwards" },
     );
   };
+}
+
+function cancelDetailAnims() {
+  if (detailXformAnim) detailXformAnim.cancel();
+  if (detailOpacityAnim) detailOpacityAnim.cancel();
+  detailXformAnim = null;
+  detailOpacityAnim = null;
 }
 
 function renderCaseToggle() {
@@ -406,9 +424,16 @@ function renderGlyphPreview() {
   const maxAdvanceUnits = state.maxSampleAdvanceUnits || upm;
 
   // Pick the smaller scale so the widest possible glyph fits both
-  // width and height of the cell.
-  const scaleByH = H / (cap + desc);
-  const scaleByW = (W * 0.92) / maxAdvanceUnits;
+  // width and height of the cell. Include cap/descender overshoots
+  // in the height budget and pad the width slightly so glyph
+  // shapes that extend past their advance (e.g. j's tail) and past
+  // the metric lines (e.g. g's bowl) don't relyon SVG overflow:
+  // visible — overflow gets clipped mid-animation by the browser's
+  // composited layer and the bits "pop in" once the transform clears.
+  const ov = (state.font && state.font.overshoots) || { cap: 0, descender: 0 };
+  const visualHeightUnits = cap + desc + (ov.cap || 0) + (ov.descender || 0);
+  const scaleByH = H / visualHeightUnits;
+  const scaleByW = (W * 0.85) / maxAdvanceUnits;
   const scale = Math.min(scaleByH, scaleByW);
   const fontSize = scale * upm;
 
@@ -420,14 +445,15 @@ function renderGlyphPreview() {
   }
   if (totalAdvanceUnits <= 0) totalAdvanceUnits = upm;
 
-  // Centre vertically when scaling is bound by width (glyph is shorter
-  // than the cell), so metric lines + glyph stay middle-aligned.
-  const usedH = (cap + desc) * scale;
-  const yOff = (H - usedH) / 2;
-  const capY = yOff + 0.5;
-  const xY = yOff + (cap - xh) * scale;
-  const baselineY = yOff + cap * scale;
-  const descenderY = yOff + usedH - 0.5;
+  // Centre vertically — visualH covers cap-overshoot peak through
+  // descender-overshoot trough so nothing the glyph paints sits
+  // outside the SVG box.
+  const visualH = visualHeightUnits * scale;
+  const yOff = (H - visualH) / 2;
+  const capY = yOff + (ov.cap || 0) * scale + 0.5;
+  const xY = capY + (cap - xh) * scale;
+  const baselineY = capY + cap * scale;
+  const descenderY = baselineY + desc * scale - 0.5;
 
   // Glyph preview mirrors the live toggle state — variant when the SS
   // is on, default form when it's off. Multi-character samples ("Aa",
