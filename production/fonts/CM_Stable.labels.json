@@ -81,7 +81,7 @@
   },
   "ss10": {
     "label": "Angled Punctuation",
-    "sample": ",",
+    "sample": ".,",
     "substitutions": {
       ",": 183,
       ".": 182
