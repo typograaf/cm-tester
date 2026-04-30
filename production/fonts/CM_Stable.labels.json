@@ -4,7 +4,7 @@
     "label": "Double Storey g",
     "sample": "g",
     "substitutions": {
-      "g": 150
+      "g": 156
     }
   },
   "ss02": {
@@ -13,7 +13,7 @@
     "sample": "Aa",
     "substitutions": {
       "A": 69,
-      "a": 151
+      "a": 157
     }
   },
   "ss03": {
@@ -29,7 +29,7 @@
     "label": "Crossed t",
     "sample": "t",
     "substitutions": {
-      "t": 152
+      "t": 158
     }
   },
   "ss05": {
@@ -38,10 +38,10 @@
     "sample": "jft",
     "substitutions": {
       "J": 71,
-      "f": 153,
-      "j": 154,
-      "r": 155,
-      "t": 156
+      "f": 159,
+      "j": 160,
+      "r": 161,
+      "t": 162
     }
   },
   "ss06": {
@@ -69,7 +69,7 @@
       "B": 75,
       "P": 76,
       "R": 77,
-      "a": 157
+      "a": 163
     }
   },
   "ss09": {
@@ -85,10 +85,25 @@
     "label": "Angled Punctuation",
     "sample": ".,ij",
     "substitutions": {
-      ",": 186,
-      ".": 185,
-      "i": 158,
-      "j": 159
+      ",": 195,
+      ".": 194,
+      "i": 164,
+      "j": 165
+    }
+  },
+  "ss11": {
+    "label": "Angled Horizontals",
+    "sample": "f",
+    "substitutions": {
+      "E": 79,
+      "F": 80,
+      "H": 81,
+      "L": 82,
+      "T": 83,
+      "Z": 84,
+      "f": 166,
+      "t": 167,
+      "z": 168
     }
   }
 }
