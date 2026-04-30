@@ -86,26 +86,26 @@ const stageOutlineEl = $("stageOutline");
 const stageGridEl = $("stageGrid");
 const overviewBtn = $("glyphOverview");
 const featureDetailEl = document.querySelector(".feature-detail");
-const outlineDesignEl = $("outlineDesign");
 
-// Mutable design tokens for outline mode — driven by the floating
-// design panel. Defaults mirror the previous "dark bg" palette.
+// Outline-mode design tokens — finalised from the temporary tweaking
+// panel. Mint-on-dark palette; thicker metrics + glyph stroke; white
+// square anchors; small white circle handles with bolder lines.
 const outlineDesign = {
-  metricColor: "#1CA84A",
-  metricThickness: 1,
+  metricColor: "#d7f394",
+  metricThickness: 2,
   metricOpacity: 1,
-  glyphStroke: "#1CA84A",
+  glyphStroke: "#d7f394",
   glyphStrokeOpacity: 1,
-  glyphThickness: 1.5,
-  glyphFill: "#1CA84A",
-  glyphFillOpacity: 0.1,
-  anchorColor: "#004C2B",
-  anchorStyle: "circle",
-  anchorSize: 3,
-  handleColor: "#004C2B",
-  handleStyle: "square",
-  handleSize: 4,
-  handleLineWidth: 0.75,
+  glyphThickness: 2,
+  glyphFill: "#d7f394",
+  glyphFillOpacity: 0.3,
+  anchorColor: "#ffffff",
+  anchorStyle: "square",
+  anchorSize: 7,
+  handleColor: "#ffffff",
+  handleStyle: "circle",
+  handleSize: 3.5,
+  handleLineWidth: 2,
   handleOpacity: 1,
 };
 
@@ -1116,62 +1116,6 @@ async function init() {
   }
   setBackground("#FFFFFF");
   setStageMode("random");
-
-  // Outline-mode design panel: bind every input by data-key and
-  // re-render the outline on every change so tweaks are live.
-  if (outlineDesignEl) {
-    for (const input of outlineDesignEl.querySelectorAll("[data-key]")) {
-      const key = input.dataset.key;
-      const isNumeric = input.type === "number" || input.type === "range";
-      // Seed input from defaults so HTML and JS stay in sync.
-      if (isNumeric) {
-        input.value = String(outlineDesign[key]);
-      } else {
-        input.value = outlineDesign[key];
-      }
-      input.addEventListener("input", () => {
-        const v = isNumeric ? parseFloat(input.value) : input.value;
-        outlineDesign[key] = Number.isNaN(v) ? outlineDesign[key] : v;
-        if (state.outlineMode) renderStageOutline();
-      });
-    }
-
-    // Copy-all: dump the live outlineDesign object to the clipboard
-    // as a JS-snippet so values can be pasted back into the source
-    // (or shared verbatim in chat).
-    const copyBtn = $("outlineDesignCopy");
-    if (copyBtn) {
-      copyBtn.addEventListener("click", async () => {
-        const lines = ["const outlineDesign = {"];
-        for (const [k, v] of Object.entries(outlineDesign)) {
-          const formatted = typeof v === "number" ? v : `"${v}"`;
-          lines.push(`  ${k}: ${formatted},`);
-        }
-        lines.push("};");
-        const text = lines.join("\n");
-        try {
-          await navigator.clipboard.writeText(text);
-          copyBtn.textContent = "Copied!";
-          copyBtn.classList.add("is-copied");
-          setTimeout(() => {
-            copyBtn.textContent = "Copy all values";
-            copyBtn.classList.remove("is-copied");
-          }, 1200);
-        } catch (_) {
-          // Fallback: select the text in a hidden textarea so the
-          // user can ⌘C manually if clipboard access was denied.
-          const ta = document.createElement("textarea");
-          ta.value = text;
-          ta.style.position = "fixed";
-          ta.style.opacity = "0";
-          document.body.appendChild(ta);
-          ta.select();
-          try { document.execCommand("copy"); } catch (_) {}
-          document.body.removeChild(ta);
-        }
-      });
-    }
-  }
 
   // Block backspace/delete in outline mode — one letter must always
   // be on screen. (Replacing it via typing still works because that

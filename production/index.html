@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>CM Typeface Tester — Production</title>
-  <link rel="stylesheet" href="styles.css?v=20260430c" />
+  <link rel="stylesheet" href="styles.css?v=20260430d" />
 </head>
 <body>
   <main class="app">
@@ -105,59 +105,7 @@ te gaan.</div>
     <p>Make your browser window a bit bigger to see the CM typeface tester.</p>
   </div>
 
-  <!-- Outline-mode design panel — temporary tweakable palette so the
-       design team can dial in colors / weights / handle styles. Only
-       shown when html.outline-mode is set. -->
-  <aside class="outline-design" id="outlineDesign" aria-label="Outline design controls">
-    <h3>Outline design</h3>
 
-    <section>
-      <h4>Metric lines</h4>
-      <label>Color <input type="color" data-key="metricColor" value="#1CA84A"></label>
-      <label>Thickness <input type="number" data-key="metricThickness" min="0" max="6" step="0.1" value="1"></label>
-      <label>Opacity <input type="number" data-key="metricOpacity" min="0" max="1" step="0.05" value="1"></label>
-    </section>
-
-    <section>
-      <h4>Glyph</h4>
-      <label>Stroke <input type="color" data-key="glyphStroke" value="#1CA84A"></label>
-      <label>Stroke width <input type="number" data-key="glyphThickness" min="0" max="8" step="0.1" value="1.5"></label>
-      <label>Stroke opacity <input type="number" data-key="glyphStrokeOpacity" min="0" max="1" step="0.05" value="1"></label>
-      <label>Fill <input type="color" data-key="glyphFill" value="#1CA84A"></label>
-      <label>Fill opacity <input type="number" data-key="glyphFillOpacity" min="0" max="1" step="0.05" value="0.1"></label>
-    </section>
-
-    <section>
-      <h4>Anchors (on-curve)</h4>
-      <label>Color <input type="color" data-key="anchorColor" value="#004C2B"></label>
-      <label>Style
-        <select data-key="anchorStyle">
-          <option value="circle">Circle</option>
-          <option value="square">Square</option>
-          <option value="diamond">Diamond</option>
-        </select>
-      </label>
-      <label>Size <input type="number" data-key="anchorSize" min="0" max="14" step="0.5" value="3"></label>
-    </section>
-
-    <section>
-      <h4>Handles (off-curve + lines)</h4>
-      <label>Color <input type="color" data-key="handleColor" value="#004C2B"></label>
-      <label>Style
-        <select data-key="handleStyle">
-          <option value="square">Square</option>
-          <option value="circle">Circle</option>
-          <option value="diamond">Diamond</option>
-        </select>
-      </label>
-      <label>Size <input type="number" data-key="handleSize" min="0" max="14" step="0.5" value="4"></label>
-      <label>Line width <input type="number" data-key="handleLineWidth" min="0" max="3" step="0.05" value="0.75"></label>
-      <label>Opacity <input type="number" data-key="handleOpacity" min="0" max="1" step="0.05" value="1"></label>
-    </section>
-
-    <button class="outline-design__copy" id="outlineDesignCopy" type="button">Copy all values</button>
-  </aside>
-
-  <script type="module" src="app.js?v=20260430c"></script>
+  <script type="module" src="app.js?v=20260430d"></script>
 </body>
 </html>
