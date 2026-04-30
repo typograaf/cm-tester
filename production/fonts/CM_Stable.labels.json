@@ -92,6 +92,7 @@
     }
   },
   "ss11": {
+    "description": "13 degree slopes on horizontals bring a lot of personality, but make the typeface quite unstable and less consistent.",
     "label": "Angled Horizontals",
     "sample": "f",
     "substitutions": {
