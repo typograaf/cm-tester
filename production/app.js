@@ -260,6 +260,33 @@ async function loadFont() {
   return state.font;
 }
 
+// Read the active-SS list from the URL hash. Format: "#ss01,ss05,cv01"
+// (raw tag list, no key=value prefix). Tags that aren't valid ss/cv
+// IDs are filtered out at the consumer.
+function readHashState() {
+  const raw = (window.location.hash || "").replace(/^#/, "");
+  if (!raw) return [];
+  return raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => /^(ss|cv)\d\d$/.test(s));
+}
+
+// Write the active-SS list back to the URL hash so the link is
+// shareable. replaceState (not pushState / location.hash =) keeps
+// the back button uncluttered as the user toggles pills.
+function writeHashState() {
+  if (!state.font) return;
+  const onTags = state.font.features
+    .filter((f) => state.featureState[f.tag])
+    .map((f) => f.tag);
+  const newHash = onTags.length ? `#${onTags.join(",")}` : "";
+  const url = newHash || (window.location.pathname + window.location.search);
+  if (window.location.hash !== newHash) {
+    history.replaceState(null, "", url);
+  }
+}
+
 function discoverFeatures(font) {
   const tags = new Set();
   const gsub = font.tables.gsub;
@@ -336,6 +363,7 @@ function onSSToggle(feat) {
   const wasFocused = state.focusedSS;
   state.featureState[feat.tag] = !state.featureState[feat.tag];
   state.focusedSS = feat.tag;
+  writeHashState();
   // In outline mode, jump the preview letter to this SS's sample so
   // the toggle is immediately visible (e.g. clicking "Spurless G"
   // shows the G, "Crossed t" shows the t).
@@ -1288,6 +1316,14 @@ async function init() {
       if (state.featureState[feat.tag] === undefined) {
         state.featureState[feat.tag] = false;
       }
+    }
+    // Apply any active SS tags from the URL hash so a shared link
+    // restores the sender's exact toggle state.
+    const validTags = new Set(state.font.features.map((f) => f.tag));
+    const hashTags = readHashState().filter((t) => validTags.has(t));
+    if (hashTags.length) {
+      for (const tag of hashTags) state.featureState[tag] = true;
+      state.focusedSS = hashTags[0];
     }
   }
 
