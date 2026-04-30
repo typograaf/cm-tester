@@ -831,15 +831,41 @@ button::-moz-focus-inner { border: 0; }
   cursor: pointer;
   justify-self: start;
 }
-.outline-design select {
+.outline-design select,
+.outline-design input[type="number"] {
   font: inherit;
-  padding: 0.2rem 0.4rem;
+  padding: 0.2rem 0.6rem;
   border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 0.4rem;
   background: var(--white);
   color: inherit;
-  cursor: pointer;
+  cursor: text;
+  width: 100%;
+  min-width: 0;
 }
+.outline-design select { cursor: pointer; }
+.outline-design input[type="number"] {
+  -moz-appearance: textfield;
+}
+.outline-design input[type="number"]::-webkit-outer-spin-button,
+.outline-design input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: auto;
+}
+
+.outline-design__copy {
+  margin-top: 0.4rem;
+  padding: 0.6rem 1rem;
+  border: 0;
+  border-radius: 0.6rem;
+  background: var(--green);
+  color: var(--white);
+  font: inherit;
+  font-variation-settings: "wght" 700, "wdth" 60;
+  cursor: pointer;
+  transition: background-color .15s ease, transform .1s ease;
+}
+.outline-design__copy:hover { background: #199040; }
+.outline-design__copy.is-copied { background: var(--dark-green); }
 
 /* ------------------------------------------------------------------
    Mobile (≤900px) — stack vertically, drop guideline preview
