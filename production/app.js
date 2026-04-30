@@ -197,6 +197,32 @@ async function loadFont() {
 
   state.font = { family, features, parsed, overshoots, ijGlyph };
 
+  // Auto-discover SS-specific variants of the ij ligature (e.g.
+  // i_j.ss10). For each ss/cv feature, check its single-substitution
+  // table — if it remaps the default ij ligature glyph to a different
+  // one, that's the SS-styled ij. Stored under the multi-char "ij"
+  // key in the labels JSON so the tokenizer in renderGlyphPreview
+  // picks it up automatically.
+  if (parsed && parsed.substitution && ijGlyph && typeof ijGlyph.index === "number") {
+    const ijIdx = ijGlyph.index;
+    for (const tag of Object.keys(state.ssLabels)) {
+      if (!/^(ss|cv)\d\d$/.test(tag)) continue;
+      let singleSubs;
+      try { singleSubs = parsed.substitution.getSingle(tag); } catch (_) { continue; }
+      if (!singleSubs || !singleSubs.length) continue;
+      for (const entry of singleSubs) {
+        if (entry && entry.sub === ijIdx && typeof entry.by === "number") {
+          const meta = state.ssLabels[tag] = state.ssLabels[tag] || {};
+          meta.substitutions = meta.substitutions || {};
+          if (meta.substitutions["ij"] === undefined) {
+            meta.substitutions["ij"] = entry.by;
+          }
+          break;
+        }
+      }
+    }
+  }
+
   // Pre-compute the widest sample across all SSes (in font units), so
   // the glyph preview can use one consistent scale for every SS — a
   // single-char "g" preview renders at the same vertical scale as the
