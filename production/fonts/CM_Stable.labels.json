@@ -127,8 +127,9 @@
     }
   },
   "ss14": {
+    "description": "Bowing terminals makes some letterforms curl back up, bringing a more playful touch. This does mean more whitespace and more difficult kerns.",
     "label": "Bowing Terminals",
-    "sample": "j",
+    "sample": "IJ ij r",
     "substitutions": {
       "J": 88,
       "j": 176,
