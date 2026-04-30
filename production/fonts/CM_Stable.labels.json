@@ -73,6 +73,7 @@
     }
   },
   "ss09": {
+    "description": "The lowercaps Y gets another lowercase glyph in the uppercase set, but makes really tight typesetting impossible due to the added descender.",
     "label": "Lowercaps Y",
     "sample": "Y",
     "substitutions": {
@@ -80,8 +81,9 @@
     }
   },
   "ss10": {
+    "description": "A 13 degree angle within the punctuation makes a big impact at the end of every sentence. It closes, but not definitively so. This also impacts tittles on the i & j.",
     "label": "Angled Punctuation",
-    "sample": ".,",
+    "sample": ".,ij",
     "substitutions": {
       ",": 183,
       ".": 182
