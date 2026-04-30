@@ -86,6 +86,28 @@ const stageOutlineEl = $("stageOutline");
 const stageGridEl = $("stageGrid");
 const overviewBtn = $("glyphOverview");
 const featureDetailEl = document.querySelector(".feature-detail");
+const outlineDesignEl = $("outlineDesign");
+
+// Mutable design tokens for outline mode — driven by the floating
+// design panel. Defaults mirror the previous "dark bg" palette.
+const outlineDesign = {
+  metricColor: "#1CA84A",
+  metricThickness: 1,
+  metricOpacity: 1,
+  glyphStroke: "#1CA84A",
+  glyphStrokeOpacity: 1,
+  glyphThickness: 1.5,
+  glyphFill: "#1CA84A",
+  glyphFillOpacity: 0.1,
+  anchorColor: "#004C2B",
+  anchorStyle: "circle",
+  anchorSize: 3,
+  handleColor: "#004C2B",
+  handleStyle: "square",
+  handleSize: 4,
+  handleLineWidth: 0.75,
+  handleOpacity: 1,
+};
 
 // Slot-swap runs transform and opacity as separate animations so each
 // can have its own easing — opacity feels softer with ease-in-out
@@ -779,48 +801,28 @@ function renderStageOutline() {
     }
   }
 
-  // Constant pixel sizes — never scale with font size, so the outline
-  // reads the same at 100px or 400px headlines. Bezier handles only
-  // appear once the text is big enough that they wouldn't clutter.
-  const anchorR = 3;
-  const strokeW = 1.5;
-  const handleStrokeW = 0.75;
-  const ctrlSize = 4;
+  // Sizes / colors live in outlineDesign so the design panel can
+  // tweak them at runtime. fontSize gate keeps handles from cluttering
+  // tiny text.
   const HANDLES_THRESHOLD = 200;
   const showHandles = fontSizePx >= HANDLES_THRESHOLD;
 
-  // Outline mode is locked to the dark green bg — always use that
-  // palette regardless of any data-bg the swatch trail left behind.
-  const bg = state.outlineMode ? "dark" : (stagePanel.dataset.bg || "white");
-  const palette = {
-    white: {
-      stroke: "#1CA84A",
-      fill:   "rgba(28,168,74,0.10)",
-      anchor: "#004C2B",
-      metric: "#1CA84A",
-      overshoot: "rgba(28,168,74,0.05)",   // 5% deep green
-    },
-    mint: {
-      stroke: "#004C2B",
-      fill:   "rgba(0,76,43,0.08)",
-      anchor: "#004C2B",
-      metric: "#004C2B",
-      overshoot: "rgba(0,76,43,0.05)",
-    },
-    dark: {
-      stroke: "#D7F394",
-      fill:   "rgba(215,243,148,0.10)",
-      anchor: "#FFFFFF",
-      metric: "#D7F394",
-      overshoot: "rgba(215,243,148,0.05)", // 5% mint on dark green
-    },
-  };
-  const c = palette[bg] || palette.white;
-  const strokeColor = c.stroke;
-  const fillColor = c.fill;
-  const anchorColor = c.anchor;
-  const metricColor = c.metric;
-  const overshootColor = c.overshoot;
+  const fillColor = rgba(outlineDesign.glyphFill, outlineDesign.glyphFillOpacity);
+  const strokeColor = outlineDesign.glyphStroke;
+  const strokeOpacity = outlineDesign.glyphStrokeOpacity;
+  const strokeW = outlineDesign.glyphThickness;
+  const metricColor = outlineDesign.metricColor;
+  const metricThickness = outlineDesign.metricThickness;
+  const metricOpacity = outlineDesign.metricOpacity;
+  const anchorColor = outlineDesign.anchorColor;
+  const anchorR = outlineDesign.anchorSize;
+  const handleColor = outlineDesign.handleColor;
+  const handleOpacity = outlineDesign.handleOpacity;
+  const handleStrokeW = outlineDesign.handleLineWidth;
+  const ctrlSize = outlineDesign.handleSize;
+  // Overshoot bands always render in the same hue family as the
+  // metric lines, with a small 5% alpha for the band.
+  const overshootColor = rgba(outlineDesign.metricColor, 0.05);
 
   const parts = [];
   parts.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMinYMin meet">`);
@@ -831,24 +833,49 @@ function renderStageOutline() {
     parts.push(`<rect x="0" y="${f(b.y)}" width="${W}" height="${f(b.h)}" fill="${overshootColor}"/>`);
   }
   for (const y of metricLines) {
-    parts.push(`<line x1="0" y1="${f(y)}" x2="${W}" y2="${f(y)}" stroke="${metricColor}" stroke-width="1"/>`);
+    parts.push(`<line x1="0" y1="${f(y)}" x2="${W}" y2="${f(y)}" stroke="${metricColor}" stroke-width="${metricThickness}" stroke-opacity="${metricOpacity}"/>`);
   }
-  parts.push(`<path d="${dParts.join(" ")}" fill="${fillColor}" fill-rule="evenodd" stroke="${strokeColor}" stroke-width="${strokeW}" stroke-linejoin="round" stroke-linecap="round"/>`);
+  parts.push(`<path d="${dParts.join(" ")}" fill="${fillColor}" fill-rule="evenodd" stroke="${strokeColor}" stroke-opacity="${strokeOpacity}" stroke-width="${strokeW}" stroke-linejoin="round" stroke-linecap="round"/>`);
   if (showHandles) {
+    parts.push(`<g opacity="${handleOpacity}">`);
     for (const l of ctrlLines) {
-      parts.push(`<line x1="${f(l.x1)}" y1="${f(l.y1)}" x2="${f(l.x2)}" y2="${f(l.y2)}" stroke="${anchorColor}" stroke-width="${handleStrokeW}"/>`);
+      parts.push(`<line x1="${f(l.x1)}" y1="${f(l.y1)}" x2="${f(l.x2)}" y2="${f(l.y2)}" stroke="${handleColor}" stroke-width="${handleStrokeW}"/>`);
     }
-    const half = ctrlSize / 2;
     for (const p of ctrlPoints) {
-      parts.push(`<rect x="${f(p.x - half)}" y="${f(p.y - half)}" width="${ctrlSize}" height="${ctrlSize}" fill="${anchorColor}"/>`);
+      parts.push(handleShape(outlineDesign.handleStyle, p.x, p.y, ctrlSize, handleColor));
     }
+    parts.push(`</g>`);
   }
   for (const a of anchors) {
-    parts.push(`<circle cx="${f(a.x)}" cy="${f(a.y)}" r="${anchorR}" fill="${anchorColor}"/>`);
+    parts.push(handleShape(outlineDesign.anchorStyle, a.x, a.y, anchorR, anchorColor));
   }
   parts.push(`</svg>`);
 
   stageOutlineEl.innerHTML = parts.join("");
+}
+
+// Build an SVG marker (anchor or off-curve handle) at (cx, cy) with
+// pixel size `size`. Square uses size as edge length; circle uses
+// size as radius; diamond uses size as half-diagonal.
+function handleShape(style, cx, cy, size, color) {
+  const f = (n) => n.toFixed(2);
+  if (style === "square") {
+    const half = size / 2;
+    return `<rect x="${f(cx - half)}" y="${f(cy - half)}" width="${f(size)}" height="${f(size)}" fill="${color}"/>`;
+  }
+  if (style === "diamond") {
+    return `<polygon points="${f(cx)},${f(cy - size)} ${f(cx + size)},${f(cy)} ${f(cx)},${f(cy + size)} ${f(cx - size)},${f(cy)}" fill="${color}"/>`;
+  }
+  // circle (default)
+  return `<circle cx="${f(cx)}" cy="${f(cy)}" r="${f(size)}" fill="${color}"/>`;
+}
+
+function rgba(hex, alpha) {
+  const h = (hex || "#000000").replace("#", "");
+  const r = parseInt(h.slice(0, 2), 16) || 0;
+  const g = parseInt(h.slice(2, 4), 16) || 0;
+  const b = parseInt(h.slice(4, 6), 16) || 0;
+  return `rgba(${r},${g},${b},${alpha})`;
 }
 
 // -------- fit logic (kept from original; only the right panel needs it) -
@@ -1089,6 +1116,25 @@ async function init() {
   }
   setBackground("#FFFFFF");
   setStageMode("random");
+
+  // Outline-mode design panel: bind every input by data-key and
+  // re-render the outline on every change so tweaks are live.
+  if (outlineDesignEl) {
+    for (const input of outlineDesignEl.querySelectorAll("[data-key]")) {
+      const key = input.dataset.key;
+      // Seed input from defaults so HTML and JS stay in sync.
+      if (input.type === "color" || input.tagName === "SELECT") {
+        input.value = outlineDesign[key];
+      } else if (input.type === "range") {
+        input.value = String(outlineDesign[key]);
+      }
+      input.addEventListener("input", () => {
+        const v = input.type === "range" ? parseFloat(input.value) : input.value;
+        outlineDesign[key] = v;
+        if (state.outlineMode) renderStageOutline();
+      });
+    }
+  }
 
   // Block backspace/delete in outline mode — one letter must always
   // be on screen. (Replacing it via typing still works because that

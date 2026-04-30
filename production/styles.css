@@ -742,6 +742,106 @@ button::-moz-focus-inner { border: 0; }
 }
 
 /* ------------------------------------------------------------------
+   Outline-mode design panel — temporary tweakable palette
+   ------------------------------------------------------------------ */
+.outline-design {
+  position: fixed;
+  top: 1.6rem;
+  right: 1.6rem;
+  z-index: 50;
+  display: none;
+  flex-direction: column;
+  gap: 1.2rem;
+  background: var(--white);
+  color: var(--dark-green);
+  border-radius: 1.6rem;
+  padding: 1.6rem 2rem;
+  font-family: var(--ui);
+  font-size: 1.2rem;
+  font-variation-settings: "wght" 500, "wdth" 60;
+  letter-spacing: var(--body-track);
+  box-shadow: 0 1.5rem 3rem rgba(0, 0, 0, 0.12);
+  max-height: calc(100svh - 3.2rem);
+  overflow-y: auto;
+  width: 24rem;
+}
+.outline-mode .outline-design { display: flex; }
+.outline-design h3 {
+  margin: 0;
+  font-size: 1.4rem;
+  font-variation-settings: "wght" 700, "wdth" 60;
+  letter-spacing: var(--body-track);
+}
+.outline-design h4 {
+  margin: 0 0 0.6rem 0;
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  font-variation-settings: "wght" 700, "wdth" 60;
+  letter-spacing: 0.06em;
+  opacity: 0.65;
+}
+.outline-design section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.outline-design label {
+  display: grid;
+  grid-template-columns: 9rem 1fr;
+  align-items: center;
+  gap: 0.8rem;
+  font-size: 1.2rem;
+}
+.outline-design input[type="range"] {
+  width: 100%;
+  margin: 0;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 0.4rem;
+  background: var(--slider-track);
+  border-radius: 9rem;
+  outline: none;
+  cursor: pointer;
+}
+.outline-design input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 50%;
+  background: var(--green);
+  border: 0;
+  cursor: pointer;
+}
+.outline-design input[type="range"]::-moz-range-thumb {
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 50%;
+  background: var(--green);
+  border: 0;
+  cursor: pointer;
+}
+.outline-design input[type="color"] {
+  width: 3.2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 0.4rem;
+  background: transparent;
+  cursor: pointer;
+  justify-self: start;
+}
+.outline-design select {
+  font: inherit;
+  padding: 0.2rem 0.4rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 0.4rem;
+  background: var(--white);
+  color: inherit;
+  cursor: pointer;
+}
+
+/* ------------------------------------------------------------------
    Mobile (≤900px) — stack vertically, drop guideline preview
    ------------------------------------------------------------------ */
 
