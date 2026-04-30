@@ -86,6 +86,17 @@ const stageOutlineEl = $("stageOutline");
 const stageGridEl = $("stageGrid");
 const overviewBtn = $("glyphOverview");
 const featureDetailEl = document.querySelector(".feature-detail");
+const presetPillsEl = $("presetPills");
+
+// Three curated stylistic-set combinations + a "Custom" sentinel.
+// Picking a preset turns its tags ON and every other ss/cv tag OFF.
+// Touching any individual SS pill that diverges from a preset auto-
+// switches the radio to "Custom".
+const SS_PRESETS = [
+  { label: "Preset 1", tags: ["ss01", "ss09", "ss14"] },
+  { label: "Preset 2", tags: ["ss02", "ss03", "ss04", "ss05", "ss09", "ss11"] },
+  { label: "Preset 3", tags: ["ss01", "ss06", "ss08", "ss09", "ss10"] },
+];
 
 // Outline-mode design tokens — finalised from the temporary tweaking
 // panel. Mint-on-dark palette; thicker metrics + glyph stroke; white
@@ -328,6 +339,75 @@ function ssPillIcon(active) {
     </svg>`;
 }
 
+// Compare current featureState against the curated presets; return
+// the matching preset's index or -1 if the combo is "Custom".
+function activePresetIndex() {
+  const onTags = new Set();
+  for (const k of Object.keys(state.featureState)) {
+    if (state.featureState[k] && /^(ss|cv)\d\d$/.test(k)) onTags.add(k);
+  }
+  for (let i = 0; i < SS_PRESETS.length; i++) {
+    const tags = SS_PRESETS[i].tags;
+    if (tags.length !== onTags.size) continue;
+    if (tags.every((t) => onTags.has(t))) return i;
+  }
+  return -1;
+}
+
+function applyPreset(idx) {
+  if (!state.font) return;
+  const onSet = new Set(idx === -1 ? [] : SS_PRESETS[idx].tags);
+  for (const feat of state.font.features) {
+    state.featureState[feat.tag] = onSet.has(feat.tag);
+  }
+  // Focus the first active pill (in feature order) so the detail
+  // panel lands somewhere meaningful instead of leaving the old SS
+  // detail showing an OFF state.
+  if (onSet.size) {
+    const first = state.font.features.find((f) => onSet.has(f.tag));
+    if (first) state.focusedSS = first.tag;
+  }
+  writeHashState();
+  renderPresetPills();
+  renderSSPills();
+  renderDetail();
+  applyTypography({ preserve: true });
+  if (state.outlineMode) {
+    refitStage();
+    renderStageOutline();
+  } else if (state.stageMode === "overview") {
+    renderStageGrid();
+  }
+}
+
+function renderPresetPills() {
+  if (!presetPillsEl) return;
+  if (presetPillsEl.childElementCount !== SS_PRESETS.length + 1) {
+    presetPillsEl.innerHTML = "";
+    SS_PRESETS.forEach((preset, i) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "preset-pill";
+      btn.dataset.idx = String(i);
+      btn.innerHTML = `<span class="preset-pill__indicator"></span><span>${preset.label}</span>`;
+      btn.addEventListener("click", () => applyPreset(i));
+      presetPillsEl.appendChild(btn);
+    });
+    const custom = document.createElement("button");
+    custom.type = "button";
+    custom.className = "preset-pill preset-pill--custom";
+    custom.dataset.idx = "-1";
+    custom.innerHTML = `<span class="preset-pill__indicator"></span><span>Custom</span>`;
+    custom.addEventListener("click", () => applyPreset(-1));
+    presetPillsEl.appendChild(custom);
+  }
+  const activeIdx = activePresetIndex();
+  for (const btn of presetPillsEl.children) {
+    const idx = parseInt(btn.dataset.idx, 10);
+    btn.classList.toggle("is-active", idx === activeIdx);
+  }
+}
+
 function renderSSPills() {
   if (!state.font) return;
   const features = state.font.features;
@@ -364,6 +444,9 @@ function onSSToggle(feat) {
   state.featureState[feat.tag] = !state.featureState[feat.tag];
   state.focusedSS = feat.tag;
   writeHashState();
+  // The combo just changed — re-evaluate which preset (or Custom) is
+  // active and update the radio row.
+  renderPresetPills();
   // In outline mode, jump the preview letter to this SS's sample so
   // the toggle is immediately visible (e.g. clicking "Spurless G"
   // shows the G, "Crossed t" shows the t).
@@ -1327,6 +1410,7 @@ async function init() {
     }
   }
 
+  renderPresetPills();
   renderSSPills();
   renderDetail();
   renderSwatches();
