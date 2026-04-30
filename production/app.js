@@ -280,7 +280,10 @@ function onSSToggle(feat) {
     if (sample) stageText.textContent = sample.charAt(0);
   }
   renderSSPills();
-  applyTypography();
+  // preserve: keep the current font size — different SS variants
+  // have slightly different metrics and the auto-fit would otherwise
+  // nudge the headline up or down by a few percent on every toggle.
+  applyTypography({ preserve: true });
 
   const changedSS = wasFocused && wasFocused !== feat.tag;
   if (changedSS) {
@@ -364,7 +367,8 @@ function renderCaseToggle() {
     btn.addEventListener("click", () => {
       state.caseMode = state.caseMode === mode.id ? null : mode.id;
       renderCaseToggle();
-      applyTypography();
+      // preserve: case swap changes letter widths too — keep size stable.
+      applyTypography({ preserve: true });
     });
     caseToggleEl.appendChild(btn);
   }
@@ -489,7 +493,7 @@ function renderSwatches() {
   }
 }
 
-function applyTypography() {
+function applyTypography(opts = {}) {
   if (!state.font) return;
 
   const family = `"${state.font.family}", system-ui, sans-serif`;
@@ -525,7 +529,7 @@ function applyTypography() {
   // it doesn't need the @font-face family.
   ssTitleEl.style.fontFamily = family;
 
-  fitHeadline();
+  fitHeadline(opts);
   if (state.outlineMode) renderStageOutline();
 }
 
@@ -849,11 +853,11 @@ function renderStageOutline() {
 
 // -------- fit logic (kept from original; only the right panel needs it) -
 
-function fitHeadline() {
+function fitHeadline(opts = {}) {
   if (window.matchMedia("(max-width: 900px)").matches) {
     fitHeadlineMobile();
   } else {
-    fitHeadlineDesktop();
+    refitStage(opts);
   }
 }
 
@@ -916,7 +920,12 @@ function computeMaxFitEm() {
 // apply either the user's last value (clamped) or an auto-fit value
 // for the current mode. Replaces the previous fitHeadlineDesktop +
 // autoFitHeadlineSlider pair.
-function refitStage() {
+//
+// `opts.preserve`: when true, keep the current slider value (only
+// shrink it if it now exceeds max). Used by SS / case toggles so
+// width-changing feature swaps don't nudge the headline size.
+function refitStage(opts = {}) {
+  const preserve = !!opts.preserve;
   if (window.matchMedia("(max-width: 900px)").matches) {
     fitHeadlineMobile();
     return;
@@ -960,7 +969,7 @@ function refitStage() {
 
   const sliderMin = parseFloat(sizeInput.min) || 4;
   let value;
-  if (state.userSizeOverride) {
+  if (preserve || state.userSizeOverride) {
     value = parseFloat(sizeInput.value) || max;
   } else {
     const fillRatio = 0.95;
