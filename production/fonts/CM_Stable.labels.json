@@ -73,7 +73,7 @@
     }
   },
   "ss09": {
-    "description": "The lowercaps Y gets another lowercase glyph in the uppercase set, but makes really tight typesetting impossible due to the added descender.",
+    "description": "The lowercaps Y gets another lowercase glyph in the uppercase set. Because of the removal of its descender, it may take away some readability.",
     "label": "Lowercaps Y",
     "sample": "Y",
     "substitutions": {

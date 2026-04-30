@@ -183,7 +183,19 @@ async function loadFont() {
     for (const ch of "gpqy") probe(ch, "desc");
   }
 
-  state.font = { family, features, parsed, overshoots };
+  // Probe the font for the ij ligature so samples like ".,ij" can
+  // render it as a single glyph rather than separate i + j.
+  // stringToGlyphs applies default OT features (incl. liga), so a
+  // length-1 result means the ij ligature was substituted in.
+  let ijGlyph = null;
+  if (parsed) {
+    try {
+      const probe = parsed.stringToGlyphs("ij");
+      if (probe && probe.length === 1) ijGlyph = probe[0];
+    } catch (_) {}
+  }
+
+  state.font = { family, features, parsed, overshoots, ijGlyph };
 
   // Pre-compute the widest sample across all SSes (in font units), so
   // the glyph preview can use one consistent scale for every SS — a
@@ -198,11 +210,10 @@ async function loadFont() {
       const subs = meta.substitutions || {};
       const advance = (useSubs) => {
         let t = 0;
-        for (const ch of sample) {
-          const g = useSubs && typeof subs[ch] === "number"
-            ? parsed.glyphs.get(subs[ch])
-            : parsed.charToGlyph(ch);
-          t += g.advanceWidth || 0;
+        const tokens = tokenizeSample(sample, subs, useSubs);
+        for (const tk of tokens) {
+          const g = resolveTokenGlyph(parsed, subs, useSubs, tk);
+          t += (g && g.advanceWidth) || 0;
         }
         return t;
       };
@@ -413,6 +424,59 @@ function renderDetail() {
   renderGlyphPreview();
 }
 
+// Multi-char tokens to look for ahead of single-char rendering. The
+// Dutch "ij" ligature is a common ask; SS substitution maps with
+// length-2+ keys also flow through.
+const DEFAULT_MULTI_TOKENS = ["ij"];
+
+function tokenizeSample(sample, subs, useSubs) {
+  const keys = new Set(DEFAULT_MULTI_TOKENS);
+  if (useSubs) {
+    for (const k of Object.keys(subs)) {
+      if (k.length > 1) keys.add(k);
+    }
+  }
+  const sorted = [...keys].sort((a, b) => b.length - a.length);
+
+  const tokens = [];
+  for (let i = 0; i < sample.length; ) {
+    let matched = null;
+    for (const k of sorted) {
+      if (sample.startsWith(k, i)) { matched = k; break; }
+    }
+    if (matched) {
+      tokens.push(matched);
+      i += matched.length;
+    } else {
+      tokens.push(sample[i]);
+      i++;
+    }
+  }
+  return tokens;
+}
+
+function resolveTokenGlyph(ot, subs, useSubs, token) {
+  // SS-specific substitution (single or multi-char key) wins.
+  if (useSubs && typeof subs[token] === "number") {
+    return ot.glyphs.get(subs[token]);
+  }
+  if (token.length === 1) {
+    return ot.charToGlyph(token);
+  }
+  // Default ij ligature probed at font load.
+  if (token === "ij" && state.font && state.font.ijGlyph) {
+    return state.font.ijGlyph;
+  }
+  // Generic multi-char fallback: ask opentype.js to apply default
+  // features (incl. liga) and use the result if it collapsed to a
+  // single glyph; otherwise return the first char's glyph.
+  try {
+    const probe = ot.stringToGlyphs(token);
+    if (probe && probe.length === 1) return probe[0];
+  } catch (_) {}
+  return ot.charToGlyph(token[0]);
+}
+
 // Build an SVG of the focused-SS sample glyph aligned to the real font
 // metrics. Lines = cap height, x-height, baseline, descender — read
 // from the live font (sCapHeight, sxHeight, sTypoDescender) so they
@@ -439,10 +503,6 @@ function renderGlyphPreview() {
 
   const isOn = !!state.featureState[tag];
   const subs = meta.substitutions || {};
-  const resolveGlyph = (ch) => {
-    if (isOn && typeof subs[ch] === "number") return ot.glyphs.get(subs[ch]);
-    return ot.charToGlyph(ch);
-  };
 
   // Use the WIDEST sample across all SSes for the W-constraint, so
   // every SS renders at the same vertical scale even though different
@@ -463,11 +523,16 @@ function renderGlyphPreview() {
   const scale = Math.min(scaleByH, scaleByW);
   const fontSize = scale * upm;
 
+  // Tokenize so multi-char units (e.g. "ij" → ij ligature) collapse
+  // to a single glyph. Per-token resolution then picks: SS-specific
+  // substitution → font's default ligature → single-char fallback.
+  const tokens = tokenizeSample(sample, subs, isOn);
+
   // Compute the actual advance for THIS sample (for centring only).
   let totalAdvanceUnits = 0;
-  for (const ch of sample) {
-    const g = resolveGlyph(ch);
-    totalAdvanceUnits += g.advanceWidth || 0;
+  const sampleGlyphs = tokens.map((tk) => resolveTokenGlyph(ot, subs, isOn, tk));
+  for (const g of sampleGlyphs) {
+    totalAdvanceUnits += (g && g.advanceWidth) || 0;
   }
   if (totalAdvanceUnits <= 0) totalAdvanceUnits = upm;
 
@@ -482,15 +547,14 @@ function renderGlyphPreview() {
   const descenderY = baselineY + desc * scale - 0.5;
 
   // Glyph preview mirrors the live toggle state — variant when the SS
-  // is on, default form when it's off. Multi-character samples ("Aa",
-  // "jft") render each char via direct index lookup (extracted from
-  // GSUB by the Python script).
+  // is on, default form when it's off. Tokens (single chars or
+  // multi-char ligatures like "ij") each render as one glyph.
   const totalAdvance = totalAdvanceUnits * scale;
   let xOff = (W - totalAdvance) / 2;
 
   const pathPieces = [];
-  for (const ch of sample) {
-    const g = resolveGlyph(ch);
+  for (const g of sampleGlyphs) {
+    if (!g) continue;
     pathPieces.push(g.getPath(xOff, baselineY, fontSize).toPathData(2));
     xOff += (g.advanceWidth || 0) * scale;
   }
