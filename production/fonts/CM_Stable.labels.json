@@ -85,8 +85,10 @@
     "label": "Angled Punctuation",
     "sample": ".,ij",
     "substitutions": {
-      ",": 183,
-      ".": 182
+      ",": 186,
+      ".": 185,
+      "i": 158,
+      "j": 159
     }
   }
 }
