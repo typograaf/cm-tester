@@ -4,7 +4,7 @@
     "label": "Double Storey g",
     "sample": "g",
     "substitutions": {
-      "g": 156
+      "g": 157
     }
   },
   "ss02": {
@@ -13,7 +13,7 @@
     "sample": "Aa",
     "substitutions": {
       "A": 69,
-      "a": 157
+      "a": 158
     }
   },
   "ss03": {
@@ -29,7 +29,7 @@
     "label": "Crossed t",
     "sample": "t",
     "substitutions": {
-      "t": 158
+      "t": 159
     }
   },
   "ss05": {
@@ -38,10 +38,10 @@
     "sample": "jft",
     "substitutions": {
       "J": 71,
-      "f": 159,
-      "j": 160,
-      "r": 161,
-      "t": 162
+      "f": 160,
+      "j": 161,
+      "r": 162,
+      "t": 163
     }
   },
   "ss06": {
@@ -69,7 +69,7 @@
       "B": 75,
       "P": 76,
       "R": 77,
-      "a": 163
+      "a": 164
     }
   },
   "ss09": {
@@ -85,10 +85,10 @@
     "label": "Angled Punctuation",
     "sample": ".,ij",
     "substitutions": {
-      ",": 195,
-      ".": 194,
-      "i": 164,
-      "j": 165
+      ",": 197,
+      ".": 196,
+      "i": 165,
+      "j": 166
     }
   },
   "ss11": {
@@ -102,9 +102,17 @@
       "L": 82,
       "T": 83,
       "Z": 84,
-      "f": 166,
-      "t": 167,
-      "z": 168
+      "f": 167,
+      "t": 168,
+      "z": 169
+    }
+  },
+  "ss12": {
+    "label": "Logo Mm",
+    "sample": "m",
+    "substitutions": {
+      "M": 85,
+      "m": 170
     }
   }
 }
