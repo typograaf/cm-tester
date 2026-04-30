@@ -115,7 +115,7 @@
   },
   "ss13": {
     "description": "These exaggerated crossbars bring a more dynamic appearance, but make the overall feeling a little less stable, a little less consistent.",
-    "label": "Exaggerated Crossbars",
+    "label": "Low Crossbars",
     "sample": "ABRP",
     "substitutions": {
       "A": 83,

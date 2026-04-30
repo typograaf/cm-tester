@@ -139,10 +139,16 @@ html.loading .app { visibility: hidden; }
   gap: 1.2rem;               /* 12 */
   width: 100%;
 }
-/* Orphan-row rule: when the last pill is alone on its row (counts of
-   9, 13, 17…), let it span the full 4-col width so the row reads as
-   intentional rather than a stranded button. */
+/* Orphan-row rules: dynamically widen the trailing pills so the
+   final row always reads as full-width.
+     - 1 orphan (counts 9, 13, 17…): the lone pill spans 4 cols
+     - 2 orphans (counts 10, 14, 18…): each spans 2 cols
+   3-orphan case (counts 11, 15…) intentionally not handled — there's
+   no clean 4-col split for three items, so they fall through to the
+   default 1-col rendering with one empty cell. */
 .ss-pill:last-child:nth-child(4n + 1) { grid-column: span 4; }
+.ss-pill:last-child:nth-child(4n + 2),
+.ss-pill:nth-last-child(2):nth-child(4n + 1) { grid-column: span 2; }
 
 .ss-pill {
   display: inline-flex;
