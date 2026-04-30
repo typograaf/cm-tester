@@ -92,9 +92,9 @@
     }
   },
   "ss11": {
-    "description": "13 degree slopes on horizontals bring a lot of personality, but make the typeface quite unstable and less consistent.",
-    "label": "Angled Horizontals",
-    "sample": "ETtf",
+    "description": "Straight legged glyphs where angled legs are expected give the typeface a more vertical, geometric and stylised appearance.",
+    "label": "Straight Legs KXY",
+    "sample": "KXY",
     "substitutions": {
       "K": 79,
       "X": 80,
@@ -114,8 +114,9 @@
     }
   },
   "ss13": {
+    "description": "These exaggerated crossbars bring a more dynamic appearance, but make the overall feeling a little less stable, a little less consistent.",
     "label": "Exaggerated Crossbars",
-    "sample": "a",
+    "sample": "ABPR",
     "substitutions": {
       "A": 83,
       "B": 84,
