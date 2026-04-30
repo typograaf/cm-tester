@@ -183,45 +183,51 @@ async function loadFont() {
     for (const ch of "gpqy") probe(ch, "desc");
   }
 
-  // Probe the font for the ij ligature so samples like ".,ij" can
-  // render it as a single glyph rather than separate i + j.
-  // stringToGlyphs applies default OT features (incl. liga), so a
-  // length-1 result means the ij ligature was substituted in.
-  let ijGlyph = null;
-  if (parsed) {
+  // Probe the font for the ij / IJ ligatures so samples like ".,ij"
+  // and "IJ ij r" render them as single glyphs rather than separate
+  // i + j (or I + J). stringToGlyphs applies default OT features
+  // (incl. liga), so a length-1 result means the ligature substituted.
+  const probeLigature = (s) => {
+    if (!parsed) return null;
     try {
-      const probe = parsed.stringToGlyphs("ij");
-      if (probe && probe.length === 1) ijGlyph = probe[0];
+      const r = parsed.stringToGlyphs(s);
+      if (r && r.length === 1) return r[0];
     } catch (_) {}
-  }
+    return null;
+  };
+  const ijGlyph = probeLigature("ij");
+  const IJGlyph = probeLigature("IJ");
 
-  state.font = { family, features, parsed, overshoots, ijGlyph };
+  state.font = { family, features, parsed, overshoots, ijGlyph, IJGlyph };
 
-  // Auto-discover SS-specific variants of the ij ligature (e.g.
-  // i_j.ss10). For each ss/cv feature, check its single-substitution
-  // table — if it remaps the default ij ligature glyph to a different
-  // one, that's the SS-styled ij. Stored under the multi-char "ij"
-  // key in the labels JSON so the tokenizer in renderGlyphPreview
-  // picks it up automatically.
-  if (parsed && parsed.substitution && ijGlyph && typeof ijGlyph.index === "number") {
-    const ijIdx = ijGlyph.index;
+  // Auto-discover SS-specific variants of the ij / IJ ligatures
+  // (e.g. i_j.ss10, I_J.ss14). For each ss/cv feature, walk its
+  // single-substitution table — if it remaps a default ligature
+  // glyph to a different one, that's the SS-styled variant. Stored
+  // under the multi-char key in the labels JSON so the tokenizer in
+  // renderGlyphPreview picks it up automatically.
+  const discoverLigSub = (key, baseGlyph) => {
+    if (!parsed || !parsed.substitution || !baseGlyph || typeof baseGlyph.index !== "number") return;
+    const baseIdx = baseGlyph.index;
     for (const tag of Object.keys(state.ssLabels)) {
       if (!/^(ss|cv)\d\d$/.test(tag)) continue;
       let singleSubs;
       try { singleSubs = parsed.substitution.getSingle(tag); } catch (_) { continue; }
       if (!singleSubs || !singleSubs.length) continue;
       for (const entry of singleSubs) {
-        if (entry && entry.sub === ijIdx && typeof entry.by === "number") {
+        if (entry && entry.sub === baseIdx && typeof entry.by === "number") {
           const meta = state.ssLabels[tag] = state.ssLabels[tag] || {};
           meta.substitutions = meta.substitutions || {};
-          if (meta.substitutions["ij"] === undefined) {
-            meta.substitutions["ij"] = entry.by;
+          if (meta.substitutions[key] === undefined) {
+            meta.substitutions[key] = entry.by;
           }
           break;
         }
       }
     }
-  }
+  };
+  discoverLigSub("ij", ijGlyph);
+  discoverLigSub("IJ", IJGlyph);
 
   // Pre-compute the widest sample across all SSes (in font units), so
   // the glyph preview can use one consistent scale for every SS — a
@@ -451,9 +457,9 @@ function renderDetail() {
 }
 
 // Multi-char tokens to look for ahead of single-char rendering. The
-// Dutch "ij" ligature is a common ask; SS substitution maps with
-// length-2+ keys also flow through.
-const DEFAULT_MULTI_TOKENS = ["ij"];
+// Dutch "ij" / "IJ" ligatures are common asks; SS substitution maps
+// with length-2+ keys also flow through.
+const DEFAULT_MULTI_TOKENS = ["IJ", "ij"];
 
 function tokenizeSample(sample, subs, useSubs) {
   const keys = new Set(DEFAULT_MULTI_TOKENS);
@@ -489,9 +495,12 @@ function resolveTokenGlyph(ot, subs, useSubs, token) {
   if (token.length === 1) {
     return ot.charToGlyph(token);
   }
-  // Default ij ligature probed at font load.
+  // Default ij / IJ ligatures probed at font load.
   if (token === "ij" && state.font && state.font.ijGlyph) {
     return state.font.ijGlyph;
+  }
+  if (token === "IJ" && state.font && state.font.IJGlyph) {
+    return state.font.IJGlyph;
   }
   // Generic multi-char fallback: ask opentype.js to apply default
   // features (incl. liga) and use the result if it collapsed to a
