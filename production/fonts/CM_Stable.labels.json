@@ -4,7 +4,7 @@
     "label": "Double Storey g",
     "sample": "g",
     "substitutions": {
-      "g": 157
+      "g": 158
     }
   },
   "ss02": {
@@ -13,7 +13,7 @@
     "sample": "Aa",
     "substitutions": {
       "A": 69,
-      "a": 158
+      "a": 159
     }
   },
   "ss03": {
@@ -29,7 +29,7 @@
     "label": "Crossed t",
     "sample": "t",
     "substitutions": {
-      "t": 159
+      "t": 160
     }
   },
   "ss05": {
@@ -38,10 +38,10 @@
     "sample": "jft",
     "substitutions": {
       "J": 71,
-      "f": 160,
-      "j": 161,
-      "r": 162,
-      "t": 163
+      "f": 161,
+      "j": 162,
+      "r": 163,
+      "t": 164
     }
   },
   "ss06": {
@@ -69,7 +69,7 @@
       "B": 75,
       "P": 76,
       "R": 77,
-      "a": 164
+      "a": 165
     }
   },
   "ss09": {
@@ -85,10 +85,10 @@
     "label": "Angled Punctuation",
     "sample": ".,ij",
     "substitutions": {
-      ",": 197,
-      ".": 196,
-      "i": 165,
-      "j": 166
+      ",": 199,
+      ".": 198,
+      "i": 166,
+      "j": 167
     }
   },
   "ss11": {
@@ -96,15 +96,12 @@
     "label": "Angled Horizontals",
     "sample": "ETtf",
     "substitutions": {
-      "E": 79,
-      "F": 80,
-      "H": 81,
-      "L": 82,
-      "T": 83,
-      "Z": 84,
-      "f": 167,
-      "t": 168,
-      "z": 169
+      "K": 79,
+      "X": 80,
+      "Y": 81,
+      "k": 168,
+      "x": 169,
+      "z": 170
     }
   },
   "ss12": {
@@ -112,8 +109,19 @@
     "label": "Logo Mm",
     "sample": "Mm",
     "substitutions": {
-      "M": 85,
-      "m": 170
+      "M": 82,
+      "m": 171
+    }
+  },
+  "ss13": {
+    "label": "Exaggerated Crossbars",
+    "sample": "a",
+    "substitutions": {
+      "A": 83,
+      "B": 84,
+      "P": 85,
+      "R": 86,
+      "a": 172
     }
   }
 }
