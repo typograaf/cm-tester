@@ -108,6 +108,7 @@
     }
   },
   "ss12": {
+    "description": "Added crossbars in the upper and lowercase m’s are a more than subtle reference to the logo.",
     "label": "Logo Mm",
     "sample": "m",
     "substitutions": {
