@@ -93,7 +93,7 @@ const presetPillsEl = $("presetPills");
 // Touching any individual SS pill that diverges from a preset auto-
 // switches the radio to "Custom".
 const SS_PRESETS = [
-  { label: "Preset 1", tags: ["ss01", "ss09", "ss14"] },
+  { label: "Preset 1", tags: ["ss01", "ss09", "ss13", "ss14"] },
   { label: "Preset 2", tags: ["ss02", "ss03", "ss04", "ss05", "ss09", "ss11"] },
   { label: "Preset 3", tags: ["ss01", "ss06", "ss08", "ss09", "ss10"] },
 ];
