@@ -69,6 +69,7 @@ const state = {
   // "outline" = single-letter outline preview.
   stageMode: "random",
   outlineMode: false, // legacy alias kept in sync with stageMode==="outline"
+  glyphMode: "compact",  // "compact" (typeset string) or "full" (all glyphs grid)
   userSizeOverride: false, // true once the user moves the size slider
 };
 
@@ -93,6 +94,7 @@ const glyphPreviewEl = $("glyphPreview");
 const bgSwatchesEl = $("bgSwatches");
 const outlineToggleEl = $("outlineToggle");
 const alignToggleEl = $("alignToggle");
+const glyphModeToggleEl = $("glyphModeToggle");
 const stageOutlineEl = $("stageOutline");
 const stageGridEl = $("stageGrid");
 const overviewBtn = $("glyphOverview");
@@ -854,6 +856,7 @@ function updateImageBgPosition() {
 // the file that still reads it.
 function setStageMode(mode) {
   const wasOutline = state.stageMode === "outline";
+  const wasOverview = state.stageMode === "overview";
   state.stageMode = mode;
   state.outlineMode = mode === "outline";
 
@@ -887,12 +890,49 @@ function setStageMode(mode) {
     setBackground(REFRESH_BG);
     stageOutlineEl.innerHTML = "";
   }
+
+  if (mode === "overview" && !wasOverview) {
+    // Entering overview — default to Compact (the basic glyphset
+    // typeset). Random String stays editable when the user comes back.
+    state.userSizeOverride = false;
+    setGlyphMode(state.glyphMode || "compact", { skipRefit: true });
+  } else if (mode !== "overview" && wasOverview) {
+    // Leaving overview — restore the default text so the headline is
+    // back in random mode rather than stuck on the glyphset, and
+    // re-enable plain-text editing.
+    stageText.textContent = REFRESH_TEXT;
+    stageText.contentEditable = "plaintext-only";
+    state.userSizeOverride = false;
+  }
   applyWhitespaceMode();
 
   applyTypography();
   refitStage();
   if (mode === "outline") renderStageOutline();
   if (mode === "overview") renderStageGrid();
+}
+
+// Compact = typeset string of the basic glyphset, displayed via the
+// existing stage-text. Full = card grid of every glyph in the font,
+// scrollable. The toggle pills only do anything in overview mode.
+function setGlyphMode(mode, opts = {}) {
+  const next = mode === "full" ? "full" : "compact";
+  state.glyphMode = next;
+  stagePanel.dataset.glyphMode = next;
+  for (const btn of glyphModeToggleEl.querySelectorAll(".pill--glyph-mode")) {
+    btn.classList.toggle("is-active", btn.dataset.glyphMode === next);
+  }
+  if (state.stageMode !== "overview") return;
+  if (next === "compact") {
+    stageText.textContent = GRID_LETTERS;
+    stageText.contentEditable = "false";
+  } else {
+    stageText.contentEditable = "plaintext-only";
+  }
+  if (opts.skipRefit) return;
+  applyWhitespaceMode();
+  refitStage();
+  renderStageGrid();
 }
 
 // Legacy entry-point used by the outline-toggle solid/outline buttons —
@@ -914,22 +954,58 @@ function setAlign(mode) {
   refitStage();
 }
 
-// Build the 6×9 grid of glyph cells for Glyph Overview mode. The grid
-// is static markup; the live font features apply through inherited
-// font-feature-settings + font-family on each cell.
+// Build the grid of glyph cells for Glyph Overview Full mode. In
+// "full" mode we walk every cmap'd character in the live font and
+// emit one cell per glyph; the grid scrolls vertically.
 function renderStageGrid() {
   if (!stageGridEl) return;
-  if (stageGridEl.childElementCount === GRID_LETTERS.length) {
-    // Already built — just refresh font features (handled by applyTypography).
-    return;
-  }
+  const chars = state.glyphMode === "full" ? collectFontChars() : GRID_LETTERS;
+  // Cheap signature so we don't rebuild the DOM if the content is
+  // identical (e.g. clicking the same mode pill twice).
+  const sig = `${state.glyphMode}:${chars.length}`;
+  if (stageGridEl.dataset.sig === sig) return;
+  stageGridEl.dataset.sig = sig;
   stageGridEl.innerHTML = "";
-  for (const ch of GRID_LETTERS) {
+  for (const ch of chars) {
     const cell = document.createElement("div");
     cell.className = "stage-grid__cell";
     cell.textContent = ch;
     stageGridEl.appendChild(cell);
   }
+  stageGridEl.scrollTop = 0;
+}
+
+// Walk the font's cmap and return one character per encoded glyph so
+// Full overview can show the entire repertoire (basic Latin, accents,
+// punctuation, ligatures with single codepoints, etc.).
+function collectFontChars() {
+  const ot = state.font && state.font.parsed;
+  if (!ot) return GRID_LETTERS;
+  const seen = new Set();
+  const out = [];
+  const push = (cp) => {
+    if (cp == null || cp < 0x20) return;          // skip control chars
+    if (cp === 0x7f) return;                       // skip DEL
+    const ch = String.fromCodePoint(cp);
+    if (seen.has(ch)) return;
+    seen.add(ch);
+    out.push(ch);
+  };
+  // Prefer the cmap table — it's the canonical char→glyph map.
+  const cmap = ot.tables && ot.tables.cmap;
+  if (cmap && cmap.glyphIndexMap) {
+    const cps = Object.keys(cmap.glyphIndexMap).map(Number).sort((a, b) => a - b);
+    for (const cp of cps) push(cp);
+  }
+  // Fallback: walk glyph table.
+  if (out.length === 0 && typeof ot.numGlyphs === "number") {
+    for (let i = 0; i < ot.numGlyphs; i++) {
+      const g = ot.glyphs.get(i);
+      if (g && g.unicode != null) push(g.unicode);
+      if (g && Array.isArray(g.unicodes)) for (const cp of g.unicodes) push(cp);
+    }
+  }
+  return out.length ? out.join("") : GRID_LETTERS;
 }
 
 // Build an SVG over the stage text with: the glyph path stroked,
@@ -1431,6 +1507,9 @@ async function init() {
   }
   for (const btn of alignToggleEl.querySelectorAll(".al-btn")) {
     btn.addEventListener("click", () => setAlign(btn.dataset.align));
+  }
+  for (const btn of glyphModeToggleEl.querySelectorAll(".pill--glyph-mode")) {
+    btn.addEventListener("click", () => setGlyphMode(btn.dataset.glyphMode));
   }
 
   // Double-click anywhere on the stage (except inside the editable
