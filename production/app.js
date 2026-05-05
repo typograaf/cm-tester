@@ -50,6 +50,7 @@ const BG_MAP = {
   "#004C2B": "dark",
   "#FFFFFF": "white",
   "#D7F394": "mint",
+  "image": "image",
 };
 
 const HIDDEN_DEFAULTS = new Set(["kern", "calt", "rlig", "ccmp", "mark", "mkmk", "aalt", "locl"]);
@@ -778,10 +779,17 @@ function applyTypography(opts = {}) {
 // -------- background + outline mode -------------------------------------
 
 function setBackground(hex) {
+  const wasImage = stagePanel.dataset.bg === "image";
   for (const btn of bgSwatchesEl.querySelectorAll(".bg-swatch")) {
     btn.classList.toggle("is-active", btn.dataset.bg === hex);
   }
   stagePanel.dataset.bg = BG_MAP[hex] || "white";
+  // Switching to/from image mode changes the auto-fit ceiling (5/8
+  // of the panel vs. full panel) so the headline must re-fit.
+  if ((stagePanel.dataset.bg === "image") !== wasImage) {
+    state.userSizeOverride = false;
+    refitStage();
+  }
   if (state.outlineMode) renderStageOutline();
 }
 
@@ -1226,17 +1234,21 @@ function refitStage(opts = {}) {
   }
 
   const max = computeMaxFitEm();
-  sizeInput.max = max.toFixed(1);
+  // Image bg leaves room for the photo to breathe — cap both the
+  // auto-fit target and the slider ceiling at 5/8 of the absolute fit.
+  const isImageBg = stagePanel.dataset.bg === "image";
+  const ceiling = isImageBg ? max * (5 / 8) : max;
+  sizeInput.max = ceiling.toFixed(1);
 
   const sliderMin = parseFloat(sizeInput.min) || 4;
   let value;
   if (preserve || state.userSizeOverride) {
-    value = parseFloat(sizeInput.value) || max;
+    value = parseFloat(sizeInput.value) || ceiling;
   } else {
     const fillRatio = 0.95;
-    value = max * fillRatio;
+    value = ceiling * fillRatio;
   }
-  value = Math.min(max, Math.max(sliderMin, value));
+  value = Math.min(ceiling, Math.max(sliderMin, value));
   sizeInput.value = value.toFixed(1);
 
   stageText.style.fontSize = `${value}em`;
@@ -1360,6 +1372,34 @@ async function init() {
   for (const btn of alignToggleEl.querySelectorAll(".al-btn")) {
     btn.addEventListener("click", () => setAlign(btn.dataset.align));
   }
+
+  // Double-click anywhere on the stage (except inside the editable
+  // text — there dblclick selects a word) to expand the preview to
+  // the full viewport, hiding the controls. Double-click again to
+  // collapse back. The grid-template + opacity transitions on .app
+  // and .col--left animate the swap; a ResizeObserver below re-fits
+  // the headline as the panel grows or shrinks.
+  const appEl = document.querySelector(".app");
+  stagePanel.addEventListener("dblclick", (e) => {
+    if (stageText.contains(e.target)) return;
+    appEl.classList.toggle("stage-fullscreen");
+  });
+
+  // Refit the headline whenever the stage panel changes size — covers
+  // window resizes AND the fullscreen-toggle transition. Single rAF
+  // debounce keeps it cheap during the 0.45s animation.
+  let stageRefitRAF = 0;
+  const stageRO = new ResizeObserver(() => {
+    if (stageRefitRAF) return;
+    stageRefitRAF = requestAnimationFrame(() => {
+      stageRefitRAF = 0;
+      if (window.matchMedia("(max-width: 900px)").matches) return;
+      refitStage({ preserve: true });
+      if (state.outlineMode) renderStageOutline();
+    });
+  });
+  stageRO.observe(stagePanel);
+
   setBackground("#FFFFFF");
   setStageMode("random");
   setAlign("left");

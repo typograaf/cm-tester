@@ -114,6 +114,15 @@ html.loading .app { visibility: hidden; }
   gap: 1.2rem;               /* 12 */
   padding: 1.2rem;           /* 12 */
   height: 100svh;
+  /* Animated grid-template-columns drives the fullscreen-stage toggle:
+     double-clicking the preview swaps the left column to 0fr so the
+     stage takes the whole viewport, and back. */
+  transition: grid-template-columns 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+              gap 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.app.stage-fullscreen {
+  grid-template-columns: 0fr 1fr;
+  gap: 0;
 }
 
 .col--left {
@@ -122,6 +131,12 @@ html.loading .app { visibility: hidden; }
   gap: 1.2rem;               /* 12 */
   min-width: 0;
   min-height: 0;             /* let inner panels honour the viewport cap */
+  overflow: hidden;          /* clip while collapsing for fullscreen stage */
+  transition: opacity 0.3s ease;
+}
+.app.stage-fullscreen .col--left {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .panel {
@@ -515,6 +530,11 @@ button::-moz-focus-inner { border: 0; }
 .bg-swatch[data-bg="#FFFFFF"] {
   background: var(--pill-bg) !important;
 }
+.bg-swatch--image {
+  background-image: url("assets/cm-image.jpg");
+  background-size: cover;
+  background-position: center;
+}
 /* No selection ring on the swatch — the active state is communicated
    by the live preview panel background changing to that color. */
 
@@ -597,6 +617,18 @@ button::-moz-focus-inner { border: 0; }
 .panel--stage[data-bg="dark"]  .stage-caption,
 .panel--stage[data-bg="dark"]  .stage-mark { color: var(--white); }
 .panel--stage[data-bg="mint"]  { background: var(--mint); }
+.panel--stage[data-bg="image"] {
+  background-color: var(--dark-green);
+  background-image:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0) 80%),
+    url("assets/cm-image.jpg");
+  background-size: cover, cover;
+  background-position: center, center;
+  background-repeat: no-repeat, no-repeat;
+}
+.panel--stage[data-bg="image"] .stage-text,
+.panel--stage[data-bg="image"] .stage-caption,
+.panel--stage[data-bg="image"] .stage-mark { color: var(--white); }
 
 .stage-text {
   font-family: var(--cm);
