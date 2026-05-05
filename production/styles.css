@@ -614,13 +614,12 @@ button::-moz-focus-inner { border: 0; }
   transition:
     background-color 0.25s ease,
     background-image 0.25s ease,
-    background-size 0.6s cubic-bezier(0.32, 0.72, 0.16, 1),
-    background-position 0.1s linear,
     left 0.6s cubic-bezier(0.32, 0.72, 0.16, 1);
-  /* The 100ms ease on background-position smooths per-frame JS
-     updates of --image-bg-x without trailing the panel transition
-     end (a longer ease would keep animating after the panel
-     stopped, which read as stutter). */
+  /* No transition on background-size or background-position — JS
+     rewrites them every frame from a stable formula (1.3x cover
+     buffer means no crossover, no division by near-zero), so each
+     update is already in step with the panel size and any
+     transition would only trail. */
 }
 .app.stage-fullscreen .panel--stage {
   /* Grow leftward to claim the full viewport. */
@@ -636,14 +635,15 @@ button::-moz-focus-inner { border: 0; }
   background-image:
     linear-gradient(90deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0) 80%),
     url("assets/cm-image.jpg");
-  background-size: cover, cover;
-  /* The image's bg-position is driven by JS so the woman + child
-     anchor (~55% x, ~30% y of the source) lands in the gap between
-     the headline's right edge and the panel's right edge — keeping
-     the subject framed in both half-screen and fullscreen modes. */
+  /* JS sets explicit px sizes on the image layer so the image is
+     always 1.3x larger than `cover`. With guaranteed positive
+     overflow on BOTH axes, the bg-position math has no
+     divide-by-near-zero crossover — no stutter as the panel
+     resizes through the cover-axis switch. */
+  background-size: cover, var(--image-bg-w, cover) var(--image-bg-h, cover);
   background-position:
     center,
-    var(--image-bg-x, 50%) var(--image-bg-y, 35%);
+    var(--image-bg-x, 50%) var(--image-bg-y, 50%);
   background-repeat: no-repeat, no-repeat;
 }
 .panel--stage[data-bg="image"] .stage-text,

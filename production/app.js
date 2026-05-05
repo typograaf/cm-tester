@@ -800,45 +800,52 @@ function setBackground(hex) {
 // width; CSS transitions on background-position make the swap glide.
 const IMAGE_NAT_W = 2472;
 const IMAGE_NAT_H = 1824;
-const IMAGE_SUBJECT_X = 0.58;   // subject centre as a fraction of source width
-const IMAGE_SUBJECT_Y = 0.30;   // subject (faces) as a fraction of source height
+const IMAGE_SUBJECT_X = 0.58;
+const IMAGE_SUBJECT_Y = 0.30;
+const IMAGE_BG_BUFFER = 1.3;    // 30% larger than `cover` on both axes
+const IMAGE_TARGET_X_REL = 0.7; // subject anchored at 70% of panel width
+const IMAGE_TARGET_Y_REL = 0.45;
 function updateImageBgPosition() {
   if (stagePanel.dataset.bg !== "image") return;
   const W = stagePanel.clientWidth;
   const H = stagePanel.clientHeight;
   if (W <= 0 || H <= 0) return;
-  const scale = Math.max(W / IMAGE_NAT_W, H / IMAGE_NAT_H);
+
+  // Always scale the photo 1.3x larger than the strict `cover` size
+  // so both axes have positive overflow at every panel size. That
+  // removes the cover crossover where one axis switches from
+  // binding to overflowing — at the crossover the bg-position math
+  // divides by ~0 and amplifies pixel noise, which read as the
+  // image flashing at the end of the resize.
+  const scale = IMAGE_BG_BUFFER * Math.max(W / IMAGE_NAT_W, H / IMAGE_NAT_H);
   const sw = IMAGE_NAT_W * scale;
   const sh = IMAGE_NAT_H * scale;
-  const overflowX = Math.max(0, sw - W);
-  const overflowY = Math.max(0, sh - H);
+  const overflowX = sw - W;
+  const overflowY = sh - H;
 
-  // Place the subject in the gap between the headline and the
-  // panel's right edge. Biased a little toward the headline (40% of
-  // the gap from text-right, not 50%) so the subject reads as
-  // "framed in the empty space" instead of pushed to the right edge.
-  let targetX = 0.7 * W;
-  if (stagePanel.dataset.align !== "center" && stageText) {
-    const panelBox = stagePanel.getBoundingClientRect();
-    const textBox = stageText.getBoundingClientRect();
-    const padR = parseFloat(getComputedStyle(stagePanel).paddingRight) || 0;
-    const textLeftInPanel = textBox.left - panelBox.left;
-    const textRightInPanel = textLeftInPanel + stageText.scrollWidth;
-    const panelRightInPanel = W - padR;
-    if (textRightInPanel > 0 && textRightInPanel < panelRightInPanel) {
-      targetX = textRightInPanel + 0.4 * (panelRightInPanel - textRightInPanel);
-    }
-  }
-  const targetY = 0.45 * H;
+  // Subject anchor in the scaled image, in pixels.
+  const subjectX = IMAGE_SUBJECT_X * sw;
+  const subjectY = IMAGE_SUBJECT_Y * sh;
 
-  const posX = overflowX > 0
-    ? Math.max(0, Math.min(100, ((IMAGE_SUBJECT_X * sw - targetX) / overflowX) * 100))
-    : 50;
-  const posY = overflowY > 0
-    ? Math.max(0, Math.min(100, ((IMAGE_SUBJECT_Y * sh - targetY) / overflowY) * 100))
-    : 35;
-  stagePanel.style.setProperty("--image-bg-x", `${posX}%`);
-  stagePanel.style.setProperty("--image-bg-y", `${posY}%`);
+  // Target landing point in panel pixels — anchor the subject at a
+  // fixed fraction of the panel width so it stays put through the
+  // fullscreen resize instead of sliding as the gap to the headline
+  // shrinks.
+  const targetX = IMAGE_TARGET_X_REL * W;
+  const targetY = IMAGE_TARGET_Y_REL * H;
+
+  // bg-position in pixels = the image's top-left corner in panel
+  // coords. Clamp so the image always covers the panel
+  // (-overflow ≤ pos ≤ 0).
+  let posX = targetX - subjectX;
+  let posY = targetY - subjectY;
+  posX = Math.max(-overflowX, Math.min(0, posX));
+  posY = Math.max(-overflowY, Math.min(0, posY));
+
+  stagePanel.style.setProperty("--image-bg-w", `${sw}px`);
+  stagePanel.style.setProperty("--image-bg-h", `${sh}px`);
+  stagePanel.style.setProperty("--image-bg-x", `${posX}px`);
+  stagePanel.style.setProperty("--image-bg-y", `${posY}px`);
 }
 
 // Three-way stage mode: "random" (preset type sample), "overview"
