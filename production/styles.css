@@ -103,40 +103,34 @@ html.loading .app { visibility: hidden; }
    ------------------------------------------------------------------ */
 
 .app {
-  /* Grid (not flex) so the column split is exactly 50/50 regardless
-     of the right panel's content min-width — switching the stage
-     between random-string and glyph-overview modes used to shift the
-     seam because the random-mode footer's nowrap brand text inflated
-     the panel's min-content; locking the columns here pins it. */
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  align-items: stretch;
-  gap: 1.2rem;               /* 12 */
-  padding: 1.2rem;           /* 12 */
+  /* Absolute-positioned children so the fullscreen toggle can slide
+     the controls column off-screen WITHOUT resizing it (its inner
+     layout would otherwise reflow as the column shrank to 0fr).
+     The stage panel's `left` animates from 50% to 1.2rem so it
+     grows leftward in lock-step. */
+  position: relative;
   height: 100svh;
-  /* Animated grid-template-columns drives the fullscreen-stage toggle:
-     double-clicking the preview swaps the left column to 0fr so the
-     stage takes the whole viewport, and back. Apple-style ease for a
-     smoother sweep. */
-  transition:
-    grid-template-columns 0.6s cubic-bezier(0.32, 0.72, 0.16, 1),
-    gap 0.6s cubic-bezier(0.32, 0.72, 0.16, 1);
-}
-.app.stage-fullscreen {
-  grid-template-columns: 0fr 1fr;
-  gap: 0;
+  overflow: hidden;
 }
 
 .col--left {
+  position: absolute;
+  top: 1.2rem;
+  bottom: 1.2rem;
+  left: 1.2rem;
+  right: calc(50% + 0.6rem);
   display: flex;
   flex-direction: column;
-  gap: 1.2rem;               /* 12 */
+  gap: 1.2rem;
   min-width: 0;
-  min-height: 0;             /* let inner panels honour the viewport cap */
-  overflow: hidden;          /* clip while collapsing for fullscreen stage */
-  transition: opacity 0.4s cubic-bezier(0.32, 0.72, 0.16, 1);
+  min-height: 0;
+  transition:
+    transform 0.6s cubic-bezier(0.32, 0.72, 0.16, 1),
+    opacity 0.5s cubic-bezier(0.32, 0.72, 0.16, 1);
 }
 .app.stage-fullscreen .col--left {
+  /* Slide off the left edge — preserving full content width — and fade. */
+  transform: translateX(calc(-100% - 2.4rem));
   opacity: 0;
   pointer-events: none;
 }
@@ -589,8 +583,11 @@ button::-moz-focus-inner { border: 0; }
    ------------------------------------------------------------------ */
 
 .panel--stage {
-  flex: 1 1 0;
-  min-width: 50rem;          /* 500 */
+  position: absolute;
+  top: 1.2rem;
+  bottom: 1.2rem;
+  right: 1.2rem;
+  left: calc(50% + 0.6rem);
   /* Stage uses em-based interior values (gap/padding/captions/mark)
      so they all scale from this single base. With chrome at 100%
      Figma scale, base = 1rem so em = rem here. */
@@ -618,7 +615,12 @@ button::-moz-focus-inner { border: 0; }
     background-color 0.25s ease,
     background-image 0.25s ease,
     background-size 0.6s cubic-bezier(0.32, 0.72, 0.16, 1),
-    background-position 0.6s cubic-bezier(0.32, 0.72, 0.16, 1);
+    background-position 0.6s cubic-bezier(0.32, 0.72, 0.16, 1),
+    left 0.6s cubic-bezier(0.32, 0.72, 0.16, 1);
+}
+.app.stage-fullscreen .panel--stage {
+  /* Grow leftward to claim the full viewport. */
+  left: 1.2rem;
 }
 .panel--stage[data-bg="dark"]  { background: var(--dark-green); }
 .panel--stage[data-bg="dark"]  .stage-text,
@@ -809,6 +811,10 @@ button::-moz-focus-inner { border: 0; }
   justify-content: space-between;
   gap: 2.4em;
   width: 100%;
+  /* The caption + brand lockup are static set dressing — drag-select
+     should ignore them so the user only edits the headline above. */
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 /* Centre alignment: text centres, caption is hidden, brand row centres. */

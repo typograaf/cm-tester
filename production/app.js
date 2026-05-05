@@ -800,7 +800,7 @@ function setBackground(hex) {
 // width; CSS transitions on background-position make the swap glide.
 const IMAGE_NAT_W = 2472;
 const IMAGE_NAT_H = 1824;
-const IMAGE_SUBJECT_X = 0.55;   // subject centre as a fraction of source width
+const IMAGE_SUBJECT_X = 0.58;   // subject centre as a fraction of source width
 const IMAGE_SUBJECT_Y = 0.30;   // subject (faces) as a fraction of source height
 function updateImageBgPosition() {
   if (stagePanel.dataset.bg !== "image") return;
@@ -813,8 +813,11 @@ function updateImageBgPosition() {
   const overflowX = Math.max(0, sw - W);
   const overflowY = Math.max(0, sh - H);
 
-  // Where do we want the subject to land in the panel?
-  let targetX = 0.75 * W;
+  // Place the subject in the gap between the headline and the
+  // panel's right edge. Biased a little toward the headline (40% of
+  // the gap from text-right, not 50%) so the subject reads as
+  // "framed in the empty space" instead of pushed to the right edge.
+  let targetX = 0.7 * W;
   if (stagePanel.dataset.align !== "center" && stageText) {
     const panelBox = stagePanel.getBoundingClientRect();
     const textBox = stageText.getBoundingClientRect();
@@ -823,7 +826,7 @@ function updateImageBgPosition() {
     const textRightInPanel = textLeftInPanel + stageText.scrollWidth;
     const panelRightInPanel = W - padR;
     if (textRightInPanel > 0 && textRightInPanel < panelRightInPanel) {
-      targetX = (textRightInPanel + panelRightInPanel) / 2;
+      targetX = textRightInPanel + 0.4 * (panelRightInPanel - textRightInPanel);
     }
   }
   const targetY = 0.45 * H;
