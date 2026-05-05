@@ -806,23 +806,20 @@ button::-moz-focus-inner { border: 0; }
 /* Compact overview: typeset string fills the panel via the existing
    stage-text wrap, no card grid. */
 .panel--stage[data-mode="overview"][data-glyph-mode="compact"] .stage-grid { display: none; }
-/* Full overview: card grid scrolls vertically through every glyph.
-   grid-auto-rows: auto + aspect-ratio: 1/1 on the cells gives each
-   row a height equal to one column's width, so all cards are
-   square and the grid grows downward as more glyphs are added —
-   overflow-y: auto turns the surplus into a scroll region. */
+/* Full overview: same 6x9 visible grid as the original Glyph
+   Overview, but rows are fixed-height (1/9 of the panel minus
+   gaps) instead of `1fr`, so additional glyphs spill into implicit
+   rows of the same size and the grid scrolls vertically — every
+   cell stays the size of one Figma card no matter how many
+   glyphs the font defines. */
 .panel--stage[data-mode="overview"][data-glyph-mode="full"] .stage-text-wrap { display: none; }
 .panel--stage[data-mode="overview"][data-glyph-mode="full"] .stage-grid {
   display: grid;
-  grid-template-rows: none;
-  grid-auto-rows: auto;
+  grid-template-rows: repeat(9, calc((100% - 8 * 1.2rem) / 9));
+  grid-auto-rows: calc((100% - 8 * 1.2rem) / 9);
   overflow-y: auto;
   align-content: start;
   animation: stage-fade .25s ease;
-}
-.panel--stage[data-mode="overview"][data-glyph-mode="full"] .stage-grid__cell {
-  aspect-ratio: 1 / 1;
-  min-height: 0;
 }
 /* Note: .stage-text-wrap and .stage-footer are deliberately *not*
    animated — opacity animations on text containers cause the
