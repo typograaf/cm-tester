@@ -74,8 +74,8 @@ const state = {
 };
 
 const GRID_LETTERS = "AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz.,";
-// Compact typeset uses the author's exact line breaks (4 lines).
-const COMPACT_TYPESET = "AaBbCcDdEe\nFfGgHhIiJjKk\nLlMmNnOoPpQqRrSsTtUu\nVvWwXxYyZz";
+// Compact typeset uses the author's exact line breaks (5 lines).
+const COMPACT_TYPESET = "AaBbCcDdEe\nFfGgHhIiJjKk\nLlMmNnOoPp\nQqRrSsTtUu\nVvWwXxYyZz";
 
 // -------- DOM refs -------------------------------------------------------
 
