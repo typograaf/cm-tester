@@ -810,6 +810,12 @@ button::-moz-focus-inner { border: 0; }
    centred regardless of the align toggle. */
 .panel--stage[data-mode="overview"][data-glyph-mode="compact"] .stage-grid { display: none; }
 .panel--stage[data-mode="overview"][data-glyph-mode="compact"] .stage-text { text-align: center; }
+/* Centre the typeset specimen vertically in the panel — only
+   stage-text-wrap is visible in this mode, so flex justify-center
+   drops it into the middle. */
+.panel--stage[data-mode="overview"][data-glyph-mode="compact"] {
+  justify-content: center;
+}
 /* Full overview: panel chrome disappears so the white cards sit
    directly on the page bg. Background swatches recolour the cards
    (per-cell), not the panel underneath them. */

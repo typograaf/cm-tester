@@ -74,17 +74,9 @@ const state = {
 };
 
 const GRID_LETTERS = "AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz.,";
-// Compact typeset = the same set, but with zero-width spaces between
-// each upper/lower pair so the line can wrap mid-string without
-// visible separators. Without these the auto-fit can't break the
-// 54-char line and the text either overflows or shrinks to a sliver.
-const COMPACT_TYPESET = (() => {
-  const parts = [];
-  for (let i = 0; i < GRID_LETTERS.length; i += 2) {
-    parts.push(GRID_LETTERS.slice(i, i + 2));
-  }
-  return parts.join("​");
-})();
+// Compact typeset uses the author's exact line breaks — three lines
+// with a soft mid-line break in the first via a regular space.
+const COMPACT_TYPESET = "AaBbCcDdEe FfGgHhIiJjKk\nLlMmNnOoPpQqRrSsTtUu\nVvWwXxYyZz";
 
 // -------- DOM refs -------------------------------------------------------
 
@@ -971,23 +963,61 @@ function setAlign(mode) {
 
 // Build the grid of glyph cells for Glyph Overview Full mode. In
 // "full" mode we walk every cmap'd character in the live font and
-// emit one cell per glyph; the grid scrolls vertically.
+// emit three back-to-back copies so the grid scrolls "infinitely"
+// — a scroll handler wraps scrollTop between copy 2 and copy 3
+// (and copy 1 → copy 2) so the user can keep scrolling forever
+// without hitting an end. Compact mode doesn't touch the grid.
+const FULL_GRID_REPEATS = 3;
+let stageGridScrollHandler = null;
 function renderStageGrid() {
   if (!stageGridEl) return;
-  const chars = state.glyphMode === "full" ? collectFontChars() : GRID_LETTERS;
-  // Cheap signature so we don't rebuild the DOM if the content is
-  // identical (e.g. clicking the same mode pill twice).
-  const sig = `${state.glyphMode}:${chars.length}`;
+  const baseChars = state.glyphMode === "full" ? collectFontChars() : GRID_LETTERS;
+  const repeats = state.glyphMode === "full" ? FULL_GRID_REPEATS : 1;
+  const sig = `${state.glyphMode}:${baseChars.length}:${repeats}`;
   if (stageGridEl.dataset.sig === sig) return;
   stageGridEl.dataset.sig = sig;
   stageGridEl.innerHTML = "";
-  for (const ch of chars) {
-    const cell = document.createElement("div");
-    cell.className = "stage-grid__cell";
-    cell.textContent = ch;
-    stageGridEl.appendChild(cell);
+  for (let r = 0; r < repeats; r++) {
+    for (const ch of baseChars) {
+      const cell = document.createElement("div");
+      cell.className = "stage-grid__cell";
+      cell.textContent = ch;
+      stageGridEl.appendChild(cell);
+    }
   }
-  stageGridEl.scrollTop = 0;
+  // Wire up infinite-scroll wrap once per Full-render. Replacing the
+  // listener is cheap; addEventListener with the same fn would just
+  // be ignored anyway, but we re-bind so the closure references the
+  // latest baseChars length.
+  if (stageGridScrollHandler) {
+    stageGridEl.removeEventListener("scroll", stageGridScrollHandler);
+    stageGridScrollHandler = null;
+  }
+  if (state.glyphMode === "full") {
+    stageGridScrollHandler = () => {
+      const total = stageGridEl.scrollHeight;
+      if (total <= 0) return;
+      const oneCopy = total / FULL_GRID_REPEATS;
+      const top = stageGridEl.scrollTop;
+      // Keep the visible window inside copy 2 by snapping back when
+      // the user crosses into copy 1 (above) or copy 3 (below). The
+      // visual content is identical N rows apart, so the snap is
+      // invisible — the scroll feels endless in either direction.
+      if (top >= oneCopy * 2) {
+        stageGridEl.scrollTop = top - oneCopy;
+      } else if (top < oneCopy * 0.5) {
+        stageGridEl.scrollTop = top + oneCopy;
+      }
+    };
+    stageGridEl.addEventListener("scroll", stageGridScrollHandler, { passive: true });
+    // Land the user in the middle copy so they can scroll either way.
+    requestAnimationFrame(() => {
+      const oneCopy = stageGridEl.scrollHeight / FULL_GRID_REPEATS;
+      stageGridEl.scrollTop = oneCopy;
+    });
+  } else {
+    stageGridEl.scrollTop = 0;
+  }
 }
 
 // Walk the font's cmap and return one character per encoded glyph so
