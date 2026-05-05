@@ -126,7 +126,7 @@ html.loading .app { visibility: hidden; }
   min-height: 0;
   transition:
     transform 0.6s cubic-bezier(0.32, 0.72, 0.16, 1),
-    opacity 0.5s cubic-bezier(0.32, 0.72, 0.16, 1);
+    opacity 0.6s cubic-bezier(0.32, 0.72, 0.16, 1);
 }
 .app.stage-fullscreen .col--left {
   /* Slide off the left edge — preserving full content width — and fade. */
@@ -615,11 +615,12 @@ button::-moz-focus-inner { border: 0; }
     background-color 0.25s ease,
     background-image 0.25s ease,
     background-size 0.6s cubic-bezier(0.32, 0.72, 0.16, 1),
+    background-position 0.1s linear,
     left 0.6s cubic-bezier(0.32, 0.72, 0.16, 1);
-  /* NB: no transition on background-position — JS rewrites
-     --image-bg-x every frame during the fullscreen swap, and a CSS
-     transition would chase a moving target and stutter for ~0.6s
-     after the panel finished resizing. */
+  /* The 100ms ease on background-position smooths per-frame JS
+     updates of --image-bg-x without trailing the panel transition
+     end (a longer ease would keep animating after the panel
+     stopped, which read as stutter). */
 }
 .app.stage-fullscreen .panel--stage {
   /* Grow leftward to claim the full viewport. */
