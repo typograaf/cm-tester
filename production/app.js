@@ -904,8 +904,12 @@ function setStageMode(mode) {
 
   if (mode === "overview" && !wasOverview) {
     // Entering overview — default to Compact (the basic glyphset
-    // typeset). Random String stays editable when the user comes back.
+    // typeset). Image bg has nothing to project behind a glyph
+    // grid (and its swatch is hidden in this mode anyway), so
+    // revert to white. Random String stays editable when the
+    // user comes back.
     state.userSizeOverride = false;
+    if (stagePanel.dataset.bg === "image") setBackground("#FFFFFF");
     setGlyphMode(state.glyphMode || "compact", { skipRefit: true });
   } else if (mode !== "overview" && wasOverview) {
     // Leaving overview — restore the default text so the headline is

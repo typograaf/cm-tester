@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>CM Typeface Tester — Production</title>
-  <link rel="stylesheet" href="styles.css?v=20260505r" />
+  <link rel="stylesheet" href="styles.css?v=20260505s" />
 </head>
 <body>
   <main class="app">
@@ -83,7 +83,13 @@
           <button class="bg-swatch" type="button" data-bg="#004C2B" aria-label="Dark green background"></button>
           <button class="bg-swatch is-active" type="button" data-bg="#FFFFFF" aria-label="White background"></button>
           <button class="bg-swatch" type="button" data-bg="#D7F394" aria-label="Mint green background"></button>
-          <button class="bg-swatch bg-swatch--image" type="button" data-bg="image" aria-label="Image background"></button>
+          <button class="bg-swatch bg-swatch--image" type="button" data-bg="image" aria-label="Image background">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+              <circle cx="9" cy="9" r="2"/>
+              <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+            </svg>
+          </button>
         </div>
         <div class="outline-toggle" id="outlineToggle">
           <button class="ot-btn ot-btn--solid is-active" type="button" data-mode="solid" aria-label="Solid preview">
@@ -132,6 +138,6 @@ te gaan.</div>
   </div>
 
 
-  <script type="module" src="app.js?v=20260505r"></script>
+  <script type="module" src="app.js?v=20260505s"></script>
 </body>
 </html>

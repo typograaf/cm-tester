@@ -552,13 +552,21 @@ button::-moz-focus-inner { border: 0; }
   background: var(--pill-bg) !important;
 }
 .bg-swatch--image {
-  background-image: url("assets/cm-image.jpg");
-  background-size: cover;
-  /* Anchor on the subject (woman + child, ~58%/30%) so the swatch
-     shows the people, not empty street. Same anchor used by the
-     full-size bg-position calc. */
-  background-position: 58% 30%;
+  background: var(--white);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--dark-green);
 }
+.bg-swatch--image svg {
+  width: 65%;
+  height: 65%;
+  display: block;
+}
+/* Image bg has nothing to apply behind a glyph grid, so hide its
+   swatch while overview is active. Other swatches stay because
+   they recolour the cards. */
+.overview-mode .bg-swatch--image { display: none; }
 /* No selection ring on the swatch — the active state is communicated
    by the live preview panel background changing to that color. */
 
@@ -794,18 +802,22 @@ button::-moz-focus-inner { border: 0; }
   transition: background-color .25s ease, color .25s ease;
 }
 
-/* Overview mode: the panel chrome disappears so the white cards sit
-   directly on the page bg. Background swatches recolor the *cards*
+.panel--stage[data-mode="overview"] .stage-footer { display: none; }
+/* Compact overview: typeset string fills the panel via the existing
+   stage-text wrap, no card grid. The panel keeps its white bg +
+   padding + rounded corners (it's the white container the design
+   shows around the typeset specimen) and the text is forced
+   centred regardless of the align toggle. */
+.panel--stage[data-mode="overview"][data-glyph-mode="compact"] .stage-grid { display: none; }
+.panel--stage[data-mode="overview"][data-glyph-mode="compact"] .stage-text { text-align: center; }
+/* Full overview: panel chrome disappears so the white cards sit
+   directly on the page bg. Background swatches recolour the cards
    (per-cell), not the panel underneath them. */
-.panel--stage[data-mode="overview"] {
+.panel--stage[data-mode="overview"][data-glyph-mode="full"] {
   background: transparent;
   padding: 0;
   gap: 0;
 }
-.panel--stage[data-mode="overview"] .stage-footer { display: none; }
-/* Compact overview: typeset string fills the panel via the existing
-   stage-text wrap, no card grid. */
-.panel--stage[data-mode="overview"][data-glyph-mode="compact"] .stage-grid { display: none; }
 /* Full overview: same 6x9 visible grid as the original Glyph
    Overview, but rows are fixed-height (1/9 of the panel minus
    gaps) instead of `1fr`, so additional glyphs spill into implicit
@@ -820,6 +832,12 @@ button::-moz-focus-inner { border: 0; }
   overflow-y: auto;
   align-content: start;
   animation: stage-fade .25s ease;
+  /* Hide the scrollbar — keep the scroll behaviour, drop the chrome. */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.panel--stage[data-mode="overview"][data-glyph-mode="full"] .stage-grid::-webkit-scrollbar {
+  display: none;
 }
 /* Note: .stage-text-wrap and .stage-footer are deliberately *not*
    animated — opacity animations on text containers cause the
