@@ -577,8 +577,8 @@ button::-moz-focus-inner { border: 0; }
   letter-spacing: -0.01em;
   width: 100%;
   outline: none;
-  overflow-wrap: anywhere;
-  word-break: break-word;
+  overflow-wrap: normal;
+  word-break: keep-all;
   white-space: pre-line;
   font-feature-settings: normal;
 }
