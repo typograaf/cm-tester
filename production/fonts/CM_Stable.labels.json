@@ -148,8 +148,9 @@
     }
   },
   "ss16": {
+    "description": "Tittled capitals bring a more friendly tone to an otherwise shouty uppercase headline.",
     "label": "Tittled Capitals",
-    "sample": "I",
+    "sample": "IJ",
     "substitutions": {
       "I": 87,
       "J": 88
