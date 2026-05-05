@@ -381,7 +381,7 @@ button::-moz-focus-inner { border: 0; }
   color: var(--white);
 }
 .al-btn svg {
-  width: 1.6rem;
+  width: auto;
   height: 1.6rem;
   display: block;
 }
