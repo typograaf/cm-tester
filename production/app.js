@@ -824,6 +824,7 @@ function setStageMode(mode) {
     setBackground(REFRESH_BG);
     stageOutlineEl.innerHTML = "";
   }
+  applyWhitespaceMode();
 
   applyTypography();
   refitStage();
@@ -1290,6 +1291,14 @@ function fitHeadlineMobile() {
   stageText.style.fontSize = `${lo}px`;
 }
 
+// Author newlines = treat the text as fixed lines (no soft-wrap).
+// No newlines = let the single string soft-wrap at word boundaries so
+// it fills the panel instead of rendering as a tiny strip.
+function applyWhitespaceMode() {
+  const hasNewline = stageText.textContent.includes("\n");
+  stageText.style.whiteSpace = hasNewline ? "pre" : "pre-line";
+}
+
 function pickRandomString() {
   if (state.outlineMode) {
     // Outline mode: pick a random basic-Latin letter (or digit).
@@ -1299,6 +1308,7 @@ function pickRandomString() {
       next = BASIC_LETTERS.charAt(Math.floor(Math.random() * BASIC_LETTERS.length));
     }
     stageText.textContent = next;
+    applyWhitespaceMode();
     refitStage();
     renderStageOutline();
     return;
@@ -1307,6 +1317,7 @@ function pickRandomString() {
   const idx = PRESETS.findIndex((s) => s.trim() === current);
   const next = PRESETS[(idx + 1) % PRESETS.length];
   stageText.textContent = next;
+  applyWhitespaceMode();
   refitStage();
 }
 
@@ -1402,6 +1413,7 @@ async function init() {
         stageText.textContent = flat;
       }
     }
+    applyWhitespaceMode();
     if (!window.matchMedia("(max-width: 900px)").matches) {
       refitStage();
       if (state.outlineMode) renderStageOutline();

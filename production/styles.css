@@ -609,7 +609,10 @@ button::-moz-focus-inner { border: 0; }
   outline: none;
   overflow-wrap: normal;
   word-break: keep-all;
-  white-space: pre;
+  /* white-space is set dynamically: "pre" when the text contains
+     author newlines, "pre-line" when it's a single string that should
+     soft-wrap to fill the panel. */
+  white-space: pre-line;
   font-feature-settings: normal;
 }
 .stage-text:focus { caret-color: var(--green); }
