@@ -116,9 +116,11 @@ html.loading .app { visibility: hidden; }
   height: 100svh;
   /* Animated grid-template-columns drives the fullscreen-stage toggle:
      double-clicking the preview swaps the left column to 0fr so the
-     stage takes the whole viewport, and back. */
-  transition: grid-template-columns 0.45s cubic-bezier(0.4, 0, 0.2, 1),
-              gap 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+     stage takes the whole viewport, and back. Apple-style ease for a
+     smoother sweep. */
+  transition:
+    grid-template-columns 0.6s cubic-bezier(0.32, 0.72, 0.16, 1),
+    gap 0.6s cubic-bezier(0.32, 0.72, 0.16, 1);
 }
 .app.stage-fullscreen {
   grid-template-columns: 0fr 1fr;
@@ -132,7 +134,7 @@ html.loading .app { visibility: hidden; }
   min-width: 0;
   min-height: 0;             /* let inner panels honour the viewport cap */
   overflow: hidden;          /* clip while collapsing for fullscreen stage */
-  transition: opacity 0.3s ease;
+  transition: opacity 0.4s cubic-bezier(0.32, 0.72, 0.16, 1);
 }
 .app.stage-fullscreen .col--left {
   opacity: 0;
@@ -609,8 +611,14 @@ button::-moz-focus-inner { border: 0; }
   /* Only ease the background — animating padding/gap during a mode
      swap caused layout thrash that re-triggered the size-fit probe
      (which momentarily sets font-size: 200em) and showed a giant L
-     flickering during the transition. */
-  transition: background 0.25s ease;
+     flickering during the transition. The longer ease on bg-position
+     keeps the photo subject gliding to its new framing during the
+     fullscreen swap. */
+  transition:
+    background-color 0.25s ease,
+    background-image 0.25s ease,
+    background-size 0.6s cubic-bezier(0.32, 0.72, 0.16, 1),
+    background-position 0.6s cubic-bezier(0.32, 0.72, 0.16, 1);
 }
 .panel--stage[data-bg="dark"]  { background: var(--dark-green); }
 .panel--stage[data-bg="dark"]  .stage-text,
@@ -623,7 +631,13 @@ button::-moz-focus-inner { border: 0; }
     linear-gradient(90deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0) 80%),
     url("assets/cm-image.jpg");
   background-size: cover, cover;
-  background-position: center, center;
+  /* The image's bg-position is driven by JS so the woman + child
+     anchor (~55% x, ~30% y of the source) lands in the gap between
+     the headline's right edge and the panel's right edge — keeping
+     the subject framed in both half-screen and fullscreen modes. */
+  background-position:
+    center,
+    var(--image-bg-x, 50%) var(--image-bg-y, 35%);
   background-repeat: no-repeat, no-repeat;
 }
 .panel--stage[data-bg="image"] .stage-text,

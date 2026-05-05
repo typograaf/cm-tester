@@ -790,7 +790,52 @@ function setBackground(hex) {
     state.userSizeOverride = false;
     refitStage();
   }
+  updateImageBgPosition();
   if (state.outlineMode) renderStageOutline();
+}
+
+// Image background framing — anchor the woman + child so they sit in
+// the gap to the right of the headline at any panel size. Computed
+// from the panel's current width/height and the headline's measured
+// width; CSS transitions on background-position make the swap glide.
+const IMAGE_NAT_W = 2472;
+const IMAGE_NAT_H = 1824;
+const IMAGE_SUBJECT_X = 0.55;   // subject centre as a fraction of source width
+const IMAGE_SUBJECT_Y = 0.30;   // subject (faces) as a fraction of source height
+function updateImageBgPosition() {
+  if (stagePanel.dataset.bg !== "image") return;
+  const W = stagePanel.clientWidth;
+  const H = stagePanel.clientHeight;
+  if (W <= 0 || H <= 0) return;
+  const scale = Math.max(W / IMAGE_NAT_W, H / IMAGE_NAT_H);
+  const sw = IMAGE_NAT_W * scale;
+  const sh = IMAGE_NAT_H * scale;
+  const overflowX = Math.max(0, sw - W);
+  const overflowY = Math.max(0, sh - H);
+
+  // Where do we want the subject to land in the panel?
+  let targetX = 0.75 * W;
+  if (stagePanel.dataset.align !== "center" && stageText) {
+    const panelBox = stagePanel.getBoundingClientRect();
+    const textBox = stageText.getBoundingClientRect();
+    const padR = parseFloat(getComputedStyle(stagePanel).paddingRight) || 0;
+    const textLeftInPanel = textBox.left - panelBox.left;
+    const textRightInPanel = textLeftInPanel + stageText.scrollWidth;
+    const panelRightInPanel = W - padR;
+    if (textRightInPanel > 0 && textRightInPanel < panelRightInPanel) {
+      targetX = (textRightInPanel + panelRightInPanel) / 2;
+    }
+  }
+  const targetY = 0.45 * H;
+
+  const posX = overflowX > 0
+    ? Math.max(0, Math.min(100, ((IMAGE_SUBJECT_X * sw - targetX) / overflowX) * 100))
+    : 50;
+  const posY = overflowY > 0
+    ? Math.max(0, Math.min(100, ((IMAGE_SUBJECT_Y * sh - targetY) / overflowY) * 100))
+    : 35;
+  stagePanel.style.setProperty("--image-bg-x", `${posX}%`);
+  stagePanel.style.setProperty("--image-bg-y", `${posY}%`);
 }
 
 // Three-way stage mode: "random" (preset type sample), "overview"
@@ -1252,6 +1297,7 @@ function refitStage(opts = {}) {
   sizeInput.value = value.toFixed(1);
 
   stageText.style.fontSize = `${value}em`;
+  updateImageBgPosition();
 }
 
 // Kept for the mobile branch only.
