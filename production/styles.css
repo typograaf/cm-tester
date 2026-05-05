@@ -615,8 +615,11 @@ button::-moz-focus-inner { border: 0; }
     background-color 0.25s ease,
     background-image 0.25s ease,
     background-size 0.6s cubic-bezier(0.32, 0.72, 0.16, 1),
-    background-position 0.6s cubic-bezier(0.32, 0.72, 0.16, 1),
     left 0.6s cubic-bezier(0.32, 0.72, 0.16, 1);
+  /* NB: no transition on background-position — JS rewrites
+     --image-bg-x every frame during the fullscreen swap, and a CSS
+     transition would chase a moving target and stutter for ~0.6s
+     after the panel finished resizing. */
 }
 .app.stage-fullscreen .panel--stage {
   /* Grow leftward to claim the full viewport. */
