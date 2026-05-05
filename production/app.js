@@ -1380,9 +1380,11 @@ function refitStage(opts = {}) {
     return;
   }
 
-  // Overview mode: the grid sizes itself via CSS grid + flex, no
-  // headline fit needed.
-  if (state.stageMode === "overview") return;
+  // Overview-Full: the grid sizes itself via CSS, no headline fit
+  // needed. Overview-Compact still uses the headline (typeset
+  // specimen) and DOES need auto-fit so the longest line fits the
+  // white card.
+  if (state.stageMode === "overview" && state.glyphMode === "full") return;
 
   // Outline mode: bypass the line-height-based fit. Size the glyph
   // by REAL font metrics (cap + descender + overshoots) so the
