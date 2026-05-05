@@ -609,7 +609,7 @@ button::-moz-focus-inner { border: 0; }
   outline: none;
   overflow-wrap: normal;
   word-break: keep-all;
-  white-space: pre-line;
+  white-space: pre;
   font-feature-settings: normal;
 }
 .stage-text:focus { caret-color: var(--green); }
