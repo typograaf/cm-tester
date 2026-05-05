@@ -74,9 +74,8 @@ const state = {
 };
 
 const GRID_LETTERS = "AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz.,";
-// Compact typeset uses the author's exact line breaks — three lines
-// with a soft mid-line break in the first via a regular space.
-const COMPACT_TYPESET = "AaBbCcDdEe FfGgHhIiJjKk\nLlMmNnOoPpQqRrSsTtUu\nVvWwXxYyZz";
+// Compact typeset uses the author's exact line breaks (4 lines).
+const COMPACT_TYPESET = "AaBbCcDdEe\nFfGgHhIiJjKk\nLlMmNnOoPpQqRrSsTtUu\nVvWwXxYyZz";
 
 // -------- DOM refs -------------------------------------------------------
 
@@ -936,6 +935,11 @@ function setGlyphMode(mode, opts = {}) {
   } else {
     stageText.contentEditable = "plaintext-only";
   }
+  // Always re-run auto-fit when toggling sub-modes — the longest line
+  // in compact ("LlMmNnOoPpQqRrSsTtUu") is much longer than the
+  // headline used elsewhere, so a stale userSizeOverride would let
+  // it overflow the white card.
+  state.userSizeOverride = false;
   if (opts.skipRefit) return;
   applyWhitespaceMode();
   refitStage();
