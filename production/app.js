@@ -91,6 +91,7 @@ const ssDescEl = $("ssDesc");
 const glyphPreviewEl = $("glyphPreview");
 const bgSwatchesEl = $("bgSwatches");
 const outlineToggleEl = $("outlineToggle");
+const alignToggleEl = $("alignToggle");
 const stageOutlineEl = $("stageOutline");
 const stageGridEl = $("stageGrid");
 const overviewBtn = $("glyphOverview");
@@ -836,6 +837,19 @@ function setOutlineMode(mode) {
   setStageMode(mode === "outline" ? "outline" : "random");
 }
 
+// Stage text alignment: "left" (default) or "center". Centre mode also
+// hides the "Zonder handen…" caption so the brand mark sits centred.
+// Hiding the caption changes the available height, so we refit.
+function setAlign(mode) {
+  const next = mode === "center" ? "center" : "left";
+  state.align = next;
+  stagePanel.dataset.align = next;
+  for (const btn of alignToggleEl.querySelectorAll(".al-btn")) {
+    btn.classList.toggle("is-active", btn.dataset.align === next);
+  }
+  refitStage();
+}
+
 // Build the 6×9 grid of glyph cells for Glyph Overview mode. The grid
 // is static markup; the live font features apply through inherited
 // font-feature-settings + font-family on each cell.
@@ -1290,9 +1304,8 @@ function pickRandomString() {
     return;
   }
   const current = stageText.textContent.trim();
-  const pool = PRESETS.filter((s) => s !== current);
-  const options = pool.length ? pool : PRESETS;
-  const next = options[Math.floor(Math.random() * options.length)];
+  const idx = PRESETS.findIndex((s) => s.trim() === current);
+  const next = PRESETS[(idx + 1) % PRESETS.length];
   stageText.textContent = next;
   refitStage();
 }
@@ -1333,8 +1346,12 @@ async function init() {
   for (const btn of outlineToggleEl.querySelectorAll(".ot-btn")) {
     btn.addEventListener("click", () => setOutlineMode(btn.dataset.mode));
   }
+  for (const btn of alignToggleEl.querySelectorAll(".al-btn")) {
+    btn.addEventListener("click", () => setAlign(btn.dataset.align));
+  }
   setBackground("#FFFFFF");
   setStageMode("random");
+  setAlign("left");
 
   // Block backspace/delete in outline mode — one letter must always
   // be on screen. (Replacing it via typing still works because that

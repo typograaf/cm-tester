@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>CM Typeface Tester — Production</title>
-  <link rel="stylesheet" href="styles.css?v=20260505f" />
+  <link rel="stylesheet" href="styles.css?v=20260505g" />
 </head>
 <body>
   <main class="app">
@@ -55,6 +55,22 @@
       <!-- Bottom action bar: case, mode toggles, swatches, outline-toggle -->
       <div class="action-bar">
         <div class="case-toggle" id="caseToggle"></div>
+        <div class="align-toggle" id="alignToggle">
+          <button class="al-btn al-btn--left is-active" type="button" data-align="left" aria-label="Align left">
+            <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" aria-hidden="true">
+              <line x1="0.6" y1="3" x2="11.4" y2="3"/>
+              <line x1="0.6" y1="6" x2="6" y2="6"/>
+              <line x1="0.6" y1="9" x2="11.4" y2="9"/>
+            </svg>
+          </button>
+          <button class="al-btn al-btn--center" type="button" data-align="center" aria-label="Align center">
+            <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" aria-hidden="true">
+              <line x1="0.6" y1="3" x2="11.4" y2="3"/>
+              <line x1="3.3" y1="6" x2="8.7" y2="6"/>
+              <line x1="0.6" y1="9" x2="11.4" y2="9"/>
+            </svg>
+          </button>
+        </div>
         <button class="pill pill--mode is-active" id="randomString" type="button" data-mode="random">Random String</button>
         <button class="pill pill--mode" id="glyphOverview" type="button" data-mode="overview">Glyph Overview</button>
 
@@ -110,6 +126,6 @@ te gaan.</div>
   </div>
 
 
-  <script type="module" src="app.js?v=20260505f"></script>
+  <script type="module" src="app.js?v=20260505g"></script>
 </body>
 </html>
