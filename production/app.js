@@ -74,6 +74,17 @@ const state = {
 };
 
 const GRID_LETTERS = "AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz.,";
+// Compact typeset = the same set, but with zero-width spaces between
+// each upper/lower pair so the line can wrap mid-string without
+// visible separators. Without these the auto-fit can't break the
+// 54-char line and the text either overflows or shrinks to a sliver.
+const COMPACT_TYPESET = (() => {
+  const parts = [];
+  for (let i = 0; i < GRID_LETTERS.length; i += 2) {
+    parts.push(GRID_LETTERS.slice(i, i + 2));
+  }
+  return parts.join("​");
+})();
 
 // -------- DOM refs -------------------------------------------------------
 
@@ -924,7 +935,7 @@ function setGlyphMode(mode, opts = {}) {
   }
   if (state.stageMode !== "overview") return;
   if (next === "compact") {
-    stageText.textContent = GRID_LETTERS;
+    stageText.textContent = COMPACT_TYPESET;
     stageText.contentEditable = "false";
   } else {
     stageText.contentEditable = "plaintext-only";
