@@ -137,6 +137,7 @@
     }
   },
   "ss15": {
+    "description": "Geometric forms in SsCc are more economical in typesetting, but are slightly more agressive looking than the more playful grotesque forms.",
     "label": "Geometric SsCc",
     "sample": "SsCc",
     "substitutions": {
