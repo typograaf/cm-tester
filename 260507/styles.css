@@ -144,23 +144,35 @@ html.loading .app { visibility: hidden; }
    Top row: SS pills (8 toggle pills, 2 rows of 4 at typical width)
    ------------------------------------------------------------------ */
 
-.ss-pills,
+/* Preset pills: just two (Curated + Tester) — each takes half the
+   row so the pair always reads as full-width. */
 .preset-pills {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1.2rem;               /* 12 */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.2rem;
   width: 100%;
 }
-/* Orphan-row rules: dynamically widen the trailing pills so the
-   final row always reads as full-width.
-     - 1 orphan (counts 9, 13, 17…): the lone pill spans 4 cols
-     - 2 orphans (counts 10, 14, 18…): each spans 2 cols
-   3-orphan case (counts 11, 15…) intentionally not handled — there's
-   no clean 4-col split for three items, so they fall through to the
-   default 1-col rendering with one empty cell. */
-.ss-pill:last-child:nth-child(4n + 1) { grid-column: span 4; }
+
+/* SS pills: 12-column grid so 4 items per row (3 cols each) is the
+   default, and any orphaned final row widens its pills to fill the
+   row completely. 12 is the LCM of 4 (full row), 3 (3-orphan split)
+   and 2 (2-orphan split). */
+.ss-pills {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 1.2rem;
+  width: 100%;
+}
+.ss-pill { grid-column: span 3; }
+/* 1 orphan (counts 9, 13, 17…): the lone pill spans the full row. */
+.ss-pill:last-child:nth-child(4n + 1) { grid-column: span 12; }
+/* 2 orphans (counts 10, 14, 18…): each spans half. */
 .ss-pill:last-child:nth-child(4n + 2),
-.ss-pill:nth-last-child(2):nth-child(4n + 1) { grid-column: span 2; }
+.ss-pill:nth-last-child(2):nth-child(4n + 1) { grid-column: span 6; }
+/* 3 orphans (counts 11, 15, 19…): each spans a third. */
+.ss-pill:last-child:nth-child(4n + 3),
+.ss-pill:nth-last-child(2):nth-child(4n + 2),
+.ss-pill:nth-last-child(3):nth-child(4n + 1) { grid-column: span 4; }
 
 .ss-pill,
 .preset-pill {
