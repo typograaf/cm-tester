@@ -103,15 +103,24 @@ const overviewBtn = $("glyphOverview");
 const featureDetailEl = document.querySelector(".feature-detail");
 const presetPillsEl = $("presetPills");
 
-// Three curated stylistic-set combinations + a "Custom" sentinel.
-// Picking a preset turns its tags ON and every other ss/cv tag OFF.
-// Touching any individual SS pill that diverges from a preset auto-
-// switches the radio to "Custom".
+// One curated SS combination + a "Tester" sentinel for free play.
+// Picking the curated preset turns its tags ON and every other
+// ss/cv tag OFF. Touching any individual SS pill that diverges
+// switches the radio to "Tester".
 const SS_PRESETS = [
-  { label: "Preset 1", tags: ["ss01", "ss09", "ss13", "ss14"] },
-  { label: "Preset 2", tags: ["ss02", "ss03", "ss04", "ss09", "ss11", "ss16"] },
-  { label: "Preset 3", tags: ["ss01", "ss06", "ss08", "ss09", "ss10"] },
+  { label: "Curated", tags: ["ss01", "ss02", "ss03", "ss04", "ss09"] },
 ];
+
+// Features that exist in the font but never appear in the UI. ss13
+// (Low Crossbars) is always-on infrastructure — applied via
+// font-feature-settings every render but never toggleable. The
+// others are removed from the tester entirely.
+const HIDDEN_FROM_UI = new Set(["ss07", "ss08", "ss10", "ss12", "ss13"]);
+const ALWAYS_ON_FEATURES = ["ss13"];
+
+// Tags that should sit at the END of the feature list regardless of
+// their lexical order in the font's GSUB table.
+const FEATURE_ORDER_TAIL = ["ss01", "ss04"];
 
 // Outline-mode design tokens — finalised from the temporary tweaking
 // panel. Mint-on-dark palette; thicker metrics + glyph stroke; white
@@ -328,6 +337,7 @@ function discoverFeatures(font) {
   for (const tag of tags) {
     if (HIDDEN_DEFAULTS.has(tag)) continue;
     if (!/^ss\d\d$/.test(tag) && !/^cv\d\d$/.test(tag)) continue;
+    if (HIDDEN_FROM_UI.has(tag)) continue;
     const meta = state.ssLabels[tag] || {};
     out.push({
       tag,
@@ -336,7 +346,17 @@ function discoverFeatures(font) {
     });
   }
 
-  out.sort((a, b) => a.tag.localeCompare(b.tag));
+  // Keep tail tags (ss01, ss04) at the END of the feature list so
+  // the curated set sits up top and the "always available" pair is
+  // last in the tester pills.
+  out.sort((a, b) => {
+    const aTail = FEATURE_ORDER_TAIL.indexOf(a.tag);
+    const bTail = FEATURE_ORDER_TAIL.indexOf(b.tag);
+    if (aTail >= 0 && bTail < 0) return 1;
+    if (bTail >= 0 && aTail < 0) return -1;
+    if (aTail >= 0 && bTail >= 0) return aTail - bTail;
+    return a.tag.localeCompare(b.tag);
+  });
   return out;
 }
 
@@ -412,7 +432,7 @@ function renderPresetPills() {
     custom.type = "button";
     custom.className = "preset-pill preset-pill--custom";
     custom.dataset.idx = "-1";
-    custom.innerHTML = `<span class="preset-pill__indicator"></span><span>Custom</span>`;
+    custom.innerHTML = `<span class="preset-pill__indicator"></span><span>Tester</span>`;
     custom.addEventListener("click", () => applyPreset(-1));
     presetPillsEl.appendChild(custom);
   }
@@ -749,11 +769,21 @@ function applyTypography(opts = {}) {
   for (const tag of Object.keys(state.featureState)) {
     parts.push(`"${tag}" ${state.featureState[tag] ? 1 : 0}`);
   }
+  // Always-on infrastructure features (e.g. ss13 Low Crossbars) are
+  // appended unconditionally — they aren't in the toggleable set.
+  for (const tag of ALWAYS_ON_FEATURES) parts.push(`"${tag}" 1`);
   const fft = parts.length ? parts.join(", ") : "normal";
 
   stageText.style.fontFamily = family;
-  stageText.style.lineHeight = leadingInput.value;
-  stageText.style.letterSpacing = `${trackingInput.value}em`;
+  // Sliders never affect the glyph overview — Compact uses a fixed
+  // "normal" leading/tracking specimen, Full uses the per-card style.
+  if (state.stageMode === "overview") {
+    stageText.style.lineHeight = "1.05";
+    stageText.style.letterSpacing = "0";
+  } else {
+    stageText.style.lineHeight = leadingInput.value;
+    stageText.style.letterSpacing = `${trackingInput.value}em`;
+  }
   stageText.style.fontFeatureSettings = fft;
   stageText.style.textTransform =
     state.caseMode === "upper" ? "uppercase"
@@ -1525,9 +1555,19 @@ function pickRandomString() {
 async function init() {
   renderCaseToggle();
 
-  leadingInput.addEventListener("input", applyTypography);
-  trackingInput.addEventListener("input", applyTypography);
+  // Sliders are scoped to random/outline mode only — the glyph
+  // overview uses a fixed normal-leading specimen and per-card
+  // sizes, so dragging in overview should be a no-op.
+  leadingInput.addEventListener("input", () => {
+    if (state.stageMode === "overview") return;
+    applyTypography();
+  });
+  trackingInput.addEventListener("input", () => {
+    if (state.stageMode === "overview") return;
+    applyTypography();
+  });
   sizeInput.addEventListener("input", () => {
+    if (state.stageMode === "overview") return;
     state.userSizeOverride = true;
     // Slider value is already inside the dynamic range — just apply
     // it. Skipping the binary search keeps the drag responsive.
@@ -1661,21 +1701,18 @@ async function init() {
   // Initial focus = first available ss/cv feature.
   if (state.font.features.length) {
     state.focusedSS = state.font.features[0].tag;
-    // Default ss features OFF so the headline reads "neutral" until
-    // the user opts a set in.
-    for (const feat of state.font.features) {
-      if (state.featureState[feat.tag] === undefined) {
-        state.featureState[feat.tag] = false;
-      }
-    }
-    // Apply any active SS tags from the URL hash so a shared link
-    // restores the sender's exact toggle state.
+    // Default = Curated preset on, everything else off. URL hash
+    // overrides if present so a shared link still restores the
+    // sender's exact toggle state.
     const validTags = new Set(state.font.features.map((f) => f.tag));
     const hashTags = readHashState().filter((t) => validTags.has(t));
-    if (hashTags.length) {
-      for (const tag of hashTags) state.featureState[tag] = true;
-      state.focusedSS = hashTags[0];
+    const initialOn = hashTags.length
+      ? new Set(hashTags)
+      : new Set(SS_PRESETS[0].tags.filter((t) => validTags.has(t)));
+    for (const feat of state.font.features) {
+      state.featureState[feat.tag] = initialOn.has(feat.tag);
     }
+    if (hashTags.length) state.focusedSS = hashTags[0];
   }
 
   renderPresetPills();
