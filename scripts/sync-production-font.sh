@@ -10,8 +10,9 @@ set -euo pipefail
 
 REPO="/Users/mdnd-martijn/Documents/GitHub/cm-tester"
 SRC_DIR="/Users/mdnd-martijn/Library/CloudStorage/Dropbox/AboutContact/Fonts/About Contact/WIP TYPE/Custom/Typeface Projects/CM/02-Exports/Production_1"
-DST="$REPO/production/fonts/CM_Stable.otf"
-LABELS_DST="$REPO/production/fonts/CM_Stable.labels.json"
+# Mirror the latest font + labels into every deployed tester
+# (production = stable, dated folders = work-in-progress).
+TARGETS=(production 260507)
 LABELS_SCRIPT="$REPO/scripts/extract_ss_labels.py"
 LOG="$REPO/scripts/sync-production-font.log"
 
@@ -32,36 +33,46 @@ fi
 
 LATEST_NAME="$(basename "$LATEST")"
 
-# Skip if dst already matches (compare by content hash so renames also no-op).
-if [[ -f "$DST" ]]; then
-  SRC_HASH="$(shasum -a 256 "$LATEST" | awk '{print $1}')"
+# Skip if every target already matches the source (renamed file = no-op).
+SRC_HASH="$(shasum -a 256 "$LATEST" | awk '{print $1}')"
+ALL_MATCH=1
+for T in "${TARGETS[@]}"; do
+  DST="$REPO/$T/fonts/CM_Stable.otf"
+  if [[ ! -f "$DST" ]]; then ALL_MATCH=0; break; fi
   DST_HASH="$(shasum -a 256 "$DST" | awk '{print $1}')"
-  if [[ "$SRC_HASH" == "$DST_HASH" ]]; then
-    log "no change ($LATEST_NAME)"
-    exit 0
+  if [[ "$SRC_HASH" != "$DST_HASH" ]]; then ALL_MATCH=0; break; fi
+done
+if [[ "$ALL_MATCH" == "1" ]]; then
+  log "no change ($LATEST_NAME)"
+  exit 0
+fi
+
+# Copy the font into every target and regenerate that target's labels
+# sidecar in place. extract_ss_labels.py merges with the existing
+# JSON so editorial overrides (sample, label) are preserved.
+GIT_PATHS=()
+for T in "${TARGETS[@]}"; do
+  DST="$REPO/$T/fonts/CM_Stable.otf"
+  LABELS_DST="$REPO/$T/fonts/CM_Stable.labels.json"
+  cp "$LATEST" "$DST"
+  log "copied $LATEST_NAME -> $T/fonts/CM_Stable.otf"
+  if ! python3 "$LABELS_SCRIPT" "$DST" "$LABELS_DST" >> "$LOG" 2>&1; then
+    log "label extraction failed for $T"
+    exit 1
   fi
-fi
-
-cp "$LATEST" "$DST"
-log "copied $LATEST_NAME -> production/fonts/CM_Stable.otf"
-
-# Regenerate the SS/CV labels sidecar so renamed/new sets pick up
-# automatically without code changes.
-if ! python3 "$LABELS_SCRIPT" "$DST" "$LABELS_DST" >> "$LOG" 2>&1; then
-  log "label extraction failed"
-  exit 1
-fi
+  GIT_PATHS+=("$T/fonts/CM_Stable.otf" "$T/fonts/CM_Stable.labels.json")
+done
 
 cd "$REPO"
 
-# Only commit/push if git sees a change in either file.
-if [[ -z "$(git status --porcelain -- production/fonts/CM_Stable.otf production/fonts/CM_Stable.labels.json)" ]]; then
+# Only commit/push if git sees a change in any of the synced files.
+if [[ -z "$(git status --porcelain -- "${GIT_PATHS[@]}")" ]]; then
   log "git: no diff, skipping commit"
   exit 0
 fi
 
-git add production/fonts/CM_Stable.otf production/fonts/CM_Stable.labels.json
-git commit -m "Production font sync: $LATEST_NAME" >> "$LOG" 2>&1 || {
+git add "${GIT_PATHS[@]}"
+git commit -m "Font sync: $LATEST_NAME" >> "$LOG" 2>&1 || {
   log "git commit failed"
   exit 1
 }

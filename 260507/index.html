@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en" class="loading">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>CM Typeface Tester — Production</title>
+  <link rel="stylesheet" href="styles.css?v=20260505y" />
+  <!-- Preload the bg photo so the first click on the image swatch
+       paints instantly instead of waiting for the 3.4MB JPG to
+       fetch on demand. -->
+  <link rel="preload" as="image" href="assets/cm-image.jpg" />
+</head>
+<body>
+  <main class="app">
+    <div class="col col--left">
+      <!-- Top: 3 preset combinations + Custom (radio-style) -->
+      <div class="preset-pills" id="presetPills"></div>
+
+      <!-- Feature panel: SS info + glyph preview -->
+      <section class="panel panel--feature">
+        <div class="feature-detail">
+          <div class="detail-info">
+            <div class="detail-info__top">
+              <p class="detail-info__tag" id="ssTag">SS01</p>
+              <h2 class="detail-info__title" id="ssTitle">Double Storey g</h2>
+            </div>
+            <p class="detail-info__desc" id="ssDesc"></p>
+          </div>
+
+          <div class="glyph-preview" id="glyphPreview">
+            <!-- SVG (metric lines + glyph path) injected at runtime so
+                 line positions map 1:1 to the live font's metrics -->
+          </div>
+        </div>
+      </section>
+
+      <!-- SS toggles — individual stylistic-set switches, sit
+           below the preview so the user fine-tunes from the preset. -->
+      <div class="ss-pills" id="ssPills"></div>
+
+      <!-- Sliders panel -->
+      <section class="panel panel--controls">
+        <div class="sliders-stack">
+          <label class="slider-row">
+            <span>Leading</span>
+            <input type="range" id="leading" min="0.6" max="2" step="0.01" value="0.87" />
+          </label>
+          <label class="slider-row">
+            <span>Tracking</span>
+            <input type="range" id="tracking" min="-0.1" max="0.2" step="0.005" value="-0.01" />
+          </label>
+          <label class="slider-row">
+            <span>Size</span>
+            <input type="range" id="fontsize" min="4" max="160" step="0.1" value="14.4" />
+          </label>
+        </div>
+      </section>
+
+      <!-- Bottom action bar: case, mode toggles, swatches, outline-toggle -->
+      <div class="action-bar">
+        <div class="case-toggle" id="caseToggle"></div>
+        <div class="align-toggle" id="alignToggle">
+          <button class="al-btn al-btn--left is-active" type="button" data-align="left" aria-label="Align left">
+            <svg viewBox="0 0 14 13" fill="currentColor" aria-hidden="true">
+              <path d="M13 0.5C13.5523 0.5 14 0.9477 14 1.5C14 2.0523 13.5523 2.5 13 2.5H1C0.4477 2.5 0 2.0523 0 1.5C0 0.9477 0.4477 0.5 1 0.5H13Z"/>
+              <path d="M7 5.5C7.5523 5.5 8 5.9477 8 6.5C8 7.0523 7.5523 7.5 7 7.5H1C0.4477 7.5 0 7.0523 0 6.5C0 5.9477 0.4477 5.5 1 5.5H7Z"/>
+              <path d="M13 10.5C13.5523 10.5 14 10.9477 14 11.5C14 12.0523 13.5523 12.5 13 12.5H1C0.4477 12.5 0 12.0523 0 11.5C0 10.9477 0.4477 10.5 1 10.5H13Z"/>
+            </svg>
+          </button>
+          <button class="al-btn al-btn--center" type="button" data-align="center" aria-label="Align center">
+            <svg viewBox="0 0 14 13" fill="currentColor" aria-hidden="true">
+              <path d="M13 0.5C13.5523 0.5 14 0.9477 14 1.5C14 2.0523 13.5523 2.5 13 2.5H1C0.4477 2.5 0 2.0523 0 1.5C0 0.9477 0.4477 0.5 1 0.5H13Z"/>
+              <path d="M10 5.5C10.5523 5.5 11 5.9477 11 6.5C11 7.0523 10.5523 7.5 10 7.5H4C3.4477 7.5 3 7.0523 3 6.5C3 5.9477 3.4477 5.5 4 5.5H10Z"/>
+              <path d="M13 10.5C13.5523 10.5 14 10.9477 14 11.5C14 12.0523 13.5523 12.5 13 12.5H1C0.4477 12.5 0 12.0523 0 11.5C0 10.9477 0.4477 10.5 1 10.5H13Z"/>
+            </svg>
+          </button>
+        </div>
+        <button class="pill pill--mode is-active" id="randomString" type="button" data-mode="random">Random String</button>
+        <button class="pill pill--mode" id="glyphOverview" type="button" data-mode="overview">Glyph Overview</button>
+
+        <div class="glyph-mode-toggle" id="glyphModeToggle">
+          <button class="pill pill--glyph-mode is-active" type="button" data-glyph-mode="compact">Compact</button>
+          <button class="pill pill--glyph-mode" type="button" data-glyph-mode="full">Full</button>
+        </div>
+
+        <div class="bg-swatches" id="bgSwatches">
+          <button class="bg-swatch" type="button" data-bg="#004C2B" aria-label="Dark green background"></button>
+          <button class="bg-swatch is-active" type="button" data-bg="#FFFFFF" aria-label="White background"></button>
+          <button class="bg-swatch" type="button" data-bg="#D7F394" aria-label="Mint green background"></button>
+          <button class="bg-swatch bg-swatch--image" type="button" data-bg="image" aria-label="Image background">
+            <svg viewBox="0 0 92 92" fill="currentColor" aria-hidden="true">
+              <path d="M92 46C92 71.4051 71.4051 92 46 92V46H92Z"/>
+              <path d="M46 46H0C0 20.5949 20.5949 0 46 0V46Z"/>
+            </svg>
+          </button>
+        </div>
+        <div class="outline-toggle" id="outlineToggle">
+          <button class="ot-btn ot-btn--solid is-active" type="button" data-mode="solid" aria-label="Solid preview">
+            <span class="ot-dot"></span>
+          </button>
+          <button class="ot-btn ot-btn--outline" type="button" data-mode="outline" aria-label="Outline preview">
+            <svg class="ot-ring" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M12.0031 20.8C12.8867 20.7997 13.6035 21.5156 13.6039 22.3992C13.6042 23.2829 12.8883 23.9997 12.0047 24H11.9953C11.1117 23.9997 10.3958 23.2829 10.3961 22.3992C10.3965 21.5156 11.1133 20.7997 11.9969 20.8H12.0031ZM3.5125 18.2195C4.13758 17.5949 5.1504 17.5952 5.775 18.2203C5.77656 18.2219 5.77812 18.2234 5.77969 18.225C6.40477 18.8496 6.40506 19.8624 5.78047 20.4875C5.15587 21.1125 4.14304 21.1129 3.51797 20.4883C3.51588 20.4862 3.5138 20.4841 3.51172 20.482C2.88714 19.857 2.88746 18.8441 3.5125 18.2195ZM18.225 18.2203C18.8496 17.5952 19.8624 17.5949 20.4875 18.2195C21.1125 18.8441 21.1129 19.857 20.4883 20.482C20.4862 20.4841 20.4841 20.4862 20.482 20.4883C19.857 21.1129 18.8441 21.1125 18.2195 20.4875C17.5949 19.8624 17.5952 18.8496 18.2203 18.225C18.2219 18.2234 18.2234 18.2219 18.225 18.2203ZM0 11.9953C0.000341225 11.1117 0.717126 10.3958 1.60078 10.3961C2.48436 10.3965 3.20034 11.1133 3.2 11.9969V12.0031C3.20034 12.8867 2.48436 13.6035 1.60078 13.6039C0.717126 13.6042 0.000341225 12.8883 0 12.0047V11.9953ZM20.8 11.9969C20.7997 11.1133 21.5156 10.3965 22.3992 10.3961C23.2829 10.3958 23.9997 11.1117 24 11.9953V12.0047C23.9997 12.8883 23.2829 13.6042 22.3992 13.6039C21.5156 13.6035 20.7997 12.8867 20.8 12.0031V11.9969ZM3.51797 3.51172C4.14304 2.88714 5.15587 2.88746 5.78047 3.5125C6.40506 4.13758 6.40477 5.1504 5.77969 5.775C5.77812 5.77656 5.77656 5.77812 5.775 5.77969C5.1504 6.40477 4.13758 6.40506 3.5125 5.78047C2.88746 5.15587 2.88714 4.14304 3.51172 3.51797C3.5138 3.51588 3.51588 3.5138 3.51797 3.51172ZM18.2195 3.5125C18.8441 2.88746 19.857 2.88714 20.482 3.51172C20.4841 3.5138 20.4862 3.51588 20.4883 3.51797C21.1129 4.14304 21.1125 5.15587 20.4875 5.78047C19.8624 6.40506 18.8496 6.40477 18.225 5.77969C18.2234 5.77812 18.2219 5.77656 18.2203 5.775C17.5952 5.1504 17.5949 4.13758 18.2195 3.5125ZM12.0047 0C12.8883 0.000341225 13.6042 0.717126 13.6039 1.60078C13.6035 2.48436 12.8867 3.20034 12.0031 3.2H11.9969C11.1133 3.20034 10.3965 2.48436 10.3961 1.60078C10.3958 0.717126 11.1117 0.000341225 11.9953 0H12.0047Z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: stage / preview -->
+    <section class="panel panel--stage" id="stagePanel">
+      <div class="stage-text-wrap">
+        <div
+          class="stage-text"
+          id="stageText"
+          contenteditable="plaintext-only"
+          spellcheck="false"
+        >Leef gerust
+zonder bang
+te zijn om op
+je gezicht
+te gaan.</div>
+        <div class="stage-outline" id="stageOutline"></div>
+      </div>
+
+      <div class="stage-footer">
+        <p class="stage-caption">Zonder handen verzekerd zijn<br />voor je tanden? Check CM.be</p>
+        <div class="stage-brand">
+          <div class="stage-mark" id="stageMark">LEEF GERUST.</div>
+          <img class="stage-logo" src="assets/logo.png" alt="CM" width="63" height="63" />
+        </div>
+      </div>
+
+      <!-- Glyph overview grid: 6 cols × 9 rows, populated at runtime -->
+      <div class="stage-grid" id="stageGrid"></div>
+    </section>
+  </main>
+
+  <div class="too-narrow" aria-hidden="true">
+    <p>Make your browser window a bit bigger to see the CM typeface tester.</p>
+  </div>
+
+
+  <script type="module" src="app.js?v=20260505y"></script>
+</body>
+</html>
