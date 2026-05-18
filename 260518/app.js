@@ -810,10 +810,9 @@ function applyTypography(opts = {}) {
     stageGridEl.style.fontFeatureSettings = fft;
   }
 
-  // Detail panel title also uses the live font once it's loaded. The
-  // glyph preview SVG is rasterized from the parsed font directly, so
-  // it doesn't need the @font-face family.
-  ssTitleEl.style.fontFamily = family;
+  // Detail panel title also uses the live font once it's loaded
+  // (absent in this build).
+  if (ssTitleEl) ssTitleEl.style.fontFamily = family;
 
   fitHeadline(opts);
   if (state.outlineMode) renderStageOutline();
@@ -1750,8 +1749,10 @@ async function init() {
     });
     ro.observe(stagePanel);
 
-    const ro2 = new ResizeObserver(() => renderGlyphPreview());
-    ro2.observe(glyphPreviewEl);
+    if (glyphPreviewEl) {
+      const ro2 = new ResizeObserver(() => renderGlyphPreview());
+      ro2.observe(glyphPreviewEl);
+    }
   }
 }
 
