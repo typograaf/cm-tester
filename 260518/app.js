@@ -1454,14 +1454,10 @@ function refitStage(opts = {}) {
   }
 
   const max = computeMaxFitEm();
-  // Image bg leaves room for the photo to breathe — cap the fit at
-  // 5/8 of the absolute fit in half-screen, but relax to 7/8 in
-  // fullscreen where the panel grew wider so the headline can
-  // claim more of the new horizontal space.
-  const isImageBg = stagePanel.dataset.bg === "image";
-  const isFullscreen = document.querySelector(".app").classList.contains("stage-fullscreen");
-  const cap = isImageBg ? (isFullscreen ? 7 / 8 : 5 / 8) : 1;
-  const ceiling = max * cap;
+  // Type is sized the same regardless of background — the stacked
+  // layout leaves enough room to read the photo subject without
+  // shrinking the headline in image mode.
+  const ceiling = max;
   sizeInput.max = ceiling.toFixed(1);
 
   const sliderMin = parseFloat(sizeInput.min) || 4;

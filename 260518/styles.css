@@ -117,7 +117,9 @@ html.loading .app { visibility: hidden; }
 }
 
 .col--left {
-  /* Bottom controls strip — natural height, full width. */
+  /* Bottom controls strip — natural height, full width. DOM order
+     puts it before the stage, so `order` drops it below. */
+  order: 1;
   flex: 0 0 auto;
   display: flex;
   flex-direction: column;
@@ -636,8 +638,10 @@ button::-moz-focus-inner { border: 0; }
 
 .panel--stage {
   /* Hero of the stacked layout — grows to fill everything the
-     controls strip doesn't use, full width. */
+     controls strip doesn't use, full width. Sits above the
+     controls (order 0 vs the strip's order 1). */
   position: relative;
+  order: 0;
   flex: 1 1 0;
   min-height: 0;
   width: 100%;
