@@ -593,6 +593,7 @@ function renderCaseToggle() {
 }
 
 function renderDetail() {
+  if (!ssTagEl) return;  // no SS detail panel in this build
   const tag = state.focusedSS;
   if (!tag) {
     ssTagEl.textContent = "";
@@ -670,6 +671,7 @@ function resolveTokenGlyph(ot, subs, useSubs, token) {
 // from the live font (sCapHeight, sxHeight, sTypoDescender) so they
 // move when the font changes.
 function renderGlyphPreview() {
+  if (!glyphPreviewEl) return;  // no glyph-preview panel in this build
   const tag = state.focusedSS;
   const meta = state.ssLabels[tag] || {};
   const sample = meta.sample;

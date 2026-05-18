@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>CM Typeface Tester — Production</title>
-  <link rel="stylesheet" href="styles.css?v=20260518b" />
+  <link rel="stylesheet" href="styles.css?v=20260518c" />
   <!-- Preload the bg photo so the first click on the image swatch
        paints instantly instead of waiting for the 3.4MB JPG to
        fetch on demand. -->
@@ -13,26 +13,9 @@
 <body>
   <main class="app">
     <div class="col col--left">
-      <!-- Feature panel: SS info + glyph preview. The preset
-           (Curated/Tester) row and the per-set toggle row are
-           intentionally absent in this build — Diagonal ABPR is
-           the single fixed set. -->
-      <section class="panel panel--feature">
-        <div class="feature-detail">
-          <div class="detail-info">
-            <div class="detail-info__top">
-              <p class="detail-info__tag" id="ssTag">SS01</p>
-              <h2 class="detail-info__title" id="ssTitle">Double Storey g</h2>
-            </div>
-            <p class="detail-info__desc" id="ssDesc"></p>
-          </div>
-
-          <div class="glyph-preview" id="glyphPreview">
-            <!-- SVG (metric lines + glyph path) injected at runtime so
-                 line positions map 1:1 to the live font's metrics -->
-          </div>
-        </div>
-      </section>
+      <!-- This build has a single fixed set (Diagonal ABPR) and no
+           toggle UI, so the SS detail/preview panel is gone too —
+           the sliders panel grows to own the freed space. -->
 
       <!-- Sliders panel -->
       <section class="panel panel--controls">
@@ -137,6 +120,6 @@ te gaan.</div>
   </div>
 
 
-  <script type="module" src="app.js?v=20260518b"></script>
+  <script type="module" src="app.js?v=20260518c"></script>
 </body>
 </html>

@@ -411,13 +411,24 @@ button::-moz-focus-inner { border: 0; }
 
 .panel--controls {
   padding: 7.2rem;           /* 72 */
+  /* This is now the only panel in the left column, so it grows to
+     own all the freed vertical space and centres the slider stack
+     within it (action bar stays pinned at the bottom of the col). */
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   /* Vertical collapse animation when the stage is in outline /
-     overview mode and the sliders are irrelevant. max-height +
-     padding-y + opacity ease together so the panel grows or shrinks
-     instead of popping. The margin transition is what kills the
-     "double-gap" — when the panel sits at height 0, eating its
-     upper gap via negative margin-top closes the leftover space. */
-  max-height: 60rem;
+     overview mode and the sliders are irrelevant. Base max-height
+     is generous (the panel fills the column) so the cap doesn't
+     clip it in normal mode; the collapse rules drop it to 0.
+     max-height + padding-y + opacity ease together so the panel
+     grows or shrinks instead of popping. The margin transition is
+     what kills the "double-gap" — when the panel sits at height 0,
+     eating its upper gap via negative margin-top closes the
+     leftover space. */
+  max-height: 120rem;
   overflow: hidden;
   transition:
     max-height .3s ease,
@@ -429,7 +440,7 @@ button::-moz-focus-inner { border: 0; }
 .sliders-stack {
   display: flex;
   flex-direction: column;
-  gap: 1.2rem;               /* 12 */
+  gap: 3.6rem;               /* roomier now there's space to breathe */
   width: 100%;
 }
 
