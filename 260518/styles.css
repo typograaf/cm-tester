@@ -236,36 +236,29 @@ html.loading .app { visibility: hidden; }
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
   padding: 7.2rem;
 }
 
-/* Figma proportions: detail-info 296 : glyph 398 (glyph wider).
-   Row height pinned to 26.8rem (= Figma 268, scales with rem) so
-   the description sits naturally below the title group instead of
-   drifting to the bottom of a tall column. */
+/* With the preset + toggle rows gone this panel owns the whole
+   left column, so the detail-info and glyph preview stack
+   vertically instead of sitting side-by-side: the glyph fills the
+   tall upper area and the SS metadata sits beneath it. */
 .feature-detail {
-  display: grid;
-  grid-template-columns: 296fr 398fr;
-  grid-template-rows: 26.8rem;
+  display: flex;
+  flex-direction: column;
   gap: 7.2rem;
-  align-items: stretch;
-  flex: 0 0 auto;
+  flex: 1 1 0;
   min-height: 0;
 }
 
 .detail-info {
-  /* Sizes to its content. With description line-clamped (4 lines)
-     and overflow hidden, content height stays predictable across
-     SSes — the glyph preview's aspect-ratio drives the row min, and
-     detail-info matches when its content needs more room. */
+  order: 1;                 /* below the glyph preview */
+  flex: 0 0 auto;           /* natural height — caption block */
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   gap: 2.4rem;
   color: var(--dark-green);
   min-width: 0;
-  min-height: 0;
   overflow: hidden;
 }
 
@@ -317,8 +310,11 @@ html.loading .app { visibility: hidden; }
    share of the grid. min-width: 0 lets it shrink to exactly its fr
    share. JS sizes the SVG path inside to fit both width and height. */
 .glyph-preview {
+  order: 0;                 /* hero — sits on top */
+  flex: 1 1 0;              /* claims the tall upper area */
   width: 100%;
   min-width: 0;
+  min-height: 0;
 }
 .glyph-preview svg {
   display: block;
