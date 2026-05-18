@@ -12,7 +12,7 @@ REPO="/Users/mdnd-martijn/Documents/GitHub/cm-tester"
 SRC_DIR="/Users/mdnd-martijn/Library/CloudStorage/Dropbox/AboutContact/Fonts/About Contact/WIP TYPE/Custom/Typeface Projects/CM/02-Exports/Production_1"
 # Mirror the latest font + labels into every deployed tester
 # (production = stable, dated folders = work-in-progress).
-TARGETS=(production 260507)
+TARGETS=(production 260507 260518)
 LABELS_SCRIPT="$REPO/scripts/extract_ss_labels.py"
 LOG="$REPO/scripts/sync-production-font.log"
 

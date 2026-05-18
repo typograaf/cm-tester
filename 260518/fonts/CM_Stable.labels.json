@@ -1,0 +1,161 @@
+{
+  "ss01": {
+    "description": "A double storey g adds personality, but makes the overall feel of the face slightly less consistent.",
+    "label": "Double Storey g",
+    "sample": "g",
+    "substitutions": {
+      "g": 159
+    }
+  },
+  "ss02": {
+    "description": "A single storey a gives the feel of the face more consistent, but takes away some of the horizontal focus and overall visual interest.",
+    "label": "Single Storey Aa",
+    "sample": "Aa",
+    "substitutions": {
+      "A": 65,
+      "a": 160
+    }
+  },
+  "ss03": {
+    "description": "The lowercaps e brings in more of a fun feeling, but adds complexity and negative space to a letter that usually provides structure.",
+    "label": "Lowercaps E",
+    "sample": "E",
+    "substitutions": {
+      "E": 66
+    }
+  },
+  "ss04": {
+    "description": "The crossed t adds a visual reference to the original logo, but takes away some of the consistency in the letter group jft.",
+    "label": "Crossed t",
+    "sample": "t",
+    "substitutions": {
+      "t": 161
+    }
+  },
+  "ss05": {
+    "description": "Straight terminals bring more harmony to the typeface, but remove the 13 degree anchor that's present throughout the typeface.",
+    "label": "Straight terminals",
+    "sample": "jft",
+    "substitutions": {
+      "J": 67,
+      "f": 162,
+      "j": 163,
+      "r": 164,
+      "t": 165
+    }
+  },
+  "ss06": {
+    "description": "A spurless “G” is a little more dynamic, but less structurally sound than its spurred brother. This is mostly a matter of preference.",
+    "label": "Spurless G",
+    "sample": "G",
+    "substitutions": {
+      "G": 68
+    }
+  },
+  "ss07": {
+    "description": "A straight leg for the uppercase R gives a more geometric feel, but is a little less consistent with the uppercase A.",
+    "label": "Straight Leg R",
+    "sample": "R",
+    "substitutions": {
+      "R": 69
+    }
+  },
+  "ss08": {
+    "description": "A 13 degree angle within the ABPR crossbars instead of a horizontal one. This is more unique, but gives a more quirky feel.",
+    "label": "Diagonal ABPR",
+    "sample": "ABRP",
+    "substitutions": {
+      "A": 70,
+      "B": 71,
+      "E": 72,
+      "P": 73,
+      "R": 74,
+      "a": 166,
+      "e": 167
+    }
+  },
+  "ss09": {
+    "description": "The lowercaps Y gets another lowercase glyph in the uppercase set. Because of the removal of its descender, it may take away some readability.",
+    "label": "Lowercaps Y",
+    "sample": "Y",
+    "substitutions": {
+      "Y": 75
+    }
+  },
+  "ss10": {
+    "description": "A 13 degree angle within the punctuation makes a big impact at the end of every sentence. It closes, but not definitively so. This also impacts tittles on the i & j.",
+    "label": "Angled Punctuation",
+    "sample": ".,ij",
+    "substitutions": {
+      ",": 206,
+      ".": 205,
+      "i": 168,
+      "j": 169
+    }
+  },
+  "ss11": {
+    "description": "Straight legged glyphs where angled legs are expected give the typeface a more vertical, geometric and stylised appearance.",
+    "label": "Straight Legs KXY",
+    "sample": "KXY",
+    "substitutions": {
+      "K": 76,
+      "X": 77,
+      "Y": 78,
+      "k": 170,
+      "x": 171,
+      "z": 172
+    }
+  },
+  "ss12": {
+    "description": "Added crossbars in the upper and lowercase m’s are a more than subtle reference to the logo.",
+    "label": "Logo Mm",
+    "sample": "Mm",
+    "substitutions": {
+      "M": 79,
+      "m": 173
+    }
+  },
+  "ss13": {
+    "description": "These exaggerated crossbars bring a more dynamic appearance, but make the overall feeling a little less stable, a little less consistent.",
+    "label": "Low Crossbars",
+    "sample": "ABRP",
+    "substitutions": {
+      "A": 80,
+      "B": 81,
+      "P": 82,
+      "R": 83,
+      "Y": 84,
+      "a": 174
+    }
+  },
+  "ss14": {
+    "description": "Bowing terminals makes some letterforms curl back up, bringing a more playful touch. This does mean more whitespace and more difficult kerns.",
+    "label": "Bowing Terminals",
+    "sample": "IJ ij r",
+    "substitutions": {
+      "J": 85,
+      "j": 175,
+      "r": 176
+    }
+  },
+  "ss15": {
+    "description": "Geometric forms in SsCc are more economical in typesetting, but are slightly more agressive looking than the more playful grotesque forms.",
+    "label": "Geometric SsCc",
+    "sample": "SsCc",
+    "substitutions": {
+      "C": 86,
+      "S": 87,
+      "c": 177,
+      "s": 178
+    }
+  },
+  "ss16": {
+    "description": "Tittled capitals bring a more friendly tone to an otherwise shouty uppercase headline.",
+    "label": "Tittled Capitals",
+    "sample": "IJ",
+    "substitutions": {
+      "I": 88,
+      "J": 89
+    }
+  }
+}
