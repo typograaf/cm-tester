@@ -103,35 +103,38 @@ html.loading .app { visibility: hidden; }
    ------------------------------------------------------------------ */
 
 .app {
-  /* Absolute-positioned children so the fullscreen toggle can slide
-     the controls column off-screen WITHOUT resizing it (its inner
-     layout would otherwise reflow as the column shrank to 0fr).
-     The stage panel's `left` animates from 50% to 1.2rem so it
-     grows leftward in lock-step. */
+  /* Single stacked column: the type preview owns the bulk of the
+     viewport and the controls sit in a compact strip beneath it,
+     so there's no half-empty side panel. Double-click fullscreen
+     collapses the controls strip and the preview grows to fill. */
   position: relative;
   height: 100svh;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  padding: 1.2rem;
 }
 
 .col--left {
-  position: absolute;
-  top: 1.2rem;
-  bottom: 1.2rem;
-  left: 1.2rem;
-  right: calc(50% + 0.6rem);
+  /* Bottom controls strip — natural height, full width. */
+  flex: 0 0 auto;
   display: flex;
   flex-direction: column;
   gap: 1.2rem;
   min-width: 0;
-  min-height: 0;
+  overflow: hidden;
   transition:
-    transform 0.6s cubic-bezier(0.32, 0.72, 0.16, 1),
-    opacity 0.6s cubic-bezier(0.32, 0.72, 0.16, 1);
+    max-height 0.55s cubic-bezier(0.32, 0.72, 0.16, 1),
+    opacity 0.45s ease,
+    margin 0.55s cubic-bezier(0.32, 0.72, 0.16, 1);
+  max-height: 80rem;
 }
 .app.stage-fullscreen .col--left {
-  /* Slide off the left edge — preserving full content width — and fade. */
-  transform: translateX(calc(-100% - 2.4rem));
+  /* Collapse the strip downward; the flex-1 preview takes the space. */
+  max-height: 0;
   opacity: 0;
+  margin-top: -1.2rem;        /* eat the column gap above */
   pointer-events: none;
 }
 
@@ -410,25 +413,16 @@ button::-moz-focus-inner { border: 0; }
    ------------------------------------------------------------------ */
 
 .panel--controls {
-  padding: 7.2rem;           /* 72 */
-  /* This is now the only panel in the left column, so it grows to
-     own all the freed vertical space and centres the slider stack
-     within it (action bar stays pinned at the bottom of the col). */
-  flex: 1 1 0;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  /* Compact strip in the stacked layout — natural height, the
+     three sliders laid out in a single row. */
+  flex: 0 0 auto;
+  padding: 3.6rem 7.2rem;
   /* Vertical collapse animation when the stage is in outline /
-     overview mode and the sliders are irrelevant. Base max-height
-     is generous (the panel fills the column) so the cap doesn't
-     clip it in normal mode; the collapse rules drop it to 0.
-     max-height + padding-y + opacity ease together so the panel
-     grows or shrinks instead of popping. The margin transition is
-     what kills the "double-gap" — when the panel sits at height 0,
-     eating its upper gap via negative margin-top closes the
-     leftover space. */
-  max-height: 120rem;
+     overview mode and the sliders are irrelevant. max-height +
+     padding-y + opacity ease together so the panel grows or
+     shrinks instead of popping. The margin transition kills the
+     "double-gap" when the panel sits at height 0. */
+  max-height: 40rem;
   overflow: hidden;
   transition:
     max-height .3s ease,
@@ -439,12 +433,14 @@ button::-moz-focus-inner { border: 0; }
 
 .sliders-stack {
   display: flex;
-  flex-direction: column;
-  gap: 3.6rem;               /* roomier now there's space to breathe */
+  flex-direction: row;       /* 3 sliders side-by-side keeps the strip slim */
+  gap: 4.8rem;
   width: 100%;
 }
 
 .slider-row {
+  flex: 1 1 0;               /* each slider shares the row evenly */
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 2.4rem;               /* 24 */
@@ -639,11 +635,12 @@ button::-moz-focus-inner { border: 0; }
    ------------------------------------------------------------------ */
 
 .panel--stage {
-  position: absolute;
-  top: 1.2rem;
-  bottom: 1.2rem;
-  right: 1.2rem;
-  left: calc(50% + 0.6rem);
+  /* Hero of the stacked layout — grows to fill everything the
+     controls strip doesn't use, full width. */
+  position: relative;
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
   /* Stage uses em-based interior values (gap/padding/captions/mark)
      so they all scale from this single base. With chrome at 100%
      Figma scale, base = 1rem so em = rem here. */
@@ -669,17 +666,12 @@ button::-moz-focus-inner { border: 0; }
      fullscreen swap. */
   transition:
     background-color 0.25s ease,
-    background-image 0.25s ease,
-    left 0.6s cubic-bezier(0.32, 0.72, 0.16, 1);
+    background-image 0.25s ease;
   /* No transition on background-size or background-position — JS
      rewrites them every frame from a stable formula (1.3x cover
      buffer means no crossover, no division by near-zero), so each
      update is already in step with the panel size and any
      transition would only trail. */
-}
-.app.stage-fullscreen .panel--stage {
-  /* Grow leftward to claim the full viewport. */
-  left: 1.2rem;
 }
 .panel--stage[data-bg="dark"]  { background: var(--dark-green); }
 .panel--stage[data-bg="dark"]  .stage-text,
