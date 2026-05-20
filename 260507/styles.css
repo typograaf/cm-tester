@@ -28,9 +28,9 @@ html {
 }
 
 :root {
-  --dark-green: #004c2b;
-  --green: #1ca84a;
-  --mint: #d7f394;
+  --dark-green: #0b321d;
+  --green: #0fb847;
+  --mint: #bce8a1;
   --slider-track: #e5edea;
   --bg: #f1f3f2;
   --white: #ffffff;
@@ -365,7 +365,7 @@ html.loading .app { visibility: hidden; }
   background: var(--green);
   color: var(--white);
 }
-.pill.is-active:hover { background: #1ca84a; }
+.pill.is-active:hover { background: #0fb847; }
 
 /* Suppress browser focus rings — selection state is already conveyed
    by .is-active (filled green) and the live detail panel preview. */

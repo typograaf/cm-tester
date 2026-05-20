@@ -47,9 +47,9 @@ const CASE_MODES = [
 // the HTML (data-bg) so it's the single source of truth for the swatch
 // dot AND the bg it applies.
 const BG_MAP = {
-  "#004C2B": "dark",
+  "#0b321d": "dark",
   "#FFFFFF": "white",
-  "#D7F394": "mint",
+  "#bce8a1": "mint",
   "image": "image",
 };
 
@@ -132,13 +132,13 @@ const FEATURE_ORDER_TAIL = ["ss01", "ss04"];
 // panel. Mint-on-dark palette; thicker metrics + glyph stroke; white
 // square anchors; small white circle handles with bolder lines.
 const outlineDesign = {
-  metricColor: "#d7f394",
+  metricColor: "#bce8a1",
   metricThickness: 2,
   metricOpacity: 1,
-  glyphStroke: "#d7f394",
+  glyphStroke: "#bce8a1",
   glyphStrokeOpacity: 1,
   glyphThickness: 2,
-  glyphFill: "#d7f394",
+  glyphFill: "#bce8a1",
   glyphFillOpacity: 0.3,
   anchorColor: "#ffffff",
   anchorStyle: "square",
@@ -757,7 +757,7 @@ function renderGlyphPreview() {
       <line x1="0" y1="${xY}" x2="${W}" y2="${xY}" stroke="${lineColor}" stroke-width="1"/>
       <line x1="0" y1="${baselineY}" x2="${W}" y2="${baselineY}" stroke="${lineColor}" stroke-width="1"/>
       <line x1="0" y1="${descenderY}" x2="${W}" y2="${descenderY}" stroke="${lineColor}" stroke-width="1"/>
-      <path d="${pathData}" fill="#004C2B"/>
+      <path d="${pathData}" fill="#0b321d"/>
     </svg>`;
 }
 
