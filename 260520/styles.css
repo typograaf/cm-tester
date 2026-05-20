@@ -1101,18 +1101,12 @@ button::-moz-focus-inner { border: 0; }
   /* Inter-paragraph spacing is handled in JS (updateParaSpacing):
      it measures each paragraph's line-box slack and sets a
      compensating margin-top so the visible gaps are equal. */
-  /* A left accent bar marks the selected paragraph — reserved on
-     every paragraph (transparent) so text never shifts on select.
-     The right side mirrors it so the box stays symmetric, which is
-     what lets centred text actually sit centred. */
-  border-left: 0.4rem solid transparent;
-  border-right: 0.4rem solid transparent;
+  /* Symmetric horizontal padding — gives breathing room and keeps
+     the box centred-symmetric for centre alignment. */
   padding-left: 1.6rem;
   padding-right: 1.6rem;
   cursor: text;
-  transition: border-color .15s ease;
 }
-.stage-para.is-selected { border-left-color: var(--green); }
 /* Centre alignment: centre the lines AND the (max-width-capped) box
    itself, so smaller paragraphs sit centred on the stage too. */
 .panel--stage[data-align="center"] .stage-para {
