@@ -130,7 +130,7 @@ const PARA_DEFAULT = { variant: "sharp", size: 8, tracking: -0.01, leading: 0.95
 // reads at a glance.
 const INITIAL_PARAS = [
   { text: "Leef gerust",
-    variant: "sharp",   size: 16, tracking: -0.015, leading: 0.9,  opsz: 72, case: null },
+    variant: "sharp",   size: 16, tracking: -0.015, leading: 0.9,  opsz: 72, case: "upper" },
   { text: "zonder bang te zijn\nom op je gezicht te gaan.",
     variant: "rounded", size: 7,  tracking: -0.005, leading: 1.0,  opsz: 36, case: null },
   { text: "Je kan vanaf nu in de app werken aan je gezondheid: een gezichtsscan die je stressniveau meet, gezondheidsactiviteiten volgens thema en gepersonaliseerde informatie over welke terugbetalingen je nog niet hebt aangevraagd.",
