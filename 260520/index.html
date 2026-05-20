@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>CM Typeface Tester — 260520</title>
-  <link rel="stylesheet" href="styles.css?v=20260520j" />
+  <link rel="stylesheet" href="styles.css?v=20260520k" />
   <!-- Preload the bg photo so the first click on the image swatch
        paints instantly instead of waiting for the 3.4MB JPG to
        fetch on demand. -->
@@ -23,12 +23,9 @@
             <button type="button" data-variant="sharp" class="is-active">Sharp</button>
             <button type="button" data-variant="rounded">Rounded</button>
           </div>
-          <div class="para-colors" id="paraColors">
-            <button type="button" class="para-color" data-color="bos"  style="background:#0b321d" aria-label="Bos Groen"></button>
-            <button type="button" class="para-color" data-color="cm"   style="background:#0fb847" aria-label="CM Groen"></button>
-            <button type="button" class="para-color" data-color="munt" style="background:#bce8a1" aria-label="Munt Groen"></button>
-            <button type="button" class="para-color" data-color="wit"  style="background:#ffffff" aria-label="Puur Wit"></button>
-          </div>
+          <!-- Per-paragraph colour swatches — built at runtime
+               (the background's own colour is omitted). -->
+          <div class="para-colors" id="paraColors"></div>
           <button class="pill pill--para" id="addPara" type="button">Add paragraph</button>
           <button class="pill pill--para" id="removePara" type="button">Remove</button>
         </div>
@@ -142,6 +139,6 @@ te gaan.</div>
   </div>
 
 
-  <script type="module" src="app.js?v=20260520j"></script>
+  <script type="module" src="app.js?v=20260520k"></script>
 </body>
 </html>

@@ -94,20 +94,21 @@ const BG_MAP = {
   "image": "image",
 };
 
-// Background tone — drives the per-paragraph colour flip.
+// Background tone, and which brand colour each background *is*. The
+// per-paragraph colour picker hides the background's own colour, so
+// a paragraph can never be set to match (and vanish into) the bg.
 const BG_TONE = { dark: "dark", image: "dark", white: "light", mint: "light" };
+const BG_EXCLUDE = { white: "wit", dark: "bos", mint: "munt", image: "bos" };
 
-// Per-paragraph text colours (brand palette). When the background
-// tone flips light <-> dark, Bos Groen and Puur Wit swap so the
-// contrast level holds; CM Groen and Munt Groen read on either tone
-// and stay put.
+// Per-paragraph text colours (brand palette).
 const COLORS = {
   bos:  "#0b321d",
   cm:   "#0fb847",
   munt: "#bce8a1",
   wit:  "#ffffff",
 };
-const COLOR_FLIP = { bos: "wit", wit: "bos", cm: "cm", munt: "munt" };
+const COLOR_NAMES = { bos: "Bos Groen", cm: "CM Groen", munt: "Munt Groen", wit: "Puur Wit" };
+const COLOR_ORDER = ["bos", "cm", "munt", "wit"];
 
 const HIDDEN_DEFAULTS = new Set(["kern", "calt", "rlig", "ccmp", "mark", "mkmk", "aalt", "locl"]);
 
@@ -127,7 +128,6 @@ const state = {
   outlineMode: false, // legacy alias kept in sync with stageMode==="outline"
   glyphMode: "compact",  // "compact" (typeset string) or "full" (all glyphs grid)
   userSizeOverride: false, // true once the user moves the size slider
-  bgTone: "light",       // tone of the current background (drives colour flip)
 };
 
 // -------- paragraph document model --------------------------------------
@@ -962,20 +962,20 @@ function setBackground(hex) {
   }
   stagePanel.dataset.bg = BG_MAP[hex] || "white";
 
-  // When the background tone flips light <-> dark, flip every
-  // paragraph's colour through COLOR_FLIP so the contrast holds.
-  const tone = BG_TONE[stagePanel.dataset.bg] || "light";
-  if (tone !== state.bgTone) {
-    state.bgTone = tone;
-    for (const p of state.paras) {
-      p.color = COLOR_FLIP[p.color] || p.color;
-    }
-    for (const el of stageDocEl.children) {
-      const p = state.paras.find((x) => x.id === el.dataset.id);
-      if (p) styleParaEl(el, p);
-    }
-    syncControlsFromPara();
+  // The picker can't offer the background's own colour. Any paragraph
+  // currently set to that colour flips to the contrasting brand
+  // colour (Bos Groen on a light bg, Puur Wit on a dark one) so it
+  // stays legible. Then rebuild the swatches for the new exclusion.
+  const excluded = BG_EXCLUDE[stagePanel.dataset.bg] || "wit";
+  const contrast = BG_TONE[stagePanel.dataset.bg] === "dark" ? "wit" : "bos";
+  for (const p of state.paras) {
+    if (p.color === excluded) p.color = contrast;
   }
+  for (const el of stageDocEl.children) {
+    const p = state.paras.find((x) => x.id === el.dataset.id);
+    if (p) styleParaEl(el, p);
+  }
+  renderColorPicker();
 
   // Switching to/from image mode changes the auto-fit ceiling (5/8
   // of the panel vs. full panel) so the headline must re-fit.
@@ -1885,6 +1885,31 @@ function selectPara(id) {
 }
 
 // Push the selected paragraph's settings into the controls panel.
+// Build the per-paragraph colour swatches: the three brand colours
+// that are NOT the current background colour. Rebuilt whenever the
+// background changes (one swatch swaps).
+function renderColorPicker() {
+  const excluded = BG_EXCLUDE[stagePanel.dataset.bg] || "wit";
+  paraColorsEl.innerHTML = "";
+  for (const c of COLOR_ORDER) {
+    if (c === excluded) continue;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "para-color";
+    btn.dataset.color = c;
+    btn.style.background = COLORS[c];
+    btn.setAttribute("aria-label", COLOR_NAMES[c]);
+    btn.addEventListener("click", () => {
+      updateParaSetting("color", c);
+      for (const b of paraColorsEl.children) {
+        b.classList.toggle("is-active", b === btn);
+      }
+    });
+    paraColorsEl.appendChild(btn);
+  }
+  syncControlsFromPara();
+}
+
 function syncControlsFromPara() {
   const p = getSelectedPara();
   if (!p) return;
@@ -1998,15 +2023,8 @@ async function init() {
       }
     });
   }
-  // Per-paragraph colour swatches.
-  for (const btn of paraColorsEl.querySelectorAll(".para-color")) {
-    btn.addEventListener("click", () => {
-      updateParaSetting("color", btn.dataset.color);
-      for (const b of paraColorsEl.querySelectorAll(".para-color")) {
-        b.classList.toggle("is-active", b === btn);
-      }
-    });
-  }
+  // Per-paragraph colour swatches are built by renderColorPicker
+  // (rebuilt on every background change), so no wiring is needed here.
   addParaBtn.addEventListener("click", addParagraph);
   removeParaBtn.addEventListener("click", removeParagraph);
   randomBtn.addEventListener("click", () => {

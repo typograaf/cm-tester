@@ -1000,12 +1000,12 @@ button::-moz-focus-inner { border: 0; }
   cursor: not-allowed;
 }
 
-/* Per-paragraph colour swatches — brand palette. */
+/* Per-paragraph colour swatches — same tray + dots as .bg-swatches. */
 .para-colors {
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
-  background: var(--pill-bg);
+  background: var(--white);
   padding: 1.2rem;
   border-radius: 9.3rem;
   flex: 0 0 auto;
@@ -1017,20 +1017,14 @@ button::-moz-focus-inner { border: 0; }
   border: 0;
   padding: 0;
   cursor: pointer;
+  position: relative;
   flex: 0 0 auto;
-  /* Inset hairline keeps the white swatch visible on the light tray. */
-  box-shadow: inset 0 0 0 1px rgba(11, 50, 29, 0.15);
-  transition: transform .15s ease, box-shadow .15s ease;
+  transition: transform .15s ease, background-color .2s ease;
 }
 .para-color:hover { transform: scale(1.08); }
-/* Active = the selected paragraph's colour: white gap + dark ring,
-   so it reads on any swatch colour. */
-.para-color.is-active {
-  box-shadow:
-    inset 0 0 0 1px rgba(11, 50, 29, 0.15),
-    0 0 0 0.2rem var(--white),
-    0 0 0 0.5rem var(--dark-green);
-}
+/* Puur Wit reads as the pill grey on the white tray, like the
+   white background swatch. */
+.para-color[data-color="wit"] { background: var(--pill-bg) !important; }
 
 /* ------------------------------------------------------------------
    Multi-paragraph document (text mode)
