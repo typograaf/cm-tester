@@ -1743,6 +1743,19 @@ function capRatio(variant) {
   return _capCache[variant];
 }
 
+// Tallest ink above the baseline (ascenders / accented caps) as a
+// fraction of font size — used to keep the first paragraph from
+// clipping against the top of the document.
+const _ascCache = {};
+function inkAscentRatio(variant) {
+  if (_ascCache[variant] != null) return _ascCache[variant];
+  const fam = (FONT_VARIANTS[variant] || FONT_VARIANTS.sharp).family;
+  _capCanvas.font = `700 200px "${fam}", sans-serif`;
+  const m = _capCanvas.measureText("HhklbdfÀÉ");
+  _ascCache[variant] = (m.actualBoundingBoxAscent || 150) / 200;
+  return _ascCache[variant];
+}
+
 // Returns { top, bottom } as fractions of font size:
 //  top    = line-box top   -> cap-top    (slack above the caps)
 //  bottom = baseline       -> line-box bottom (slack below the baseline)
@@ -1778,7 +1791,14 @@ function updateParaSpacing() {
   els.forEach((el, i) => {
     const p = state.paras[i];
     if (!p) return;
-    if (i === 0) { el.style.marginTop = "0px"; return; }
+    if (i === 0) {
+      // The doc container clips its overflow, so nudge the first
+      // paragraph down until its tallest ink clears the top edge.
+      const ascPortion = paraSlack(p.variant, p.leading).top + capRatio(p.variant);
+      const overshoot = (inkAscentRatio(p.variant) - ascPortion) * p.size * emPx;
+      el.style.marginTop = `${Math.max(0, overshoot)}px`;
+      return;
+    }
     const prev = state.paras[i - 1];
     // prevBottom: last baseline -> box bottom. thisTop: box top -> cap top.
     const prevBottom = paraSlack(prev.variant, prev.leading).bottom * prev.size * emPx;
