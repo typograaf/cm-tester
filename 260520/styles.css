@@ -1,0 +1,950 @@
+/* ------------------------------------------------------------------
+   Fonts
+   ------------------------------------------------------------------ */
+
+@font-face {
+  font-family: "BE Cause";
+  src: url("fonts/BECauseVF.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ------------------------------------------------------------------
+   Proportional scaling
+
+   Figma frame is 1920 x 991 and the design renders at that scale.
+   1rem tracks the SMALLER of width-/192 (1920w → 10px) and
+   height-/99.1 (991h → 10px), so the layout scales up on larger
+   monitors AND down on smaller ones, never letting one dimension
+   overflow. Floor at 7px so everything stays legible on tight
+   viewports.
+   ------------------------------------------------------------------ */
+
+html {
+  /* Global 0.8x scale: divisors and floor multiplied by 1/0.8 and 0.8
+     respectively so every rem-based size shrinks proportionally. */
+  font-size: max(5.6px, min(calc(100vw / 240), calc(100vh / 123.875)));
+}
+
+:root {
+  --dark-green: #004c2b;
+  --green: #1ca84a;
+  --mint: #d7f394;
+  --slider-track: #e5edea;
+  --bg: #f1f3f2;
+  --white: #ffffff;
+  --pill-bg: #f5f5f5;
+
+  --radius: 4.8rem;          /* 48 */
+  --body-size: 2rem;         /* 20 */
+  --body-track: 0.02em;      /* +2 in font units */
+
+  --ui: "BE Cause", -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
+  --cm: "CM-Stable", system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100svh;
+  background: var(--bg);
+  font-family: var(--ui);
+  font-feature-settings: "dlig" 1;
+  color: var(--dark-green);
+  -webkit-font-smoothing: antialiased;
+  /* Lock both axes — .app pins to 100svh and the too-narrow overlay
+     handles small viewports, so any sub-pixel slack from the size
+     slider can't cause the page to scroll. */
+  overflow: hidden;
+}
+
+/* The desktop layout needs at least 1280×800 to look right. Below
+   that we show a friendly "make your window bigger" overlay
+   instead of trying to stack the panels into a mobile layout. */
+.too-narrow {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--bg);
+  align-items: center;
+  justify-content: center;
+  padding: 4rem;
+  text-align: center;
+}
+.too-narrow p {
+  margin: 0;
+  font-family: var(--ui);
+  font-weight: 500;
+  font-variation-settings: "wght" 500, "wdth" 60;
+  font-size: 22px;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+  color: var(--dark-green);
+  max-width: 22em;
+}
+
+@media (max-width: 1279px), (max-height: 799px) {
+  .app { display: none; }
+  .too-narrow { display: flex; }
+}
+
+/* Hide via visibility (not opacity) so the initial reveal doesn't
+   promote .app to a composited layer — that layer's paint bounds
+   would clip text descenders/ascenders during the fade-in and they'd
+   "pop in" once the layer was dropped. */
+html.loading .app { visibility: hidden; }
+
+/* ------------------------------------------------------------------
+   App shell — two columns
+   ------------------------------------------------------------------ */
+
+.app {
+  /* Single stacked column: the type preview owns the bulk of the
+     viewport and the controls sit in a compact strip beneath it,
+     so there's no half-empty side panel. Double-click fullscreen
+     collapses the controls strip and the preview grows to fill. */
+  position: relative;
+  height: 100svh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  padding: 1.2rem;
+}
+
+.col--left {
+  /* Bottom controls strip — natural height, full width. DOM order
+     puts it before the stage, so `order` drops it below. */
+  order: 1;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  min-width: 0;
+  overflow: hidden;
+  transition:
+    max-height 0.55s cubic-bezier(0.32, 0.72, 0.16, 1),
+    opacity 0.45s ease,
+    margin 0.55s cubic-bezier(0.32, 0.72, 0.16, 1);
+  max-height: 80rem;
+}
+.app.stage-fullscreen .col--left {
+  /* Collapse the strip downward; the flex-1 preview takes the space. */
+  max-height: 0;
+  opacity: 0;
+  margin-top: -1.2rem;        /* eat the column gap above */
+  pointer-events: none;
+}
+
+.panel {
+  background: var(--white);
+  border-radius: var(--radius);
+}
+
+/* ------------------------------------------------------------------
+   Top row: SS pills (8 toggle pills, 2 rows of 4 at typical width)
+   ------------------------------------------------------------------ */
+
+/* Preset pills: just two (Curated + Tester) — each takes half the
+   row so the pair always reads as full-width. */
+.preset-pills {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.2rem;
+  width: 100%;
+}
+
+/* SS pills: 12-column grid so 4 items per row (3 cols each) is the
+   default, and any orphaned final row widens its pills to fill the
+   row completely. 12 is the LCM of 4 (full row), 3 (3-orphan split)
+   and 2 (2-orphan split). */
+.ss-pills {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 1.2rem;
+  width: 100%;
+}
+.ss-pill { grid-column: span 3; }
+/* 1 orphan (counts 9, 13, 17…): the lone pill spans the full row. */
+.ss-pill:last-child:nth-child(4n + 1) { grid-column: span 12; }
+/* 2 orphans (counts 10, 14, 18…): each spans half. */
+.ss-pill:last-child:nth-child(4n + 2),
+.ss-pill:nth-last-child(2):nth-child(4n + 1) { grid-column: span 6; }
+/* 3 orphans (counts 11, 15, 19…): each spans a third. */
+.ss-pill:last-child:nth-child(4n + 3),
+.ss-pill:nth-last-child(2):nth-child(4n + 2),
+.ss-pill:nth-last-child(3):nth-child(4n + 1) { grid-column: span 4; }
+
+.ss-pill,
+.preset-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 1.2rem;               /* 12 */
+  background: var(--white);
+  color: var(--dark-green);
+  border: 0;
+  padding: 1.2rem;           /* 12 */
+  border-radius: 9.3rem;
+  cursor: pointer;
+  font-family: var(--ui);
+  font-weight: 700;
+  font-variation-settings: "wght" 700, "wdth" 60;
+  font-size: var(--body-size);
+  line-height: 1.6;
+  letter-spacing: var(--body-track);
+  font-feature-settings: "dlig" 1;
+  white-space: nowrap;
+  transition: background .15s, color .15s;
+  min-width: 0;
+}
+.preset-pill:hover { background: #f7f8f7; }
+
+/* Round radio-style indicator inside each preset pill. Mirrors the
+   line-box height like the SS pill toggle but is a perfect circle:
+   hollow when inactive, filled green when this preset is active. */
+.preset-pill__indicator {
+  width: 1.6em;
+  height: 1.6em;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  background: var(--pill-bg);
+  box-shadow: inset 0 0 0 0.2em var(--pill-bg);
+  transition: background-color .2s ease, box-shadow .2s ease;
+}
+.preset-pill.is-active .preset-pill__indicator {
+  background: var(--green);
+  box-shadow: inset 0 0 0 0.2em var(--green);
+}
+.ss-pill__icon {
+  /* Sized in em so the icon scales with the pill's font-size and
+     fills the text line-box vertically (1.6em = the line-height
+     box). 19:12 aspect ratio preserved from the Figma source. */
+  height: 1.6em;
+  width: calc(1.6em * 19 / 12);
+  flex: 0 0 auto;
+  display: block;
+}
+.ss-pill__icon rect.track  { fill: var(--pill-bg); transition: fill .2s ease; }
+.ss-pill__icon circle.knob { fill: var(--white); transition: cx .2s ease; }
+.ss-pill.is-active .ss-pill__icon rect.track { fill: var(--green); }
+.ss-pill:hover { background: #f7f8f7; }
+
+/* Feature panel — info + glyph preview, stretched to fill column */
+.panel--feature {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 7.2rem;
+}
+
+/* With the preset + toggle rows gone this panel owns the whole
+   left column, so the detail-info and glyph preview stack
+   vertically instead of sitting side-by-side: the glyph fills the
+   tall upper area and the SS metadata sits beneath it. */
+.feature-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 7.2rem;
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.detail-info {
+  order: 1;                 /* below the glyph preview */
+  flex: 0 0 auto;           /* natural height — caption block */
+  display: flex;
+  flex-direction: column;
+  gap: 2.4rem;
+  color: var(--dark-green);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.detail-info__top {
+  display: flex;
+  flex-direction: column;
+  gap: 2.4rem;
+}
+
+.detail-info__tag {
+  margin: 0;
+  font: 400 var(--body-size)/1.4 var(--ui);
+  font-variation-settings: "wght" 500, "wdth" 60;
+  letter-spacing: var(--body-track);
+}
+
+.detail-info__title {
+  margin: 0;
+  font: 700 4rem/0.95 var(--cm);
+  letter-spacing: -0.01em;
+  color: var(--dark-green);
+  /* Long titles can wrap to two lines but only at word boundaries —
+     no mid-word breaks like "Lowerc / aps e". */
+  overflow-wrap: normal;
+  word-break: keep-all;
+}
+
+.detail-info__desc {
+  margin: 0;
+  font: 400 var(--body-size)/1.4 var(--ui);
+  font-variation-settings: "wght" 500, "wdth" 60;
+  letter-spacing: var(--body-track);
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  overflow-wrap: break-word;
+  /* No line-clamp — the parent detail-info has plenty of room from
+     the flex-grown feature-detail row. detail-info still has
+     overflow: hidden as a final safety, but in practice all 5
+     descriptions fit comfortably without ellipsis. */
+}
+
+/* Glyph preview (right half of feature panel)
+   The SVG inside is built by JS so its viewBox + metric lines + glyph
+   baseline track the live font's metrics (UPM, cap, x-height,
+   descender). The container only needs to give the SVG room. */
+
+/* Glyph preview cell — no aspect-ratio constraint, since that gives
+   the cell an intrinsic min-width that makes it overflow its 3fr
+   share of the grid. min-width: 0 lets it shrink to exactly its fr
+   share. JS sizes the SVG path inside to fit both width and height. */
+.glyph-preview {
+  order: 0;                 /* hero — sits on top */
+  flex: 1 1 0;              /* claims the tall upper area */
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+.glyph-preview svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* Allow the path to extend slightly past the descender line — fonts
+     typically include a few units of overshoot below sTypoDescender. */
+  overflow: visible;
+}
+
+/* ------------------------------------------------------------------
+   Pills — shared (SS pills, case toggle, Random String)
+   ------------------------------------------------------------------ */
+
+.pill,
+.case-toggle button {
+  font-family: var(--ui);
+  font-weight: 700;
+  font-variation-settings: "wght" 700, "wdth" 60;
+  font-size: var(--body-size);
+  line-height: 1.6;
+  letter-spacing: var(--body-track);
+  color: var(--dark-green);
+  background: var(--white);
+  border: 0;
+  padding: 1.2rem 2.4rem;
+  border-radius: 9.3rem;
+  cursor: pointer;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .15s, color .15s;
+  font-feature-settings: "dlig" 1;
+}
+/* Action-bar TT/tt pills are tighter — uniform 12px padding per Figma. */
+.action-bar .case-toggle button { padding: 1.2rem; min-width: 4.8rem; }
+.action-bar .pill--mode { padding: 1.2rem; }
+.pill:hover,
+.case-toggle button:hover { background: #f7f8f7; }
+
+.pill.is-active,
+.case-toggle button.is-active {
+  background: var(--green);
+  color: var(--white);
+}
+.pill.is-active:hover { background: #1ca84a; }
+
+/* Suppress browser focus rings — selection state is already conveyed
+   by .is-active (filled green) and the live detail panel preview. */
+button { outline: none; }
+button:focus,
+button:focus-visible { outline: none; box-shadow: none; }
+button::-moz-focus-inner { border: 0; }
+
+.case-toggle {
+  display: inline-flex;
+  gap: 0.6rem;
+}
+
+/* Align toggle — two pills (left / centre) sized to match TT/tt. */
+.align-toggle {
+  display: inline-flex;
+  gap: 0.6rem;
+}
+.al-btn {
+  width: 4.8rem;
+  height: 4.8rem;
+  padding: 0;
+  border: 0;
+  border-radius: 9.3rem;
+  background: var(--white);
+  color: var(--dark-green);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .15s, color .15s;
+}
+.al-btn:hover { background: #f7f8f7; }
+.al-btn.is-active {
+  background: var(--green);
+  color: var(--white);
+}
+.al-btn svg {
+  width: auto;
+  height: 1.6rem;
+  display: block;
+}
+
+/* ------------------------------------------------------------------
+   Sliders panel — Leading / Tracking / Size
+   ------------------------------------------------------------------ */
+
+.panel--controls {
+  /* Compact strip in the stacked layout — natural height, the
+     three sliders laid out in a single row. */
+  flex: 0 0 auto;
+  padding: 3.6rem 7.2rem;
+  /* Vertical collapse animation when the stage is in outline /
+     overview mode and the sliders are irrelevant. max-height +
+     padding-y + opacity ease together so the panel grows or
+     shrinks instead of popping. The margin transition kills the
+     "double-gap" when the panel sits at height 0. */
+  max-height: 40rem;
+  overflow: hidden;
+  transition:
+    max-height .3s ease,
+    padding .3s ease,
+    margin .3s ease,
+    opacity .25s ease;
+}
+
+.sliders-stack {
+  display: flex;
+  flex-direction: row;       /* 3 sliders side-by-side keeps the strip slim */
+  gap: 4.8rem;
+  width: 100%;
+}
+
+.slider-row {
+  flex: 1 1 0;               /* each slider shares the row evenly */
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 2.4rem;               /* 24 */
+}
+.slider-row > span {
+  font: 400 var(--body-size)/1.4 var(--ui);
+  font-variation-settings: "wght" 500, "wdth" 60;
+  letter-spacing: var(--body-track);
+  color: var(--dark-green);
+  white-space: nowrap;
+  min-width: 6.8rem;          /* align tracks with each other */
+}
+.slider-row input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1 1 0;
+  height: 0.4rem;             /* 4 */
+  background: var(--slider-track);
+  border-radius: 13.8rem;
+  outline: none;
+  cursor: pointer;
+}
+.slider-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 3.6rem;              /* 36 */
+  height: 1.8rem;             /* 18 */
+  background: var(--green);
+  border-radius: 7.9rem;
+  border: 0;
+  cursor: pointer;
+  transition: transform .15s ease, background-color .2s ease;
+}
+.slider-row input[type="range"]::-moz-range-thumb {
+  width: 3.6rem;
+  height: 1.8rem;
+  background: var(--green);
+  border-radius: 7.9rem;
+  border: 0;
+  cursor: pointer;
+  transition: transform .15s ease, background-color .2s ease;
+}
+.slider-row input[type="range"]:hover::-webkit-slider-thumb,
+.slider-row input[type="range"]:active::-webkit-slider-thumb { transform: scale(1.12); }
+.slider-row input[type="range"]:hover::-moz-range-thumb,
+.slider-row input[type="range"]:active::-moz-range-thumb { transform: scale(1.12); }
+
+/* ------------------------------------------------------------------
+   Action bar — sits on the page bg below the sliders panel.
+   Holds case toggle, mode pills (Random / Glyph Overview),
+   bg-swatches tray, outline-toggle tray.
+   ------------------------------------------------------------------ */
+.action-bar {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+}
+/* The two mode pills (Random / Glyph Overview) share the remaining
+   horizontal space equally so they fill the row. */
+.action-bar .pill--mode {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* Compact / Full sub-toggle for Glyph Overview — slides in only when
+   the stage is in overview mode. Same easing/durations as the other
+   collapsing trays (.bg-swatches, .panel--controls) so animations
+   are consistent across the action bar. The negative margin-left
+   eats the action-bar gap when collapsed so neighbours don't leave
+   a double-gap hole. */
+.glyph-mode-toggle {
+  display: inline-flex;
+  gap: 1.2rem;
+  max-width: 0;
+  margin-left: -1.2rem;
+  overflow: hidden;
+  opacity: 0;
+  transition:
+    max-width .3s ease,
+    margin .3s ease,
+    opacity .25s ease;
+}
+.overview-mode .glyph-mode-toggle {
+  max-width: 30rem;
+  margin-left: 0;
+  opacity: 1;
+}
+.pill--glyph-mode { padding: 1.2rem 2.4rem; flex: 0 0 auto; }
+
+/* Background swatches (group) — pill-shaped tray with 3 dots */
+.bg-swatches {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--white);
+  padding: 1.2rem;
+  border-radius: 9.3rem;
+  /* Horizontal collapse when outline mode locks the bg to dark
+     green and the swatches become irrelevant. max-width + padding-x
+     + margin-left + opacity ease together so the tray slides closed
+     and eats one of the action-bar gaps so neighbours don't leave a
+     "double gap" hole. */
+  max-width: 30rem;
+  overflow: hidden;
+  transition:
+    max-width .3s ease,
+    padding .3s ease,
+    margin .3s ease,
+    opacity .25s ease;
+}
+.bg-swatch {
+  width: 3.2rem;             /* matches the pill's text line-box (2 × 1.6) */
+  height: 3.2rem;
+  border-radius: 50%;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  position: relative;
+  flex: 0 0 auto;
+  transition: transform .15s ease, background-color .2s ease;
+}
+.bg-swatch:hover { transform: scale(1.08); }
+.bg-swatch[data-bg="#FFFFFF"] {
+  background: var(--pill-bg) !important;
+}
+.bg-swatch--image {
+  background: var(--white);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--dark-green);
+}
+.bg-swatch--image svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 50%;
+}
+/* Image bg has nothing to apply behind a glyph grid, so hide its
+   swatch while overview is active. Other swatches stay because
+   they recolour the cards. */
+.overview-mode .bg-swatch--image { display: none; }
+/* No selection ring on the swatch — the active state is communicated
+   by the live preview panel background changing to that color. */
+
+/* Outline toggle — pill-shaped tray with solid dot + dotted-ring icon */
+.outline-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--white);
+  padding: 1.2rem;
+  border-radius: 9.3rem;
+}
+.ot-btn {
+  width: 3.2rem;             /* matches the pill's text line-box (2 × 1.6) */
+  height: 3.2rem;
+  border-radius: 50%;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  transition: transform .15s ease;
+}
+.ot-btn:hover { transform: scale(1.08); }
+.ot-btn .ot-dot {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--dark-green);
+}
+.ot-btn .ot-ring {
+  width: 100%;
+  height: 100%;
+  display: block;
+  color: var(--dark-green);
+}
+.ot-btn.is-active .ot-dot,
+.ot-btn.is-active .ot-ring {
+  /* keep visual identity; selection state on the parent */
+}
+/* No selection ring on the mode buttons — the active state is
+   communicated by the live preview switching between solid and
+   outline rendering. */
+
+/* ------------------------------------------------------------------
+   Right panel: stage / preview
+   ------------------------------------------------------------------ */
+
+.panel--stage {
+  /* Hero of the stacked layout — grows to fill everything the
+     controls strip doesn't use, full width. Sits above the
+     controls (order 0 vs the strip's order 1). */
+  position: relative;
+  order: 0;
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+  /* Stage uses em-based interior values (gap/padding/captions/mark)
+     so they all scale from this single base. With chrome at 100%
+     Figma scale, base = 1rem so em = rem here. */
+  font-size: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12em;                 /* minimum — extra space distributes via space-between */
+  padding: 7.2em;
+  border-radius: 4.8em;
+  background: var(--white);
+  /* Clip at the panel boundary. During a window resize the layout
+     commits the new (smaller) panel size before the resize observer
+     re-fits the font, so the old too-large font-size paints once
+     before JS catches up — without the clip, the headline briefly
+     escapes the panel and the user sees a "giant L" flash. */
+  overflow: hidden;
+  /* Only ease the background — animating padding/gap during a mode
+     swap caused layout thrash that re-triggered the size-fit probe
+     (which momentarily sets font-size: 200em) and showed a giant L
+     flickering during the transition. The longer ease on bg-position
+     keeps the photo subject gliding to its new framing during the
+     fullscreen swap. */
+  transition:
+    background-color 0.25s ease,
+    background-image 0.25s ease;
+  /* No transition on background-size or background-position — JS
+     rewrites them every frame from a stable formula (1.3x cover
+     buffer means no crossover, no division by near-zero), so each
+     update is already in step with the panel size and any
+     transition would only trail. */
+}
+.panel--stage[data-bg="dark"]  { background: var(--dark-green); }
+.panel--stage[data-bg="dark"]  .stage-text,
+.panel--stage[data-bg="dark"]  .stage-caption,
+.panel--stage[data-bg="dark"]  .stage-mark { color: var(--white); }
+.panel--stage[data-bg="mint"]  { background: var(--mint); }
+.panel--stage[data-bg="image"] {
+  background-color: var(--dark-green);
+  background-image:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0) 80%),
+    url("assets/cm-image.jpg");
+  /* JS sets explicit px sizes on the image layer so the image is
+     always 1.3x larger than `cover`. With guaranteed positive
+     overflow on BOTH axes, the bg-position math has no
+     divide-by-near-zero crossover — no stutter as the panel
+     resizes through the cover-axis switch. */
+  background-size: cover, var(--image-bg-w, cover) var(--image-bg-h, cover);
+  background-position:
+    center,
+    var(--image-bg-x, 50%) var(--image-bg-y, 50%);
+  background-repeat: no-repeat, no-repeat;
+}
+.panel--stage[data-bg="image"] .stage-text,
+.panel--stage[data-bg="image"] .stage-caption,
+.panel--stage[data-bg="image"] .stage-mark { color: var(--white); }
+
+.stage-text {
+  font-family: var(--cm);
+  font-weight: 700;
+  color: var(--dark-green);
+  font-size: 14.4em;          /* 144 default */
+  line-height: 0.87;
+  letter-spacing: -0.01em;
+  width: 100%;
+  outline: none;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  /* white-space is set dynamically: "pre" when the text contains
+     author newlines, "pre-line" when it's a single string that should
+     soft-wrap to fill the panel. */
+  white-space: pre-line;
+  font-feature-settings: normal;
+}
+.stage-text:focus { caret-color: var(--green); }
+
+/* Outline mode: stage-text stays in the DOM (so contenteditable still
+   works) but is rendered transparent. The stage-outline SVG sits
+   absolutely on top, drawing the path stroke + on-curve anchors +
+   off-curve control handles read from opentype.js commands. */
+
+.stage-text-wrap {
+  position: relative;
+  width: 100%;
+}
+.stage-outline {
+  display: none;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.stage-outline svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.panel--stage[data-mode="outline"] .stage-outline { display: block; }
+.panel--stage[data-mode="outline"] .stage-text {
+  color: transparent;
+  -webkit-text-stroke: 0;
+  /* Single character centred in the panel — caret hidden so a
+     blinking line doesn't sit next to the letter. Solid mode keeps
+     its normal caret. */
+  caret-color: transparent;
+  text-align: center;
+  white-space: nowrap;
+}
+/* Outline mode focuses on one character — hide the brand footer and
+   let the stage-text-wrap take the whole panel so the letter sits at
+   the visual centre. The background is locked to dark green
+   regardless of the swatch selection. */
+.panel--stage[data-mode="outline"] {
+  background: var(--dark-green);
+}
+.panel--stage[data-mode="outline"] .stage-footer { display: none; }
+.panel--stage[data-mode="outline"] .stage-text-wrap {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+/* In outline mode the bg-swatches and the leading/tracking/size
+   sliders are irrelevant — type is locked to 100% size with the dark
+   green bg. Hide them. */
+.outline-mode .bg-swatches {
+  max-width: 0;
+  padding-left: 0;
+  padding-right: 0;
+  margin-left: -1.2rem;       /* eat the action-bar gap to its left */
+  opacity: 0;
+}
+.outline-mode .panel--controls {
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin-top: -1.2rem;        /* eat the col gap above */
+  opacity: 0;
+}
+
+/* ------------------------------------------------------------------
+   Glyph Overview mode — replaces the type sample with a 6×9 grid
+   of all letters. Each cell is a small white pill; the panel itself
+   loses its background and padding so the cards sit on the page bg.
+   ------------------------------------------------------------------ */
+.stage-grid {
+  display: none;
+  flex: 1 1 0;
+  width: 100%;
+  min-height: 0;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-rows: repeat(9, minmax(0, 1fr));
+  gap: 1.2rem;
+}
+.stage-grid__cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--white);
+  border-radius: 2.4rem;
+  padding: 1rem;
+  font-family: var(--cm);
+  font-weight: 700;
+  color: var(--dark-green);
+  line-height: 0.87;
+  letter-spacing: -0.01em;
+  font-size: 7.2rem;
+  overflow: hidden;
+  transition: background-color .25s ease, color .25s ease;
+}
+
+.panel--stage[data-mode="overview"] .stage-footer { display: none; }
+/* Compact overview: typeset string fills the panel via the existing
+   stage-text wrap, no card grid. The panel keeps its white bg +
+   padding + rounded corners (it's the white container the design
+   shows around the typeset specimen) and the text is forced
+   centred regardless of the align toggle. */
+.panel--stage[data-mode="overview"][data-glyph-mode="compact"] .stage-grid { display: none; }
+.panel--stage[data-mode="overview"][data-glyph-mode="compact"] .stage-text { text-align: center; }
+/* Centre the typeset specimen vertically in the panel — only
+   stage-text-wrap is visible in this mode, so flex justify-center
+   drops it into the middle. */
+.panel--stage[data-mode="overview"][data-glyph-mode="compact"] {
+  justify-content: center;
+}
+/* Full overview: panel chrome disappears so the white cards sit
+   directly on the page bg. Background swatches recolour the cards
+   (per-cell), not the panel underneath them. */
+.panel--stage[data-mode="overview"][data-glyph-mode="full"] {
+  background: transparent;
+  padding: 0;
+  gap: 0;
+}
+/* Full overview: same 6x9 visible grid as the original Glyph
+   Overview, but rows are fixed-height (1/9 of the panel minus
+   gaps) instead of `1fr`, so additional glyphs spill into implicit
+   rows of the same size and the grid scrolls vertically — every
+   cell stays the size of one Figma card no matter how many
+   glyphs the font defines. */
+.panel--stage[data-mode="overview"][data-glyph-mode="full"] .stage-text-wrap { display: none; }
+.panel--stage[data-mode="overview"][data-glyph-mode="full"] .stage-grid {
+  display: grid;
+  grid-template-rows: repeat(9, calc((100% - 8 * 1.2rem) / 9));
+  grid-auto-rows: calc((100% - 8 * 1.2rem) / 9);
+  overflow-y: auto;
+  align-content: start;
+  animation: stage-fade .25s ease;
+  /* Hide the scrollbar — keep the scroll behaviour, drop the chrome. */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.panel--stage[data-mode="overview"][data-glyph-mode="full"] .stage-grid::-webkit-scrollbar {
+  display: none;
+}
+/* Note: .stage-text-wrap and .stage-footer are deliberately *not*
+   animated — opacity animations on text containers cause the
+   browser to clip descenders/ascenders to the composited layer and
+   "pop" them in once the animation lands. The grid is fine because
+   each cell already has overflow: hidden. */
+.panel--stage[data-mode="overview"][data-bg="dark"] .stage-grid__cell {
+  background: var(--dark-green);
+  color: var(--white);
+}
+.panel--stage[data-mode="overview"][data-bg="mint"] .stage-grid__cell {
+  background: var(--mint);
+}
+
+@keyframes stage-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Sliders are irrelevant when the stage is showing the static glyph
+   grid — collapse the whole sliders panel. (Animated via the
+   max-height + padding + opacity transition declared above.) */
+.overview-mode .panel--controls {
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin-top: -1.2rem;        /* eat the col gap above */
+  opacity: 0;
+}
+
+.stage-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2.4em;
+  width: 100%;
+  /* The caption + brand lockup are static set dressing — drag-select
+     should ignore them so the user only edits the headline above. */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Centre alignment: text centres, caption is hidden, brand row centres. */
+.panel--stage[data-align="center"] .stage-text { text-align: center; }
+.panel--stage[data-align="center"] .stage-caption { display: none; }
+.panel--stage[data-align="center"] .stage-footer { justify-content: center; }
+.stage-caption {
+  margin: 0;
+  font-weight: 400;
+  font-variation-settings: "wght" 500, "wdth" 60;
+  font-size: 2.4em;
+  line-height: 1.2;
+  letter-spacing: var(--body-track);
+  color: var(--dark-green);
+}
+.stage-brand {
+  display: flex;
+  align-items: center;
+  gap: 2.4em;
+  height: 6.3em;
+}
+.stage-mark {
+  font-family: var(--cm);
+  font-weight: 700;
+  font-size: 4.8em;
+  line-height: 1;
+  color: var(--dark-green);
+  text-transform: uppercase;
+  white-space: nowrap;
+  font-feature-settings: normal;
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
+}
+.stage-logo {
+  width: 6.3em;
+  height: 6.3em;
+  flex: 0 0 auto;
+  display: block;
+  filter: drop-shadow(1em 1em 3em rgba(0, 0, 0, 0.1));
+}
+
+/* ------------------------------------------------------------------
+   Mobile (≤900px) — stack vertically, drop guideline preview
+   ------------------------------------------------------------------ */
+
+/* No mobile/stacked fallback — when the viewport is too small the
+   .too-narrow overlay above takes over instead. */
