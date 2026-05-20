@@ -129,6 +129,8 @@ const state = {
   glyphMode: "compact",  // "compact" (typeset string) or "full" (all glyphs grid)
   userSizeOverride: false, // true once the user moves the size slider
   overviewOpsz: 36,      // optical size for the Glyph Overview
+  fontFaces: {},         // key -> live FontFace (for hot-swapping)
+  fontBytes: {},         // key -> loaded byte length (change detection)
 };
 
 // -------- paragraph document model --------------------------------------
@@ -279,9 +281,9 @@ async function loadFont() {
   // faces are used by paragraphs, with opsz driven per-element via
   // font-variation-settings.
   const faces = [
-    { family: FONT_STABLE.family, buf },
-    { family: FONT_VARIANTS.sharp.family, buf: sharpBuf },
-    { family: FONT_VARIANTS.rounded.family, buf: roundedBuf },
+    { key: "sharp",   family: FONT_VARIANTS.sharp.family,   buf: sharpBuf },
+    { key: "rounded", family: FONT_VARIANTS.rounded.family, buf: roundedBuf },
+    { key: "stable",  family: FONT_STABLE.family,           buf },
   ];
   for (const face of faces) {
     const ff = new FontFace(face.family, face.buf, {
@@ -291,6 +293,10 @@ async function loadFont() {
     });
     await ff.load();
     document.fonts.add(ff);
+    // Track the face + byte length so the watcher can hot-swap it
+    // when a freshly synced export lands.
+    state.fontFaces[face.key] = ff;
+    state.fontBytes[face.key] = face.buf.byteLength;
   }
   await document.fonts.ready;
   try {
@@ -412,6 +418,58 @@ async function loadFont() {
   }
 
   return state.font;
+}
+
+// -------- font hot-reload -----------------------------------------------
+// Poll the variable fonts so a freshly synced export shows up in an
+// already-open tester without a manual reload. The sync script + the
+// LaunchAgent push new files to GitHub Pages; this picks them up live.
+
+const FONT_POLL_MS = 15000;
+let fontPollBusy = false;
+
+// Re-fetch one variant; if its byte length differs from what's loaded,
+// hot-swap the FontFace. Returns true when it changed.
+async function reloadVariantIfChanged(key) {
+  const v = FONT_VARIANTS[key];
+  const res = await fetch(`${v.file}?t=${Date.now()}`);
+  if (!res.ok) return false;
+  const buf = await res.arrayBuffer();
+  if (buf.byteLength === state.fontBytes[key]) return false;
+  const ff = new FontFace(v.family, buf, { weight: "700", style: "normal", display: "swap" });
+  await ff.load();
+  if (state.fontFaces[key]) {
+    try { document.fonts.delete(state.fontFaces[key]); } catch (_) {}
+  }
+  document.fonts.add(ff);
+  state.fontFaces[key] = ff;
+  state.fontBytes[key] = buf.byteLength;
+  return true;
+}
+
+async function pollFonts() {
+  if (fontPollBusy || !state.font) return;
+  fontPollBusy = true;
+  try {
+    let changed = false;
+    for (const key of ["sharp", "rounded"]) {
+      try {
+        if (await reloadVariantIfChanged(key)) changed = true;
+      } catch (_) { /* offline / transient — retry next tick */ }
+    }
+    if (changed) {
+      await document.fonts.ready;
+      // Re-render so the new outlines + metrics take effect everywhere.
+      applyTypography();
+      for (const el of stageDocEl.children) {
+        const p = state.paras.find((x) => x.id === el.dataset.id);
+        if (p) styleParaEl(el, p);
+      }
+      updateParaSpacing();
+    }
+  } finally {
+    fontPollBusy = false;
+  }
 }
 
 // Read the active-SS list from the URL hash. Format: "#ss01,ss05,cv01"
@@ -2214,6 +2272,10 @@ async function init() {
   // re-measure once more so the spacing is pixel-accurate.
   requestAnimationFrame(updateParaSpacing);
   setTimeout(updateParaSpacing, 200);
+
+  // Watch for freshly synced font exports and hot-swap them live.
+  setInterval(pollFonts, FONT_POLL_MS);
+  window.addEventListener("focus", pollFonts);
 
   requestAnimationFrame(() => requestAnimationFrame(fitHeadline));
   setTimeout(fitHeadline, 150);
