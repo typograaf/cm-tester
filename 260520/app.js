@@ -90,7 +90,7 @@ const CASE_MODES = [
 const BG_MAP = {
   "#0b321d": "dark",
   "#FFFFFF": "white",
-  "#bce8a1": "mint",
+  "#addb91": "mint",
   "image": "image",
 };
 
@@ -104,7 +104,7 @@ const BG_EXCLUDE = { white: "wit", dark: "bos", mint: "munt", image: "bos" };
 const COLORS = {
   bos:  "#0b321d",
   cm:   "#0fb847",
-  munt: "#bce8a1",
+  munt: "#addb91",
   wit:  "#ffffff",
 };
 const COLOR_NAMES = { bos: "Bos Groen", cm: "CM Groen", munt: "Munt Groen", wit: "Puur Wit" };
@@ -225,13 +225,13 @@ const FEATURE_ORDER_TAIL = ["ss01", "ss04"];
 // panel. Mint-on-dark palette; thicker metrics + glyph stroke; white
 // square anchors; small white circle handles with bolder lines.
 const outlineDesign = {
-  metricColor: "#bce8a1",
+  metricColor: "#addb91",
   metricThickness: 2,
   metricOpacity: 1,
-  glyphStroke: "#bce8a1",
+  glyphStroke: "#addb91",
   glyphStrokeOpacity: 1,
   glyphThickness: 2,
-  glyphFill: "#bce8a1",
+  glyphFill: "#addb91",
   glyphFillOpacity: 0.3,
   anchorColor: "#ffffff",
   anchorStyle: "square",

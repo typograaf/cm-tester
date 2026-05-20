@@ -49,7 +49,7 @@ const CASE_MODES = [
 const BG_MAP = {
   "#0b321d": "dark",
   "#FFFFFF": "white",
-  "#bce8a1": "mint",
+  "#addb91": "mint",
   "image": "image",
 };
 
@@ -117,13 +117,13 @@ const SS_PRESETS = [
 // panel. Mint-on-dark palette; thicker metrics + glyph stroke; white
 // square anchors; small white circle handles with bolder lines.
 const outlineDesign = {
-  metricColor: "#bce8a1",
+  metricColor: "#addb91",
   metricThickness: 2,
   metricOpacity: 1,
-  glyphStroke: "#bce8a1",
+  glyphStroke: "#addb91",
   glyphStrokeOpacity: 1,
   glyphThickness: 2,
-  glyphFill: "#bce8a1",
+  glyphFill: "#addb91",
   glyphFillOpacity: 0.3,
   anchorColor: "#ffffff",
   anchorStyle: "square",
