@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>CM Typeface Tester — Production</title>
-  <link rel="stylesheet" href="styles.css?v=20260520ac" />
+  <title>CM Typeface Tester — 260520</title>
+  <link rel="stylesheet" href="styles.css?v=20260520d" />
   <!-- Preload the bg photo so the first click on the image swatch
        paints instantly instead of waiting for the 3.4MB JPG to
        fetch on demand. -->
@@ -13,16 +13,23 @@
 <body>
   <main class="app">
     <div class="col col--left">
-      <!-- This build has a single fixed set (Diagonal ABPR) and no
-           toggle UI, so the SS detail/preview panel is gone too —
-           the sliders panel grows to own the freed space. -->
-
-      <!-- Sliders panel -->
+      <!-- Controls panel — edits the currently selected paragraph.
+           Variant (Sharp/Rounded) + add/remove sit on top, the four
+           axes (leading / tracking / size / optical size) below. -->
       <section class="panel panel--controls">
+        <div class="para-bar">
+          <span class="para-bar__label" id="paraLabel">Paragraph 1 / 1</span>
+          <div class="variant-toggle" id="variantToggle">
+            <button type="button" data-variant="sharp" class="is-active">Sharp</button>
+            <button type="button" data-variant="rounded">Rounded</button>
+          </div>
+          <button class="pill pill--para" id="addPara" type="button">Add paragraph</button>
+          <button class="pill pill--para" id="removePara" type="button">Remove</button>
+        </div>
         <div class="sliders-stack">
           <label class="slider-row">
             <span>Leading</span>
-            <input type="range" id="leading" min="0.6" max="2" step="0.01" value="0.87" />
+            <input type="range" id="leading" min="0.6" max="2" step="0.01" value="0.95" />
           </label>
           <label class="slider-row">
             <span>Tracking</span>
@@ -30,7 +37,11 @@
           </label>
           <label class="slider-row">
             <span>Size</span>
-            <input type="range" id="fontsize" min="4" max="160" step="0.1" value="14.4" />
+            <input type="range" id="fontsize" min="1.5" max="40" step="0.1" value="8" />
+          </label>
+          <label class="slider-row">
+            <span>Optical</span>
+            <input type="range" id="opsz" min="12" max="72" step="1" value="24" />
           </label>
         </div>
       </section>
@@ -89,6 +100,12 @@
     <!-- Right: stage / preview -->
     <section class="panel panel--stage" id="stagePanel">
       <div class="stage-text-wrap">
+        <!-- Multi-paragraph document — one .stage-para per paragraph,
+             built at runtime. Each carries its own size / tracking /
+             leading / optical-size / variant. Used in text mode. -->
+        <div class="stage-doc" id="stageDoc"></div>
+        <!-- Single editable line — used only by Glyph Overview
+             (compact typeset) and Outline mode. -->
         <div
           class="stage-text"
           id="stageText"
@@ -120,6 +137,6 @@ te gaan.</div>
   </div>
 
 
-  <script type="module" src="app.js?v=20260520ac"></script>
+  <script type="module" src="app.js?v=20260520d"></script>
 </body>
 </html>

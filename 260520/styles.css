@@ -41,6 +41,9 @@ html {
   --body-track: 0.02em;      /* +2 in font units */
 
   --ui: "BE Cause", -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
+  /* Stable master — the face for Glyph Overview, Outline mode and the
+     brand mark. Paragraphs in text mode pick their own variable
+     family (CM-Sharp / CM-Rounded) per-paragraph. */
   --cm: "CM-Stable", system-ui, sans-serif;
 }
 
@@ -415,16 +418,20 @@ button::-moz-focus-inner { border: 0; }
    ------------------------------------------------------------------ */
 
 .panel--controls {
-  /* Compact strip in the stacked layout — natural height, the
-     three sliders laid out in a single row. */
+  /* Compact strip in the stacked layout — natural height. The
+     paragraph bar (variant + add/remove) sits above a single row
+     of four sliders. */
   flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
   padding: 3.6rem 7.2rem;
   /* Vertical collapse animation when the stage is in outline /
      overview mode and the sliders are irrelevant. max-height +
      padding-y + opacity ease together so the panel grows or
      shrinks instead of popping. The margin transition kills the
      "double-gap" when the panel sits at height 0. */
-  max-height: 40rem;
+  max-height: 60rem;
   overflow: hidden;
   transition:
     max-height .3s ease,
@@ -679,6 +686,7 @@ button::-moz-focus-inner { border: 0; }
 }
 .panel--stage[data-bg="dark"]  { background: var(--dark-green); }
 .panel--stage[data-bg="dark"]  .stage-text,
+.panel--stage[data-bg="dark"]  .stage-para,
 .panel--stage[data-bg="dark"]  .stage-caption,
 .panel--stage[data-bg="dark"]  .stage-mark { color: var(--white); }
 .panel--stage[data-bg="mint"]  { background: var(--mint); }
@@ -699,6 +707,7 @@ button::-moz-focus-inner { border: 0; }
   background-repeat: no-repeat, no-repeat;
 }
 .panel--stage[data-bg="image"] .stage-text,
+.panel--stage[data-bg="image"] .stage-para,
 .panel--stage[data-bg="image"] .stage-caption,
 .panel--stage[data-bg="image"] .stage-mark { color: var(--white); }
 
@@ -948,3 +957,104 @@ button::-moz-focus-inner { border: 0; }
 
 /* No mobile/stacked fallback — when the viewport is too small the
    .too-narrow overlay above takes over instead. */
+
+/* ------------------------------------------------------------------
+   Paragraph bar — variant toggle + add/remove, above the sliders
+   ------------------------------------------------------------------ */
+.para-bar {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+}
+.para-bar__label {
+  font: 400 var(--body-size)/1.4 var(--ui);
+  font-variation-settings: "wght" 500, "wdth" 60;
+  letter-spacing: var(--body-track);
+  color: var(--dark-green);
+  white-space: nowrap;
+  margin-right: auto;          /* push the toggle + buttons right */
+}
+
+/* Sharp / Rounded segmented toggle — same look as the case toggle. */
+.variant-toggle {
+  display: inline-flex;
+  gap: 0.6rem;
+}
+.variant-toggle button {
+  font-family: var(--ui);
+  font-weight: 700;
+  font-variation-settings: "wght" 700, "wdth" 60;
+  font-size: var(--body-size);
+  line-height: 1.6;
+  letter-spacing: var(--body-track);
+  color: var(--dark-green);
+  background: var(--pill-bg);
+  border: 0;
+  padding: 1.2rem 2.4rem;
+  border-radius: 9.3rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .15s, color .15s;
+}
+.variant-toggle button:hover { background: #ececec; }
+.variant-toggle button.is-active {
+  background: var(--green);
+  color: var(--white);
+}
+
+.pill--para {
+  background: var(--pill-bg);
+  flex: 0 0 auto;
+}
+.pill--para:hover { background: #ececec; }
+.pill--para:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ------------------------------------------------------------------
+   Multi-paragraph document (text mode)
+   Each .stage-para is independently editable and carries its own
+   size / tracking / leading / optical-size / variant, applied as
+   inline styles by app.js.
+   ------------------------------------------------------------------ */
+.stage-doc {
+  display: none;               /* shown by the data-mode rule below */
+  flex-direction: column;
+  width: 100%;
+  gap: 0.6em;
+}
+.panel--stage[data-mode="random"] .stage-doc  { display: flex; }
+.panel--stage[data-mode="random"] .stage-text { display: none; }
+/* The doc owns the upper area and scrolls internally if the
+   paragraphs outgrow the panel. */
+.panel--stage[data-mode="random"] .stage-text-wrap {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.panel--stage[data-mode="random"] .stage-text-wrap::-webkit-scrollbar {
+  display: none;
+}
+
+.stage-para {
+  font-family: var(--cm);
+  font-weight: 700;
+  color: var(--dark-green);
+  width: 100%;
+  outline: none;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  font-feature-settings: normal;
+  /* A left accent bar marks the selected paragraph — reserved on
+     every paragraph (transparent) so text never shifts on select. */
+  border-left: 0.4rem solid transparent;
+  padding-left: 1.6rem;
+  min-height: 1em;
+  cursor: text;
+  transition: border-color .15s ease;
+}
+.stage-para:focus { caret-color: var(--green); }
+.stage-para.is-selected { border-left-color: var(--green); }
+.panel--stage[data-align="center"] .stage-para { text-align: center; }

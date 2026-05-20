@@ -8,8 +8,24 @@ import opentype from "https://cdn.jsdelivr.net/npm/opentype.js@1.3.4/+esm";
 
 // -------- config ---------------------------------------------------------
 
-const FONT_FILE = "fonts/CM_Stable.otf";
+// Two variable masters of the CM typeface. Both carry a single
+// optical-size axis (opsz, 12–72). Paragraphs pick one per-paragraph;
+// they render purely through CSS (no opentype.js parsing).
+const FONT_VARIANTS = {
+  sharp:   { file: "fonts/CM_Sharp_VF.ttf",   family: "CM-Sharp" },
+  rounded: { file: "fonts/CM_Rounded_VF.ttf", family: "CM-Rounded" },
+};
+// The stable (non-variable) master. opentype.js parses this one — it
+// backs Glyph Overview, Outline mode and the brand mark. The jsdelivr
+// ESM opentype build trips over the variable TTFs, so they are kept
+// out of its hands; the stable OTF is what those modes have always
+// used and is visually the same typeface.
+const FONT_STABLE = { file: "fonts/CM_Stable.otf", family: "CM-Stable" };
 const FONT_LABELS_FILE = "fonts/CM_Stable.labels.json";
+
+// Optical-size axis range, read off the fonts' fvar table.
+const OPSZ_MIN = 12;
+const OPSZ_MAX = 72;
 
 const PRESETS = [
   "Leef gerust\nwat meer.",
@@ -73,6 +89,31 @@ const state = {
   userSizeOverride: false, // true once the user moves the size slider
 };
 
+// -------- paragraph document model --------------------------------------
+
+// Text mode is a document of independently styled paragraphs. Each
+// paragraph carries its own variant / size / tracking / leading /
+// optical size; the controls panel always edits the selected one.
+let paraSeq = 0;
+const newParaId = () => `p${++paraSeq}`;
+
+// Fallback values for a paragraph with no source to copy from.
+const PARA_DEFAULT = { variant: "sharp", size: 8, tracking: -0.01, leading: 0.95, opsz: 24 };
+
+// Initial document — three paragraphs at different optical sizes so
+// the per-paragraph nature of the tester reads at a glance.
+const INITIAL_PARAS = [
+  { text: "Leef gerust",
+    variant: "sharp",   size: 16, tracking: -0.015, leading: 0.9,  opsz: 72 },
+  { text: "zonder bang te zijn\nom op je gezicht te gaan.",
+    variant: "rounded", size: 7,  tracking: -0.005, leading: 1.0,  opsz: 36 },
+  { text: "Je optimale bescherming, altijd en overal. Elke ochtend een nieuwe frisse start met de CM-letter op kleine optische maat.",
+    variant: "sharp",   size: 3,  tracking: 0.005,  leading: 1.25, opsz: 13 },
+];
+
+state.paras = [];          // [{ id, text, variant, size, tracking, leading, opsz }]
+state.selectedParaId = null;
+
 const GRID_LETTERS = "AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz.,";
 // Compact typeset uses the author's exact line breaks (5 lines).
 const COMPACT_TYPESET = "AaBbCcDdEe\nFfGgHhIiJjKk\nLlMmNnOoPp\nQqRrSsTtUu\nVvWwXxYyZz";
@@ -102,6 +143,12 @@ const stageGridEl = $("stageGrid");
 const overviewBtn = $("glyphOverview");
 const featureDetailEl = document.querySelector(".feature-detail");
 const presetPillsEl = $("presetPills");
+const stageDocEl = $("stageDoc");
+const opszInput = $("opsz");
+const variantToggleEl = $("variantToggle");
+const addParaBtn = $("addPara");
+const removeParaBtn = $("removePara");
+const paraLabelEl = $("paraLabel");
 
 // One curated SS combination + a "Tester" sentinel for free play.
 // Picking the curated preset turns its tags ON and every other
@@ -161,12 +208,18 @@ let detailOpacityAnim = null;
 
 async function loadFont() {
   const cb = Date.now();
-  const [res, labelsRes] = await Promise.all([
-    fetch(`${FONT_FILE}?t=${cb}`),
+  const [stableRes, sharpRes, roundedRes, labelsRes] = await Promise.all([
+    fetch(`${FONT_STABLE.file}?t=${cb}`),
+    fetch(`${FONT_VARIANTS.sharp.file}?t=${cb}`),
+    fetch(`${FONT_VARIANTS.rounded.file}?t=${cb}`),
     fetch(`${FONT_LABELS_FILE}?t=${cb}`),
   ]);
-  if (!res.ok) throw new Error(`failed to fetch ${FONT_FILE}`);
-  const buf = await res.arrayBuffer();
+  if (!stableRes.ok) throw new Error(`failed to fetch ${FONT_STABLE.file}`);
+  if (!sharpRes.ok) throw new Error(`failed to fetch ${FONT_VARIANTS.sharp.file}`);
+  if (!roundedRes.ok) throw new Error(`failed to fetch ${FONT_VARIANTS.rounded.file}`);
+  const buf = await stableRes.arrayBuffer();
+  const sharpBuf = await sharpRes.arrayBuffer();
+  const roundedBuf = await roundedRes.arrayBuffer();
   if (labelsRes.ok) {
     try {
       state.ssLabels = await labelsRes.json();
@@ -175,19 +228,33 @@ async function loadFont() {
     }
   }
 
-  const family = "CM-Stable";
-  const fontFace = new FontFace(family, buf, {
-    weight: "700",
-    style: "normal",
-    display: "block",
-  });
-  await fontFace.load();
-  document.fonts.add(fontFace);
+  // Register all three masters as separate families. The stable face
+  // backs the chrome (overview / outline / mark); the two variable
+  // faces are used by paragraphs, with opsz driven per-element via
+  // font-variation-settings.
+  const faces = [
+    { family: FONT_STABLE.family, buf },
+    { family: FONT_VARIANTS.sharp.family, buf: sharpBuf },
+    { family: FONT_VARIANTS.rounded.family, buf: roundedBuf },
+  ];
+  for (const face of faces) {
+    const ff = new FontFace(face.family, face.buf, {
+      weight: "700",
+      style: "normal",
+      display: "block",
+    });
+    await ff.load();
+    document.fonts.add(ff);
+  }
   await document.fonts.ready;
   try {
-    await document.fonts.load(`700 100px "${family}"`);
+    for (const face of faces) {
+      await document.fonts.load(`700 100px "${face.family}"`);
+    }
   } catch (_) {}
 
+  // opentype.js parses the stable master only.
+  const family = FONT_STABLE.family;
   let features = [];
   let parsed = null;
   try {
@@ -798,6 +865,9 @@ function applyTypography(opts = {}) {
     state.caseMode === "upper" ? "uppercase"
     : state.caseMode === "lower" ? "lowercase"
     : "none";
+  // Case applies to the whole specimen — mirror it onto the
+  // multi-paragraph document; per-paragraph styles inherit it.
+  if (stageDocEl) stageDocEl.style.textTransform = stageText.style.textTransform;
 
   stageMark.style.fontFamily = family;
   stageMark.style.letterSpacing = `${trackingInput.value}em`;
@@ -940,10 +1010,10 @@ function setStageMode(mode) {
     state.userSizeOverride = false;
     if (stagePanel.dataset.bg === "image") setBackground("#FFFFFF");
     setGlyphMode(state.glyphMode || "compact", { skipRefit: true });
-  } else if (mode !== "overview" && wasOverview) {
-    // Leaving overview — restore the default text so the headline is
-    // back in random mode rather than stuck on the glyphset, and
-    // re-enable plain-text editing.
+  } else if (mode === "random" && wasOverview) {
+    // Leaving overview for text mode — restore plain-text editing on
+    // the (now hidden) single line. Outline mode is handled by its
+    // own block above, so don't clobber its single character here.
     stageText.textContent = REFRESH_TEXT;
     stageText.contentEditable = "plaintext-only";
     state.userSizeOverride = false;
@@ -1412,6 +1482,9 @@ function computeMaxFitEm() {
 // shrink it if it now exceeds max). Used by SS / case toggles so
 // width-changing feature swaps don't nudge the headline size.
 function refitStage(opts = {}) {
+  // Text mode is a multi-paragraph document — every paragraph has a
+  // manual size, so there's no single headline to auto-fit.
+  if (state.stageMode === "random") return;
   const preserve = !!opts.preserve;
   if (window.matchMedia("(max-width: 900px)").matches) {
     fitHeadlineMobile();
@@ -1546,12 +1619,141 @@ function pickRandomString() {
     renderStageOutline();
     return;
   }
-  const current = stageText.textContent.trim();
-  const idx = PRESETS.findIndex((s) => s.trim() === current);
-  const next = PRESETS[(idx + 1) % PRESETS.length];
-  stageText.textContent = next;
-  applyWhitespaceMode();
-  refitStage();
+  // Text mode: cycle the selected paragraph's text to the next preset.
+  const p = getSelectedPara();
+  if (!p) return;
+  const idx = PRESETS.findIndex((s) => s.trim() === (p.text || "").trim());
+  p.text = PRESETS[(idx + 1) % PRESETS.length];
+  const el = stageDocEl.querySelector(`[data-id="${p.id}"]`);
+  if (el) el.textContent = p.text;
+}
+
+// -------- paragraph document --------------------------------------------
+
+// Apply a paragraph's settings to its DOM element as inline styles.
+function styleParaEl(el, p) {
+  const fam = (FONT_VARIANTS[p.variant] || FONT_VARIANTS.sharp).family;
+  el.style.fontFamily = `"${fam}", system-ui, sans-serif`;
+  el.style.fontSize = `${p.size}em`;
+  el.style.lineHeight = String(p.leading);
+  el.style.letterSpacing = `${p.tracking}em`;
+  el.style.fontVariationSettings = `"opsz" ${p.opsz}`;
+  // Keep the build's fixed set (Diagonal ABPR) + default ligatures on,
+  // matching the headline / brand mark. No-op if the font lacks them.
+  el.style.fontFeatureSettings = `"${FIXED_ACTIVE_SET}" 1, "dlig" 1, "liga" 1`;
+}
+
+function getSelectedPara() {
+  return state.paras.find((p) => p.id === state.selectedParaId) || null;
+}
+
+// Mark the selected paragraph's element with .is-selected.
+function highlightSelected() {
+  for (const el of stageDocEl.children) {
+    el.classList.toggle("is-selected", el.dataset.id === state.selectedParaId);
+  }
+}
+
+// Rebuild the whole document from state.paras. Called on add / remove;
+// slider drags only restyle one element in place.
+function renderDoc() {
+  stageDocEl.innerHTML = "";
+  for (const p of state.paras) {
+    const el = document.createElement("div");
+    el.className = "stage-para";
+    el.dataset.id = p.id;
+    el.contentEditable = "plaintext-only";
+    el.spellcheck = false;
+    el.textContent = p.text;
+    styleParaEl(el, p);
+    el.addEventListener("mousedown", () => selectPara(p.id));
+    el.addEventListener("focus", () => selectPara(p.id));
+    el.addEventListener("input", () => { p.text = el.textContent; });
+    stageDocEl.appendChild(el);
+  }
+  if (!state.paras.some((p) => p.id === state.selectedParaId)) {
+    state.selectedParaId = state.paras.length ? state.paras[0].id : null;
+  }
+  highlightSelected();
+  syncControlsFromPara();
+}
+
+function selectPara(id) {
+  if (state.selectedParaId === id) return;
+  state.selectedParaId = id;
+  highlightSelected();
+  syncControlsFromPara();
+}
+
+// Push the selected paragraph's settings into the controls panel.
+function syncControlsFromPara() {
+  const p = getSelectedPara();
+  if (!p) return;
+  leadingInput.value = p.leading;
+  trackingInput.value = p.tracking;
+  sizeInput.value = p.size;
+  opszInput.value = p.opsz;
+  for (const btn of variantToggleEl.querySelectorAll("button")) {
+    btn.classList.toggle("is-active", btn.dataset.variant === p.variant);
+  }
+  const idx = state.paras.indexOf(p);
+  paraLabelEl.textContent = `Paragraph ${idx + 1} / ${state.paras.length}`;
+  removeParaBtn.disabled = state.paras.length <= 1;
+}
+
+// Update one setting on the selected paragraph and restyle it in place.
+function updateParaSetting(key, value) {
+  const p = getSelectedPara();
+  if (!p) return;
+  p[key] = value;
+  const el = stageDocEl.querySelector(`[data-id="${p.id}"]`);
+  if (el) styleParaEl(el, p);
+}
+
+// New paragraph copies the selected one's settings (per the brief),
+// lands right after it, and is selected with its placeholder text
+// pre-highlighted so typing replaces it.
+function addParagraph() {
+  const cur = getSelectedPara() || PARA_DEFAULT;
+  const p = {
+    id: newParaId(),
+    text: "New paragraph",
+    variant: cur.variant,
+    size: cur.size,
+    tracking: cur.tracking,
+    leading: cur.leading,
+    opsz: cur.opsz,
+  };
+  const idx = state.paras.findIndex((x) => x.id === state.selectedParaId);
+  state.paras.splice(idx < 0 ? state.paras.length : idx + 1, 0, p);
+  state.selectedParaId = p.id;
+  renderDoc();
+  const el = stageDocEl.querySelector(`[data-id="${p.id}"]`);
+  if (el) {
+    el.focus();
+    const r = document.createRange();
+    r.selectNodeContents(el);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(r);
+  }
+}
+
+// Remove the selected paragraph; selection falls to its neighbour.
+// The document always keeps at least one paragraph.
+function removeParagraph() {
+  if (state.paras.length <= 1) return;
+  const idx = state.paras.findIndex((x) => x.id === state.selectedParaId);
+  if (idx < 0) return;
+  state.paras.splice(idx, 1);
+  const next = state.paras[Math.min(idx, state.paras.length - 1)];
+  state.selectedParaId = next ? next.id : null;
+  renderDoc();
+}
+
+function seedParas() {
+  state.paras = INITIAL_PARAS.map((p) => ({ id: newParaId(), ...p }));
+  state.selectedParaId = state.paras[0].id;
 }
 
 // -------- init ----------------------------------------------------------
@@ -1562,23 +1764,31 @@ async function init() {
   // Sliders are scoped to random/outline mode only — the glyph
   // overview uses a fixed normal-leading specimen and per-card
   // sizes, so dragging in overview should be a no-op.
-  leadingInput.addEventListener("input", () => {
-    if (state.stageMode === "overview") return;
-    applyTypography();
-  });
-  trackingInput.addEventListener("input", () => {
-    if (state.stageMode === "overview") return;
-    applyTypography();
-  });
-  sizeInput.addEventListener("input", () => {
-    if (state.stageMode === "overview") return;
-    state.userSizeOverride = true;
-    // Slider value is already inside the dynamic range — just apply
-    // it. Skipping the binary search keeps the drag responsive.
-    const v = parseFloat(sizeInput.value) || 14.4;
-    stageText.style.fontSize = `${v}em`;
-    if (state.outlineMode) renderStageOutline();
-  });
+  // The four sliders edit the selected paragraph. They live in the
+  // controls panel, which only shows in text mode (it collapses in
+  // Glyph Overview / Outline), so guarding on stageMode is enough.
+  const bindSlider = (input, key, parse) => {
+    input.addEventListener("input", () => {
+      if (state.stageMode !== "random") return;
+      updateParaSetting(key, parse(input.value));
+    });
+  };
+  bindSlider(leadingInput, "leading", parseFloat);
+  bindSlider(trackingInput, "tracking", parseFloat);
+  bindSlider(sizeInput, "size", parseFloat);
+  bindSlider(opszInput, "opsz", (v) => parseInt(v, 10));
+
+  // Sharp / Rounded — per-paragraph variant.
+  for (const btn of variantToggleEl.querySelectorAll("button")) {
+    btn.addEventListener("click", () => {
+      updateParaSetting("variant", btn.dataset.variant);
+      for (const b of variantToggleEl.querySelectorAll("button")) {
+        b.classList.toggle("is-active", b === btn);
+      }
+    });
+  }
+  addParaBtn.addEventListener("click", addParagraph);
+  removeParaBtn.addEventListener("click", removeParagraph);
   randomBtn.addEventListener("click", () => {
     // Clicking Random always randomizes the type sample. If we're in
     // a different stage mode (overview/outline), switch back to random
@@ -1615,7 +1825,9 @@ async function init() {
   // the headline as the panel grows or shrinks.
   const appEl = document.querySelector(".app");
   stagePanel.addEventListener("dblclick", (e) => {
+    // Ignore double-clicks inside editable text (word-select there).
     if (stageText.contains(e.target)) return;
+    if (stageDocEl.contains(e.target)) return;
     appEl.classList.toggle("stage-fullscreen");
   });
 
@@ -1633,6 +1845,11 @@ async function init() {
     });
   });
   stageRO.observe(stagePanel);
+
+  // Build the initial paragraph document before the stage mode is
+  // set so text mode has something to show on first paint.
+  seedParas();
+  renderDoc();
 
   setBackground("#FFFFFF");
   setStageMode("random");

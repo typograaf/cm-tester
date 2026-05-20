@@ -10,9 +10,12 @@ set -euo pipefail
 
 REPO="/Users/mdnd-martijn/Documents/GitHub/cm-tester"
 SRC_DIR="/Users/mdnd-martijn/Library/CloudStorage/Dropbox/AboutContact/Fonts/About Contact/WIP TYPE/Custom/Typeface Projects/CM/02-Exports/Production_1"
-# Mirror the latest font + labels into every deployed tester.
+# Mirror the latest CM_Stable.otf + labels into every deployed tester.
 # 260505 = the former "production" stable build; the rest are dated
-# work-in-progress iterations.
+# work-in-progress iterations. 260520 also keeps CM_Stable.otf — its
+# Glyph Overview / Outline modes parse it with opentype.js — though
+# its paragraph text mode runs on the Production 2 variable fonts
+# (CM_Sharp_VF / CM_Rounded_VF), which this script does not touch.
 TARGETS=(260505 260507 260518 260520)
 LABELS_SCRIPT="$REPO/scripts/extract_ss_labels.py"
 LOG="$REPO/scripts/sync-production-font.log"
