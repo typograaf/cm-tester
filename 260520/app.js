@@ -1712,7 +1712,11 @@ function styleParaEl(el, p) {
 // line-box slack and set a per-paragraph margin-top, making the
 // *visible* gap — previous baseline to next cap height — a constant.
 
-const PARA_WS_REM = 2.6;    // desired white channel (descender -> next cap)
+// Desired gap between paragraphs, measured baseline -> next cap top.
+// The eye anchors spacing on the baseline, so a constant baseline->cap
+// gap is what reads as "equal". Kept generous so a big headline's
+// descender still leaves a comfortable channel inside the gap.
+const PARA_GAP_REM = 5;
 
 // Hidden one-line probe for measuring line-box geometry.
 const _probe = document.createElement("div");
@@ -1739,17 +1743,6 @@ function capRatio(variant) {
   return _capCache[variant];
 }
 
-// Descender depth (below baseline) as a fraction of font size.
-const _descCache = {};
-function descRatio(variant) {
-  if (_descCache[variant] != null) return _descCache[variant];
-  const fam = (FONT_VARIANTS[variant] || FONT_VARIANTS.sharp).family;
-  _capCanvas.font = `700 200px "${fam}", sans-serif`;
-  const m = _capCanvas.measureText("gjpqy");
-  _descCache[variant] = (m.actualBoundingBoxDescent || 40) / 200;
-  return _descCache[variant];
-}
-
 // Returns { top, bottom } as fractions of font size:
 //  top    = line-box top   -> cap-top    (slack above the caps)
 //  bottom = baseline       -> line-box bottom (slack below the baseline)
@@ -1772,30 +1765,25 @@ function paraSlack(variant, leading) {
   return out;
 }
 
-// Position every paragraph so the visible white channel — the gap
-// from the previous paragraph's descender bottom to the next
-// paragraph's cap top — is the same constant for every pair.
+// Position every paragraph so the gap from the previous paragraph's
+// last baseline to the next paragraph's cap top is the same constant
+// for every pair — that is what reads as equal spacing.
 function updateParaSpacing() {
   if (!state.fontsReady) return;
   const els = [...stageDocEl.children];
   if (!els.length) return;
   const emPx = parseFloat(getComputedStyle(stagePanel).fontSize) || 10;
   const remPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 10;
-  const wsPx = PARA_WS_REM * remPx;
+  const gapPx = PARA_GAP_REM * remPx;
   els.forEach((el, i) => {
     const p = state.paras[i];
     if (!p) return;
     if (i === 0) { el.style.marginTop = "0px"; return; }
     const prev = state.paras[i - 1];
-    const prevPx = prev.size * emPx;
-    const thisPx = p.size * emPx;
-    // box-bottom -> last baseline, and box-top -> first cap top.
-    const prevBottom = paraSlack(prev.variant, prev.leading).bottom * prevPx;
-    const thisTop = paraSlack(p.variant, p.leading).top * thisPx;
-    // The previous paragraph's descenders extend below its baseline;
-    // fold that into the gap so the *visible* channel stays constant.
-    const prevDesc = descRatio(prev.variant) * prevPx;
-    el.style.marginTop = `${wsPx + prevDesc - prevBottom - thisTop}px`;
+    // prevBottom: last baseline -> box bottom. thisTop: box top -> cap top.
+    const prevBottom = paraSlack(prev.variant, prev.leading).bottom * prev.size * emPx;
+    const thisTop = paraSlack(p.variant, p.leading).top * p.size * emPx;
+    el.style.marginTop = `${gapPx - prevBottom - thisTop}px`;
   });
 }
 
