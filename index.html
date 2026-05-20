@@ -1,67 +1,218 @@
 <!doctype html>
-<html lang="en" class="loading">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>CM Typeface Tester</title>
-  <link rel="stylesheet" href="styles.css?v=20260414n" />
+  <link rel="icon" href="assets/logo.png" />
+  <style>
+    /* ---- Brand palette (CM Typeface, May 2026) ----
+       Bos Groen  #0b321d   CM Groen  #0fb847
+       Munt Groen #bce8a1   Puur Wit  #ffffff
+       Dark text  #173224 */
+    @font-face {
+      font-family: "BECause";
+      src: url("assets/BECauseVF.woff2") format("woff2");
+      font-weight: 100 900;
+      font-display: swap;
+    }
+
+    :root {
+      --bos: #0b321d;
+      --cm: #0fb847;
+      --munt: #bce8a1;
+      --wit: #ffffff;
+      --ink: #173224;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      background: var(--bos);
+      color: var(--wit);
+      font-family: "BECause", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      min-height: 100svh;
+      display: flex;
+      flex-direction: column;
+      padding: clamp(20px, 4vw, 56px);
+      gap: clamp(32px, 6vh, 72px);
+    }
+
+    /* ---- Header ---- */
+    .head {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .head img { width: 44px; height: 44px; display: block; }
+    .head h1 {
+      font-size: clamp(20px, 2.4vw, 28px);
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .intro {
+      max-width: 46ch;
+      font-size: clamp(15px, 1.5vw, 18px);
+      line-height: 1.45;
+      font-weight: 400;
+      color: var(--munt);
+    }
+
+    /* ---- Version grid ---- */
+    .grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+      align-content: start;
+    }
+
+    .card {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding: 24px;
+      min-height: 220px;
+      border-radius: 8px;
+      background: var(--munt);
+      color: var(--ink);
+      text-decoration: none;
+      transition: transform 0.14s ease, background 0.14s ease;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      background: var(--wit);
+    }
+    .card--latest { background: var(--cm); color: var(--wit); }
+    .card--latest:hover { background: var(--cm); transform: translateY(-4px); }
+
+    .card-top {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .card-date {
+      font-size: 34px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+    .tag {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1.5px solid currentColor;
+      white-space: nowrap;
+    }
+    .card-name {
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .card-desc {
+      font-size: 14px;
+      line-height: 1.45;
+      font-weight: 400;
+      opacity: 0.85;
+      margin-top: auto;
+    }
+    .card-go {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .card-go::after { content: "  \2192"; }
+
+    /* ---- Footer ---- */
+    .foot {
+      display: flex;
+      gap: 20px;
+      font-size: 13px;
+      color: var(--munt);
+      font-weight: 400;
+    }
+  </style>
 </head>
 <body>
-  <main class="app">
-    <!-- top bar: exploration switcher + case toggle -->
-    <section class="panel panel--topbar">
-      <div class="explorations" id="explorations"></div>
-      <select class="explorations-select" id="explorationsSelect" aria-label="Exploration"></select>
-      <div class="case-toggle" id="caseToggle"></div>
-    </section>
+  <header class="head">
+    <img src="assets/logo.png" alt="CM" width="44" height="44" />
+    <h1>CM Typeface Tester</h1>
+  </header>
 
-    <!-- big text panel -->
-    <section class="panel panel--stage">
-      <div
-        class="stage-text"
-        id="stageText"
-        contenteditable="plaintext-only"
-        spellcheck="false"
-      >Leef gerust
-zonder bang
-te zijn om op
-je gezicht
-te gaan.</div>
+  <p class="intro">
+    Test builds for the CM custom typeface. Each version is a snapshot of the
+    tester at a point in time &mdash; pick one to open it.
+  </p>
 
-      <div class="stage-footer">
-        <p class="stage-caption">Zonder handen verzekerd zijn<br />voor je tanden? Check CM.be</p>
-        <div class="stage-brand">
-          <div class="stage-mark" id="stageMark">LEEF GERUST.</div>
-          <img class="stage-logo" src="assets/logo.png" alt="CM" width="63" height="63" />
-        </div>
-      </div>
-    </section>
+  <main class="grid" id="grid"></main>
 
-    <!-- controls -->
-    <section class="panel panel--controls">
-      <div class="controls-main">
-        <button class="pill pill--primary" id="randomString" type="button">Random String</button>
+  <footer class="foot">
+    <span>About Contact voor CM</span>
+    <span>cm.typografie.be</span>
+  </footer>
 
-        <div class="sliders">
-          <label class="slider">
-            <span>Leading</span>
-            <input type="range" id="leading" min="0.6" max="2" step="0.01" value="0.87" />
-          </label>
-          <label class="slider">
-            <span>Tracking</span>
-            <input type="range" id="tracking" min="-0.1" max="0.2" step="0.005" value="-0.01" />
-          </label>
-          <label class="slider">
-            <span>Size</span>
-            <input type="range" id="fontsize" min="4" max="24" step="0.1" value="14.4" />
-          </label>
-        </div>
-      </div>
+  <script>
+    // Newest first. `tag` drives the chip + (for "latest") the accent card.
+    const VERSIONS = [
+      {
+        date: "260520",
+        label: "20 May 2026",
+        name: "Current iteration",
+        tag: "Latest",
+        desc: "Working copy of the single-column build — big preview, slim controls strip.",
+      },
+      {
+        date: "260518",
+        label: "18 May 2026",
+        name: "Single-column layout",
+        tag: "",
+        desc: "Large preview with a bottom controls strip, glyph overview and background swatches.",
+      },
+      {
+        date: "260507",
+        label: "7 May 2026",
+        name: "Multi-panel iteration",
+        tag: "",
+        desc: "Earlier layout with stylistic-set detail panels alongside the preview.",
+      },
+      {
+        date: "260505",
+        label: "5 May 2026",
+        name: "Production build",
+        tag: "Stable",
+        desc: "The former production build — receives the latest font sync.",
+      },
+      {
+        date: "260414",
+        label: "14 Apr 2026",
+        name: "Original tester",
+        tag: "",
+        desc: "The first tester — five typeface explorations with OpenType feature toggles.",
+      },
+    ];
 
-      <div class="features" id="features"></div>
-    </section>
-  </main>
-
-  <script type="module" src="app.js?v=20260414n"></script>
+    const grid = document.getElementById("grid");
+    for (const v of VERSIONS) {
+      const a = document.createElement("a");
+      a.className = "card" + (v.tag === "Latest" ? " card--latest" : "");
+      a.href = v.date + "/";
+      a.innerHTML =
+        '<div class="card-top">' +
+          '<span class="card-date">' + v.date + '</span>' +
+          (v.tag ? '<span class="tag">' + v.tag + '</span>' : '') +
+        '</div>' +
+        '<div class="card-name">' + v.name + '</div>' +
+        '<div class="card-desc">' + v.desc + '</div>' +
+        '<div class="card-go">Open ' + v.label + '</div>';
+      grid.appendChild(a);
+    }
+  </script>
 </body>
 </html>

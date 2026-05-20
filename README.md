@@ -1,26 +1,24 @@
 # CM Tester
 
-Type tester for the CM custom typeface — edit text, change leading / tracking / size, toggle OpenType features, and switch between the 5 explorations.
+Type tester for the CM custom typeface. Live: https://cm.typografie.be
 
-Live: https://cm.typografie.be
+The root is a **hub** (`index.html`) that links through to every dated build.
+Each build lives in its own `YYMMDD/` folder and is a self-contained snapshot
+(its own `index.html`, `app.js`, `styles.css`, `fonts/`, `assets/`).
+
+## Versions
+
+- `260414/` — the original tester (five explorations, OpenType feature toggles)
+- `260505/` — former production / stable build
+- `260507/` — multi-panel iteration
+- `260518/` — single-column layout
+- `260520/` — current working iteration
 
 ## Fonts
 
-Latest exported font per exploration (as of 2026-04-14):
-
-- Exp 1: `CM_1_260413a-Bold.otf`
-- Exp 2: `CM_2_260414-Bold.otf`
-- Exp 3: `CM_3_260413-Bold.otf`
-- Exp 4: `CM_4_260413b-Bold.otf`
-- Exp 5: `CM_5_260414c-Bold.otf`
-
-To refresh: replace the files in `fonts/` and update the paths in `app.js` (`EXPLORATIONS`).
-
-## How it works
-
-- `FontFace` API loads each OTF at runtime.
-- `opentype.js` parses the font to auto-discover OpenType features (GSUB/GPOS). Stylistic-set UI names are pulled from the `name` table when available; otherwise the tag (e.g. `SS01`) is used as a label.
-- Toggled features are applied via CSS `font-feature-settings`.
+`scripts/sync-production-font.sh` mirrors the latest `CM_Stable*.otf` export
+from Dropbox into each work-in-progress build's `fonts/` folder (see `TARGETS`
+in that script) and pushes the change.
 
 ## Local preview
 

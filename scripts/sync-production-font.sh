@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Sync the latest CM Stable export from Dropbox into production/fonts/
-# and push the change to GitHub Pages.
+# Sync the latest CM Stable export from Dropbox into each tester's
+# fonts/ folder and push the change to GitHub Pages.
 #
 # Picks the newest CM_Stable*.otf by modification time. Overwrites the
 # fixed filename CM_Stable.otf so the production app.js never needs
@@ -10,9 +10,10 @@ set -euo pipefail
 
 REPO="/Users/mdnd-martijn/Documents/GitHub/cm-tester"
 SRC_DIR="/Users/mdnd-martijn/Library/CloudStorage/Dropbox/AboutContact/Fonts/About Contact/WIP TYPE/Custom/Typeface Projects/CM/02-Exports/Production_1"
-# Mirror the latest font + labels into every deployed tester
-# (production = stable, dated folders = work-in-progress).
-TARGETS=(production 260507 260518)
+# Mirror the latest font + labels into every deployed tester.
+# 260505 = the former "production" stable build; the rest are dated
+# work-in-progress iterations.
+TARGETS=(260505 260507 260518 260520)
 LABELS_SCRIPT="$REPO/scripts/extract_ss_labels.py"
 LOG="$REPO/scripts/sync-production-font.log"
 
