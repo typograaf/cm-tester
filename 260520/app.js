@@ -128,6 +128,7 @@ const state = {
   outlineMode: false, // legacy alias kept in sync with stageMode==="outline"
   glyphMode: "compact",  // "compact" (typeset string) or "full" (all glyphs grid)
   userSizeOverride: false, // true once the user moves the size slider
+  overviewOpsz: 36,      // optical size for the Glyph Overview
 };
 
 // -------- paragraph document model --------------------------------------
@@ -193,6 +194,7 @@ const addParaBtn = $("addPara");
 const removeParaBtn = $("removePara");
 const paraLabelEl = $("paraLabel");
 const paraColorsEl = $("paraColors");
+const ovOpszInput = $("ovOpsz");
 
 // One curated SS combination + a "Tester" sentinel for free play.
 // Picking the curated preset turns its tags ON and every other
@@ -902,10 +904,20 @@ function renderSwatches() {
   }
 }
 
+// Optical size for the Glyph Overview — applied to the compact
+// typeset (stageText) and the full grid cells (stageGrid).
+function applyOverviewOpsz() {
+  const v = state.overviewOpsz;
+  stageText.style.fontVariationSettings = `"opsz" ${v}`;
+  if (stageGridEl) stageGridEl.style.fontVariationSettings = `"opsz" ${v}`;
+}
+
 function applyTypography(opts = {}) {
   if (!state.font) return;
 
-  const family = `"${state.font.family}", system-ui, sans-serif`;
+  // Glyph Overview / Outline / brand mark render with the Sharp
+  // variable master so the optical-size axis is available.
+  const family = `"${FONT_VARIANTS.sharp.family}", system-ui, sans-serif`;
 
   const parts = [];
   for (const tag of Object.keys(state.featureState)) {
@@ -937,6 +949,7 @@ function applyTypography(opts = {}) {
   stageMark.style.fontFamily = family;
   stageMark.style.letterSpacing = `${trackingInput.value}em`;
   stageMark.style.fontFeatureSettings = fft;
+  stageMark.style.fontVariationSettings = `"opsz" 72`;
 
   // Glyph overview cells inherit the live font so SS toggles update the
   // grid in real time.
@@ -944,6 +957,9 @@ function applyTypography(opts = {}) {
     stageGridEl.style.fontFamily = family;
     stageGridEl.style.fontFeatureSettings = fft;
   }
+  // Optical size for the Glyph Overview (compact typeset + full grid),
+  // driven by the overview optical slider.
+  applyOverviewOpsz();
 
   // Detail panel title also uses the live font once it's loaded
   // (absent in this build).
@@ -2025,6 +2041,14 @@ async function init() {
   }
   // Per-paragraph colour swatches are built by renderColorPicker
   // (rebuilt on every background change), so no wiring is needed here.
+
+  // Optical-size slider for the Glyph Overview (compact + full).
+  ovOpszInput.addEventListener("input", () => {
+    state.overviewOpsz = parseInt(ovOpszInput.value, 10) || 36;
+    applyOverviewOpsz();
+    refitStage();   // compact typeset re-fits as the metrics shift
+  });
+
   addParaBtn.addEventListener("click", addParagraph);
   removeParaBtn.addEventListener("click", removeParagraph);
   randomBtn.addEventListener("click", () => {
