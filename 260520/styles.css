@@ -50,6 +50,11 @@ html {
 
 * { box-sizing: border-box; }
 
+/* Neutral text-selection highlight — no green block behind the type.
+   The caret is left at the browser default (no green either). */
+::selection { background: rgba(0, 0, 0, 0.13); }
+::-moz-selection { background: rgba(0, 0, 0, 0.13); }
+
 html, body {
   margin: 0;
   padding: 0;
@@ -753,7 +758,6 @@ button::-moz-focus-inner { border: 0; }
   white-space: pre-line;
   font-feature-settings: normal;
 }
-.stage-text:focus { caret-color: var(--green); }
 
 /* Outline mode: stage-text stays in the DOM (so contenteditable still
    works) but is rendered transparent. The stage-outline SVG sits
@@ -1098,12 +1102,20 @@ button::-moz-focus-inner { border: 0; }
      it measures each paragraph's line-box slack and sets a
      compensating margin-top so the visible gaps are equal. */
   /* A left accent bar marks the selected paragraph — reserved on
-     every paragraph (transparent) so text never shifts on select. */
+     every paragraph (transparent) so text never shifts on select.
+     The right side mirrors it so the box stays symmetric, which is
+     what lets centred text actually sit centred. */
   border-left: 0.4rem solid transparent;
+  border-right: 0.4rem solid transparent;
   padding-left: 1.6rem;
+  padding-right: 1.6rem;
   cursor: text;
   transition: border-color .15s ease;
 }
-.stage-para:focus { caret-color: var(--green); }
 .stage-para.is-selected { border-left-color: var(--green); }
-.panel--stage[data-align="center"] .stage-para { text-align: center; }
+/* Centre alignment: centre the lines AND the (max-width-capped) box
+   itself, so smaller paragraphs sit centred on the stage too. */
+.panel--stage[data-align="center"] .stage-para {
+  text-align: center;
+  margin-inline: auto;
+}
