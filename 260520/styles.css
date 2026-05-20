@@ -911,19 +911,9 @@ button::-moz-focus-inner { border: 0; }
   -webkit-user-select: none;
 }
 
-/* Centre alignment: text centres, caption is hidden, brand row centres. */
+/* Centre alignment: text centres, brand row centres. */
 .panel--stage[data-align="center"] .stage-text { text-align: center; }
-.panel--stage[data-align="center"] .stage-caption { display: none; }
 .panel--stage[data-align="center"] .stage-footer { justify-content: center; }
-.stage-caption {
-  margin: 0;
-  font-weight: 400;
-  font-variation-settings: "wght" 500, "wdth" 60;
-  font-size: 2.4em;
-  line-height: 1.2;
-  letter-spacing: var(--body-track);
-  color: var(--dark-green);
-}
 .stage-brand {
   display: flex;
   align-items: center;
@@ -1022,7 +1012,10 @@ button::-moz-focus-inner { border: 0; }
   display: none;               /* shown by the data-mode rule below */
   flex-direction: column;
   width: 100%;
-  gap: 0.6em;
+  /* Constant rem-based gap. Combined with text-box trimming on each
+     paragraph (below), the visible space between paragraphs reads
+     the same regardless of their per-paragraph size / leading. */
+  gap: 2.4rem;
 }
 .panel--stage[data-mode="random"] .stage-doc  { display: flex; }
 .panel--stage[data-mode="random"] .stage-text { display: none; }
@@ -1043,10 +1036,20 @@ button::-moz-focus-inner { border: 0; }
   font-weight: 700;
   color: var(--dark-green);
   width: 100%;
+  /* Cap the line length at roughly twelve words. ch scales with the
+     paragraph's own font-size, so the word count holds at any size;
+     width:100% still wins when the panel is narrower than the cap. */
+  max-width: 50ch;
   outline: none;
   white-space: pre-wrap;
   overflow-wrap: break-word;
   font-feature-settings: normal;
+  /* Trim the line-box leading to the cap height / baseline so the
+     paragraph box hugs its glyphs — makes the .stage-doc gap read as
+     even space between paragraphs whatever their leading is. */
+  text-box-trim: trim-both;
+  text-box-edge: cap alphabetic;
+  text-box: trim-both cap alphabetic;
   /* A left accent bar marks the selected paragraph — reserved on
      every paragraph (transparent) so text never shifts on select. */
   border-left: 0.4rem solid transparent;
