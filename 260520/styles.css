@@ -1012,10 +1012,9 @@ button::-moz-focus-inner { border: 0; }
   display: none;               /* shown by the data-mode rule below */
   flex-direction: column;
   width: 100%;
-  /* Constant rem-based gap. Combined with text-box trimming on each
-     paragraph (below), the visible space between paragraphs reads
-     the same regardless of their per-paragraph size / leading. */
-  gap: 2.4rem;
+  /* No flex gap — app.js sets a per-paragraph margin-top so the
+     *visible* gap (previous baseline -> next cap height) is the same
+     constant for every pair, whatever their size / leading. */
 }
 .panel--stage[data-mode="random"] .stage-doc  { display: flex; }
 .panel--stage[data-mode="random"] .stage-text { display: none; }
@@ -1044,17 +1043,13 @@ button::-moz-focus-inner { border: 0; }
   white-space: pre-wrap;
   overflow-wrap: break-word;
   font-feature-settings: normal;
-  /* Trim the line-box leading to the cap height / baseline so the
-     paragraph box hugs its glyphs — makes the .stage-doc gap read as
-     even space between paragraphs whatever their leading is. */
-  text-box-trim: trim-both;
-  text-box-edge: cap alphabetic;
-  text-box: trim-both cap alphabetic;
+  /* Inter-paragraph spacing is handled in JS (updateParaSpacing):
+     it measures each paragraph's line-box slack and sets a
+     compensating margin-top so the visible gaps are equal. */
   /* A left accent bar marks the selected paragraph — reserved on
      every paragraph (transparent) so text never shifts on select. */
   border-left: 0.4rem solid transparent;
   padding-left: 1.6rem;
-  min-height: 1em;
   cursor: text;
   transition: border-color .15s ease;
 }

@@ -27,21 +27,46 @@ const FONT_LABELS_FILE = "fonts/CM_Stable.labels.json";
 const OPSZ_MIN = 12;
 const OPSZ_MAX = 72;
 
-const PRESETS = [
-  "Leef gerust\nwat meer.",
-  "Leef gerust\nwat losser.",
-  "Leef gerust\niets te wild.",
-  "Leef gerust\nzonder bang\nte zijn om op\nje gezicht\nte gaan.",
-  "Skoebidoe, van\nzwangerschap\ntot ouderschap.",
-  "CM-Hospitaalplan niet duurder.",
-  "Deel je warme hart.",
-  "Zijn jouw goede voornemens al in het water gevallen?",
-  "Iets zachter, even straf.",
-  "Baby op\nkomst!",
-  "Zorglijn\nmaakt je\nwegwijs.",
-  "Je optimale bescherming.\nAltijd en overal.",
-  "Elke ochtend een nieuwe frisse start.",
+// Type samples grouped by scale. Random String picks from the band
+// that matches the selected paragraph's size — big paragraphs get
+// short headlines, small paragraphs get longer running text.
+const SAMPLES = {
+  // Headlines — large sizes, a few words.
+  headline: [
+    "Leef gerust",
+    "Zorg voor jezelf",
+    "Altijd dichtbij",
+    "Gezond vooruit",
+    "Samen sterker",
+    "Goed verzekerd",
+    "Elke dag beter",
+  ],
+  // Sub-headers — medium sizes, one phrase.
+  subhead: [
+    "zonder bang te zijn\nom op je gezicht te gaan.",
+    "want jouw gezondheid verdient de beste zorg.",
+    "ontdek wat CM voor jou kan terugbetalen.",
+    "van tandzorg tot brilglazen, wij denken mee.",
+    "kleine en grote zorgen, samen dragen we ze.",
+  ],
+  // Body copy — small sizes, full running sentences.
+  body: [
+    "Je kan vanaf nu in de app werken aan je gezondheid: een gezichtsscan die je stressniveau meet, gezondheidsactiviteiten volgens thema en gepersonaliseerde informatie over welke terugbetalingen je nog niet hebt aangevraagd.",
+    "Met het CM-Hospitaalplan ben je goed beschermd bij een opname in het ziekenhuis. Zo hoef je je geen zorgen te maken over hoge facturen en kan je je volledig richten op je herstel.",
+    "Of je nu sport, op reis vertrekt of een gezin start: CM staat naast je met advies, terugbetalingen en diensten die echt een verschil maken in je dagelijkse leven, elke dag opnieuw.",
+    "Een nieuwe bril, een bezoek aan de tandarts of een sessie bij de kinesist: ontdek in een paar klikken wat je van CM terugkrijgt en vraag je terugbetaling meteen digitaal aan.",
+  ],
+};
+
+// Size thresholds (em) that map a paragraph to a sample band.
+const SAMPLE_TIERS = [
+  { min: 9,   key: "headline" },
+  { min: 4.5, key: "subhead" },
+  { min: 0,   key: "body" },
 ];
+function sampleTier(size) {
+  return (SAMPLE_TIERS.find((t) => size >= t.min) || SAMPLE_TIERS[2]).key;
+}
 
 // Solid mode "fresh load" defaults — restored when leaving outline mode.
 const REFRESH_TEXT = "Leef gerust\nzonder bang\nte zijn om op\nje gezicht\nte gaan.";
@@ -98,21 +123,23 @@ let paraSeq = 0;
 const newParaId = () => `p${++paraSeq}`;
 
 // Fallback values for a paragraph with no source to copy from.
-const PARA_DEFAULT = { variant: "sharp", size: 8, tracking: -0.01, leading: 0.95, opsz: 24 };
+const PARA_DEFAULT = { variant: "sharp", size: 8, tracking: -0.01, leading: 0.95, opsz: 24, case: null };
 
-// Initial document — three paragraphs at different optical sizes so
-// the per-paragraph nature of the tester reads at a glance.
+// Initial document — a headline, a sub-header and a body paragraph,
+// each at its own scale, so the per-paragraph nature of the tester
+// reads at a glance.
 const INITIAL_PARAS = [
   { text: "Leef gerust",
-    variant: "sharp",   size: 16, tracking: -0.015, leading: 0.9,  opsz: 72 },
+    variant: "sharp",   size: 16, tracking: -0.015, leading: 0.9,  opsz: 72, case: null },
   { text: "zonder bang te zijn\nom op je gezicht te gaan.",
-    variant: "rounded", size: 7,  tracking: -0.005, leading: 1.0,  opsz: 36 },
-  { text: "Je optimale bescherming, altijd en overal. Elke ochtend een nieuwe frisse start met de CM-letter op kleine optische maat.",
-    variant: "sharp",   size: 3,  tracking: 0.005,  leading: 1.25, opsz: 13 },
+    variant: "rounded", size: 7,  tracking: -0.005, leading: 1.0,  opsz: 36, case: null },
+  { text: "Je kan vanaf nu in de app werken aan je gezondheid: een gezichtsscan die je stressniveau meet, gezondheidsactiviteiten volgens thema en gepersonaliseerde informatie over welke terugbetalingen je nog niet hebt aangevraagd.",
+    variant: "sharp",   size: 3,  tracking: 0.005,  leading: 1.3,  opsz: 13, case: null },
 ];
 
-state.paras = [];          // [{ id, text, variant, size, tracking, leading, opsz }]
+state.paras = [];          // [{ id, text, variant, size, tracking, leading, opsz, case }]
 state.selectedParaId = null;
+state.fontsReady = false;  // true once the variable fonts have loaded
 
 const GRID_LETTERS = "AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz.,";
 // Compact typeset uses the author's exact line breaks (5 lines).
@@ -641,20 +668,42 @@ function cancelDetailAnims() {
   detailOpacityAnim = null;
 }
 
+// In text mode the TT/tt toggle is per-paragraph (it edits the
+// selected paragraph's case); in Glyph Overview / Outline it falls
+// back to the global stageText case.
+function currentCase() {
+  if (state.stageMode === "random") {
+    const p = getSelectedPara();
+    return p ? (p.case || null) : null;
+  }
+  return state.caseMode;
+}
+
+function toggleCase(id) {
+  if (state.stageMode === "random") {
+    const p = getSelectedPara();
+    if (!p) return;
+    p.case = p.case === id ? null : id;
+    const el = stageDocEl.querySelector(`[data-id="${p.id}"]`);
+    if (el) styleParaEl(el, p);
+  } else {
+    state.caseMode = state.caseMode === id ? null : id;
+    // preserve: case swap changes letter widths too — keep size stable.
+    applyTypography({ preserve: true });
+  }
+  renderCaseToggle();
+}
+
 function renderCaseToggle() {
   caseToggleEl.innerHTML = "";
+  const cur = currentCase();
   for (const mode of CASE_MODES) {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.textContent = mode.label;
     btn.title = mode.transform;
-    btn.classList.toggle("is-active", state.caseMode === mode.id);
-    btn.addEventListener("click", () => {
-      state.caseMode = state.caseMode === mode.id ? null : mode.id;
-      renderCaseToggle();
-      // preserve: case swap changes letter widths too — keep size stable.
-      applyTypography({ preserve: true });
-    });
+    btn.classList.toggle("is-active", cur === mode.id);
+    btn.addEventListener("click", () => toggleCase(mode.id));
     caseToggleEl.appendChild(btn);
   }
 }
@@ -861,13 +910,12 @@ function applyTypography(opts = {}) {
     stageText.style.letterSpacing = `${trackingInput.value}em`;
   }
   stageText.style.fontFeatureSettings = fft;
+  // Case for stageText (Glyph Overview / Outline) only — text-mode
+  // paragraphs each carry their own case via styleParaEl.
   stageText.style.textTransform =
     state.caseMode === "upper" ? "uppercase"
     : state.caseMode === "lower" ? "lowercase"
     : "none";
-  // Case applies to the whole specimen — mirror it onto the
-  // multi-paragraph document; per-paragraph styles inherit it.
-  if (stageDocEl) stageDocEl.style.textTransform = stageText.style.textTransform;
 
   stageMark.style.fontFamily = family;
   stageMark.style.letterSpacing = `${trackingInput.value}em`;
@@ -1619,13 +1667,23 @@ function pickRandomString() {
     renderStageOutline();
     return;
   }
-  // Text mode: cycle the selected paragraph's text to the next preset.
+  // Text mode: drop a fresh random sample into the selected
+  // paragraph, picked from the band that suits its size — short
+  // headlines for big type, longer running text for small type.
   const p = getSelectedPara();
   if (!p) return;
-  const idx = PRESETS.findIndex((s) => s.trim() === (p.text || "").trim());
-  p.text = PRESETS[(idx + 1) % PRESETS.length];
+  const list = SAMPLES[sampleTier(p.size)];
+  const cur = (p.text || "").trim();
+  let next = cur;
+  for (let i = 0; i < 8 && next.trim() === cur; i++) {
+    next = list[Math.floor(Math.random() * list.length)];
+  }
+  p.text = next;
   const el = stageDocEl.querySelector(`[data-id="${p.id}"]`);
-  if (el) el.textContent = p.text;
+  if (el) {
+    el.textContent = next;
+    updateParaSpacing();
+  }
 }
 
 // -------- paragraph document --------------------------------------------
@@ -1638,9 +1696,107 @@ function styleParaEl(el, p) {
   el.style.lineHeight = String(p.leading);
   el.style.letterSpacing = `${p.tracking}em`;
   el.style.fontVariationSettings = `"opsz" ${p.opsz}`;
+  el.style.textTransform =
+    p.case === "upper" ? "uppercase"
+    : p.case === "lower" ? "lowercase"
+    : "none";
   // Keep the build's fixed set (Diagonal ABPR) + default ligatures on,
   // matching the headline / brand mark. No-op if the font lacks them.
   el.style.fontFeatureSettings = `"${FIXED_ACTIVE_SET}" 1, "dlig" 1, "liga" 1`;
+}
+
+// ---- paragraph spacing -------------------------------------------------
+// A constant flex gap looks uneven because each paragraph's line box
+// carries different half-leading above the cap and below the baseline
+// (its leading × size). So instead we measure each paragraph's real
+// line-box slack and set a per-paragraph margin-top, making the
+// *visible* gap — previous baseline to next cap height — a constant.
+
+const PARA_WS_REM = 2.6;    // desired white channel (descender -> next cap)
+
+// Hidden one-line probe for measuring line-box geometry.
+const _probe = document.createElement("div");
+_probe.setAttribute("aria-hidden", "true");
+_probe.style.cssText =
+  "position:absolute;visibility:hidden;left:-9999px;top:0;" +
+  "white-space:nowrap;font-weight:700;margin:0;padding:0;";
+_probe.innerHTML =
+  "<span>Hxgp</span>" +
+  '<span class="_b" style="display:inline-block;width:0;height:0;' +
+  'vertical-align:baseline;"></span>';
+
+const _capCanvas = document.createElement("canvas").getContext("2d");
+const _capCache = {};       // variant -> cap-height ratio
+const _slackCache = {};     // `${variant}:${leading}` -> { top, bottom } ratios
+
+// Cap height as a fraction of font size, from the glyph's ink bounds.
+function capRatio(variant) {
+  if (_capCache[variant] != null) return _capCache[variant];
+  const fam = (FONT_VARIANTS[variant] || FONT_VARIANTS.sharp).family;
+  _capCanvas.font = `700 200px "${fam}", sans-serif`;
+  const m = _capCanvas.measureText("H");
+  _capCache[variant] = (m.actualBoundingBoxAscent || 140) / 200;
+  return _capCache[variant];
+}
+
+// Descender depth (below baseline) as a fraction of font size.
+const _descCache = {};
+function descRatio(variant) {
+  if (_descCache[variant] != null) return _descCache[variant];
+  const fam = (FONT_VARIANTS[variant] || FONT_VARIANTS.sharp).family;
+  _capCanvas.font = `700 200px "${fam}", sans-serif`;
+  const m = _capCanvas.measureText("gjpqy");
+  _descCache[variant] = (m.actualBoundingBoxDescent || 40) / 200;
+  return _descCache[variant];
+}
+
+// Returns { top, bottom } as fractions of font size:
+//  top    = line-box top   -> cap-top    (slack above the caps)
+//  bottom = baseline       -> line-box bottom (slack below the baseline)
+function paraSlack(variant, leading) {
+  const key = `${variant}:${leading}`;
+  if (_slackCache[key]) return _slackCache[key];
+  if (!_probe.isConnected) document.body.appendChild(_probe);
+  const fam = (FONT_VARIANTS[variant] || FONT_VARIANTS.sharp).family;
+  const PX = 400;
+  _probe.style.fontFamily = `"${fam}", sans-serif`;
+  _probe.style.fontSize = `${PX}px`;
+  _probe.style.lineHeight = String(leading);
+  const box = _probe.getBoundingClientRect();
+  const base = _probe.querySelector("._b").getBoundingClientRect();
+  const out = {
+    top: ((base.top - box.top) - capRatio(variant) * PX) / PX,
+    bottom: (box.bottom - base.top) / PX,
+  };
+  _slackCache[key] = out;
+  return out;
+}
+
+// Position every paragraph so the visible white channel — the gap
+// from the previous paragraph's descender bottom to the next
+// paragraph's cap top — is the same constant for every pair.
+function updateParaSpacing() {
+  if (!state.fontsReady) return;
+  const els = [...stageDocEl.children];
+  if (!els.length) return;
+  const emPx = parseFloat(getComputedStyle(stagePanel).fontSize) || 10;
+  const remPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 10;
+  const wsPx = PARA_WS_REM * remPx;
+  els.forEach((el, i) => {
+    const p = state.paras[i];
+    if (!p) return;
+    if (i === 0) { el.style.marginTop = "0px"; return; }
+    const prev = state.paras[i - 1];
+    const prevPx = prev.size * emPx;
+    const thisPx = p.size * emPx;
+    // box-bottom -> last baseline, and box-top -> first cap top.
+    const prevBottom = paraSlack(prev.variant, prev.leading).bottom * prevPx;
+    const thisTop = paraSlack(p.variant, p.leading).top * thisPx;
+    // The previous paragraph's descenders extend below its baseline;
+    // fold that into the gap so the *visible* channel stays constant.
+    const prevDesc = descRatio(prev.variant) * prevPx;
+    el.style.marginTop = `${wsPx + prevDesc - prevBottom - thisTop}px`;
+  });
 }
 
 function getSelectedPara() {
@@ -1676,6 +1832,7 @@ function renderDoc() {
   }
   highlightSelected();
   syncControlsFromPara();
+  updateParaSpacing();
 }
 
 function selectPara(id) {
@@ -1699,6 +1856,8 @@ function syncControlsFromPara() {
   const idx = state.paras.indexOf(p);
   paraLabelEl.textContent = `Paragraph ${idx + 1} / ${state.paras.length}`;
   removeParaBtn.disabled = state.paras.length <= 1;
+  // The TT/tt toggle reflects the selected paragraph's case.
+  renderCaseToggle();
 }
 
 // Update one setting on the selected paragraph and restyle it in place.
@@ -1708,6 +1867,11 @@ function updateParaSetting(key, value) {
   p[key] = value;
   const el = stageDocEl.querySelector(`[data-id="${p.id}"]`);
   if (el) styleParaEl(el, p);
+  // Size / leading / variant change the line-box geometry, so the
+  // inter-paragraph spacing has to be recomputed.
+  if (key === "size" || key === "leading" || key === "variant") {
+    updateParaSpacing();
+  }
 }
 
 // New paragraph copies the selected one's settings (per the brief),
@@ -1723,6 +1887,7 @@ function addParagraph() {
     tracking: cur.tracking,
     leading: cur.leading,
     opsz: cur.opsz,
+    case: cur.case || null,
   };
   const idx = state.paras.findIndex((x) => x.id === state.selectedParaId);
   state.paras.splice(idx < 0 ? state.paras.length : idx + 1, 0, p);
@@ -1841,6 +2006,7 @@ async function init() {
       stageRefitRAF = 0;
       if (window.matchMedia("(max-width: 900px)").matches) return;
       refitStage({ preserve: true });
+      updateParaSpacing();
       if (state.outlineMode) renderStageOutline();
     });
   });
@@ -1913,11 +2079,14 @@ async function init() {
   window.addEventListener("resize", () => {
     if (!window.matchMedia("(max-width: 900px)").matches) {
       refitStage();
+      updateParaSpacing();
       if (state.outlineMode) renderStageOutline();
     }
   });
 
   await loadFont();
+  // Fonts are in — line-box measurement is now accurate.
+  state.fontsReady = true;
 
   // No toggle UI in this build: every discovered set is forced OFF,
   // then Diagonal ABPR (ss08) is the single fixed active set. ss08
@@ -1939,8 +2108,15 @@ async function init() {
   // from there if the text doesn't fit.
   autoFitHeadlineSlider();
   applyTypography();
+  // Now that the fonts are measurable, lay out the paragraph spacing.
+  updateParaSpacing();
 
   document.documentElement.classList.remove("loading");
+
+  // Fonts can settle a frame or two after document.fonts resolves;
+  // re-measure once more so the spacing is pixel-accurate.
+  requestAnimationFrame(updateParaSpacing);
+  setTimeout(updateParaSpacing, 200);
 
   requestAnimationFrame(() => requestAnimationFrame(fitHeadline));
   setTimeout(fitHeadline, 150);
