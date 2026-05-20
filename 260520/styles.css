@@ -685,9 +685,9 @@ button::-moz-focus-inner { border: 0; }
      transition would only trail. */
 }
 .panel--stage[data-bg="dark"]  { background: var(--dark-green); }
+/* stage-para colour is set per-paragraph in JS (styleParaEl); only
+   the single-line stageText and the brand mark auto-flip here. */
 .panel--stage[data-bg="dark"]  .stage-text,
-.panel--stage[data-bg="dark"]  .stage-para,
-.panel--stage[data-bg="dark"]  .stage-caption,
 .panel--stage[data-bg="dark"]  .stage-mark { color: var(--white); }
 .panel--stage[data-bg="mint"]  { background: var(--mint); }
 .panel--stage[data-bg="image"] {
@@ -707,8 +707,6 @@ button::-moz-focus-inner { border: 0; }
   background-repeat: no-repeat, no-repeat;
 }
 .panel--stage[data-bg="image"] .stage-text,
-.panel--stage[data-bg="image"] .stage-para,
-.panel--stage[data-bg="image"] .stage-caption,
 .panel--stage[data-bg="image"] .stage-mark { color: var(--white); }
 
 .stage-text {
@@ -1000,6 +998,38 @@ button::-moz-focus-inner { border: 0; }
 .pill--para:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+/* Per-paragraph colour swatches — brand palette. */
+.para-colors {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--pill-bg);
+  padding: 1.2rem;
+  border-radius: 9.3rem;
+  flex: 0 0 auto;
+}
+.para-color {
+  width: 3.2rem;
+  height: 3.2rem;
+  border-radius: 50%;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  flex: 0 0 auto;
+  /* Inset hairline keeps the white swatch visible on the light tray. */
+  box-shadow: inset 0 0 0 1px rgba(11, 50, 29, 0.15);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.para-color:hover { transform: scale(1.08); }
+/* Active = the selected paragraph's colour: white gap + dark ring,
+   so it reads on any swatch colour. */
+.para-color.is-active {
+  box-shadow:
+    inset 0 0 0 1px rgba(11, 50, 29, 0.15),
+    0 0 0 0.2rem var(--white),
+    0 0 0 0.5rem var(--dark-green);
 }
 
 /* ------------------------------------------------------------------

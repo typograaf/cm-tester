@@ -94,6 +94,21 @@ const BG_MAP = {
   "image": "image",
 };
 
+// Background tone — drives the per-paragraph colour flip.
+const BG_TONE = { dark: "dark", image: "dark", white: "light", mint: "light" };
+
+// Per-paragraph text colours (brand palette). When the background
+// tone flips light <-> dark, Bos Groen and Puur Wit swap so the
+// contrast level holds; CM Groen and Munt Groen read on either tone
+// and stay put.
+const COLORS = {
+  bos:  "#0b321d",
+  cm:   "#0fb847",
+  munt: "#bce8a1",
+  wit:  "#ffffff",
+};
+const COLOR_FLIP = { bos: "wit", wit: "bos", cm: "cm", munt: "munt" };
+
 const HIDDEN_DEFAULTS = new Set(["kern", "calt", "rlig", "ccmp", "mark", "mkmk", "aalt", "locl"]);
 
 // -------- state ----------------------------------------------------------
@@ -112,6 +127,7 @@ const state = {
   outlineMode: false, // legacy alias kept in sync with stageMode==="outline"
   glyphMode: "compact",  // "compact" (typeset string) or "full" (all glyphs grid)
   userSizeOverride: false, // true once the user moves the size slider
+  bgTone: "light",       // tone of the current background (drives colour flip)
 };
 
 // -------- paragraph document model --------------------------------------
@@ -123,18 +139,18 @@ let paraSeq = 0;
 const newParaId = () => `p${++paraSeq}`;
 
 // Fallback values for a paragraph with no source to copy from.
-const PARA_DEFAULT = { variant: "sharp", size: 8, tracking: -0.01, leading: 0.95, opsz: 24, case: null };
+const PARA_DEFAULT = { variant: "sharp", size: 8, tracking: -0.01, leading: 0.95, opsz: 24, case: null, color: "bos" };
 
 // Initial document — a headline, a sub-header and a body paragraph,
 // each at its own scale, so the per-paragraph nature of the tester
 // reads at a glance.
 const INITIAL_PARAS = [
   { text: "Leef gerust",
-    variant: "sharp",   size: 16, tracking: -0.015, leading: 0.9,  opsz: 72, case: "upper" },
+    variant: "sharp",   size: 16, tracking: -0.015, leading: 0.9,  opsz: 72, case: "upper", color: "bos" },
   { text: "zonder bang te zijn\nom op je gezicht te gaan.",
-    variant: "rounded", size: 7,  tracking: -0.005, leading: 1.0,  opsz: 36, case: null },
+    variant: "rounded", size: 7,  tracking: -0.005, leading: 1.0,  opsz: 36, case: null, color: "bos" },
   { text: "Je kan vanaf nu in de app werken aan je gezondheid: een gezichtsscan die je stressniveau meet, gezondheidsactiviteiten volgens thema en gepersonaliseerde informatie over welke terugbetalingen je nog niet hebt aangevraagd.",
-    variant: "sharp",   size: 3,  tracking: 0.005,  leading: 1.3,  opsz: 13, case: null },
+    variant: "sharp",   size: 3,  tracking: 0.005,  leading: 1.3,  opsz: 13, case: null, color: "bos" },
 ];
 
 state.paras = [];          // [{ id, text, variant, size, tracking, leading, opsz, case }]
@@ -176,6 +192,7 @@ const variantToggleEl = $("variantToggle");
 const addParaBtn = $("addPara");
 const removeParaBtn = $("removePara");
 const paraLabelEl = $("paraLabel");
+const paraColorsEl = $("paraColors");
 
 // One curated SS combination + a "Tester" sentinel for free play.
 // Picking the curated preset turns its tags ON and every other
@@ -944,6 +961,22 @@ function setBackground(hex) {
     btn.classList.toggle("is-active", btn.dataset.bg === hex);
   }
   stagePanel.dataset.bg = BG_MAP[hex] || "white";
+
+  // When the background tone flips light <-> dark, flip every
+  // paragraph's colour through COLOR_FLIP so the contrast holds.
+  const tone = BG_TONE[stagePanel.dataset.bg] || "light";
+  if (tone !== state.bgTone) {
+    state.bgTone = tone;
+    for (const p of state.paras) {
+      p.color = COLOR_FLIP[p.color] || p.color;
+    }
+    for (const el of stageDocEl.children) {
+      const p = state.paras.find((x) => x.id === el.dataset.id);
+      if (p) styleParaEl(el, p);
+    }
+    syncControlsFromPara();
+  }
+
   // Switching to/from image mode changes the auto-fit ceiling (5/8
   // of the panel vs. full panel) so the headline must re-fit.
   if ((stagePanel.dataset.bg === "image") !== wasImage) {
@@ -1692,6 +1725,7 @@ function pickRandomString() {
 function styleParaEl(el, p) {
   const fam = (FONT_VARIANTS[p.variant] || FONT_VARIANTS.sharp).family;
   el.style.fontFamily = `"${fam}", system-ui, sans-serif`;
+  el.style.color = COLORS[p.color] || COLORS.bos;
   el.style.fontSize = `${p.size}em`;
   el.style.lineHeight = String(p.leading);
   el.style.letterSpacing = `${p.tracking}em`;
@@ -1861,6 +1895,9 @@ function syncControlsFromPara() {
   for (const btn of variantToggleEl.querySelectorAll("button")) {
     btn.classList.toggle("is-active", btn.dataset.variant === p.variant);
   }
+  for (const btn of paraColorsEl.querySelectorAll(".para-color")) {
+    btn.classList.toggle("is-active", btn.dataset.color === p.color);
+  }
   const idx = state.paras.indexOf(p);
   paraLabelEl.textContent = `Paragraph ${idx + 1} / ${state.paras.length}`;
   removeParaBtn.disabled = state.paras.length <= 1;
@@ -1896,6 +1933,7 @@ function addParagraph() {
     leading: cur.leading,
     opsz: cur.opsz,
     case: cur.case || null,
+    color: cur.color || "bos",
   };
   const idx = state.paras.findIndex((x) => x.id === state.selectedParaId);
   state.paras.splice(idx < 0 ? state.paras.length : idx + 1, 0, p);
@@ -1956,6 +1994,15 @@ async function init() {
     btn.addEventListener("click", () => {
       updateParaSetting("variant", btn.dataset.variant);
       for (const b of variantToggleEl.querySelectorAll("button")) {
+        b.classList.toggle("is-active", b === btn);
+      }
+    });
+  }
+  // Per-paragraph colour swatches.
+  for (const btn of paraColorsEl.querySelectorAll(".para-color")) {
+    btn.addEventListener("click", () => {
+      updateParaSetting("color", btn.dataset.color);
+      for (const b of paraColorsEl.querySelectorAll(".para-color")) {
         b.classList.toggle("is-active", b === btn);
       }
     });
