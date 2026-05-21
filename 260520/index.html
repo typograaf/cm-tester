@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>CM Typeface Tester — 260520</title>
-  <link rel="stylesheet" href="styles.css?v=20260520p" />
+  <link rel="stylesheet" href="styles.css?v=20260520q" />
   <!-- Preload the bg photo so the first click on the image swatch
        paints instantly instead of waiting for the 3.4MB JPG to
        fetch on demand. -->
@@ -13,16 +13,12 @@
 <body>
   <main class="app">
     <div class="col col--left">
-      <!-- Controls panel — edits the currently selected paragraph.
-           Variant (Sharp/Rounded) + add/remove sit on top, the four
-           axes (leading / tracking / size / optical size) below. -->
+      <!-- Controls panel — edits the currently selected paragraph:
+           colour + add/remove on top, then leading / tracking / size
+           and the weight row below. -->
       <section class="panel panel--controls">
         <div class="para-bar">
           <span class="para-bar__label" id="paraLabel">Paragraph 1 / 1</span>
-          <div class="variant-toggle" id="variantToggle">
-            <button type="button" data-variant="sharp" class="is-active">Sharp</button>
-            <button type="button" data-variant="rounded">Rounded</button>
-          </div>
           <!-- Per-paragraph colour swatches — built at runtime
                (the background's own colour is omitted). -->
           <div class="para-colors" id="paraColors"></div>
@@ -128,7 +124,7 @@
       <div class="stage-text-wrap">
         <!-- Multi-paragraph document — one .stage-para per paragraph,
              built at runtime. Each carries its own size / tracking /
-             leading / optical-size / variant. Used in text mode. -->
+             leading / weight / colour / case. Used in text mode. -->
         <div class="stage-doc" id="stageDoc"></div>
         <!-- Single editable line — used only by Glyph Overview
              (compact typeset) and Outline mode. -->
@@ -162,6 +158,6 @@ te gaan.</div>
   </div>
 
 
-  <script type="module" src="app.js?v=20260520p"></script>
+  <script type="module" src="app.js?v=20260520q"></script>
 </body>
 </html>

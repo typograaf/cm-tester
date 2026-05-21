@@ -8,12 +8,10 @@ import opentype from "https://cdn.jsdelivr.net/npm/opentype.js@1.3.4/+esm";
 
 // -------- config ---------------------------------------------------------
 
-// Two variable masters of the CM typeface, with a weight axis.
-// Paragraphs pick one per-paragraph; they render purely through CSS
-// (no opentype.js parsing).
+// The variable master of the CM typeface, with a weight axis.
+// Paragraphs render it purely through CSS (no opentype.js parsing).
 const FONT_VARIANTS = {
-  sharp:   { file: "fonts/CM_Sharp_VF.ttf",   family: "CM-Sharp" },
-  rounded: { file: "fonts/CM_Rounded_VF.ttf", family: "CM-Rounded" },
+  sharp: { file: "fonts/CM_Sharp_VF.ttf", family: "CM-Sharp" },
 };
 // The stable (non-variable) master. opentype.js parses this one — it
 // backs Glyph Overview, Outline mode and the brand mark. The jsdelivr
@@ -162,7 +160,7 @@ const INITIAL_PARAS = [
   { text: "Leef gerust",
     variant: "sharp",   size: 16, tracking: -0.015, leading: 0.9,  wght: 900, case: "upper", color: "bos" },
   { text: "zonder bang te zijn\nom op je gezicht te gaan.",
-    variant: "rounded", size: 7,  tracking: -0.005, leading: 1.0,  wght: 700, case: null, color: "bos" },
+    variant: "sharp",   size: 7,  tracking: -0.005, leading: 1.0,  wght: 700, case: null, color: "bos" },
   { text: "Je kan vanaf nu in de app werken aan je gezondheid: een gezichtsscan die je stressniveau meet, gezondheidsactiviteiten volgens thema en gepersonaliseerde informatie over welke terugbetalingen je nog niet hebt aangevraagd.",
     variant: "sharp",   size: 3,  tracking: 0.005,  leading: 1.3,  wght: 500, case: null, color: "bos" },
 ];
@@ -203,7 +201,6 @@ const presetPillsEl = $("presetPills");
 const stageDocEl = $("stageDoc");
 const wghtInput = $("wght");
 const weightBtnsEl = $("weightBtns");
-const variantToggleEl = $("variantToggle");
 const addParaBtn = $("addPara");
 const removeParaBtn = $("removePara");
 const paraLabelEl = $("paraLabel");
@@ -269,18 +266,15 @@ let detailOpacityAnim = null;
 
 async function loadFont() {
   const cb = Date.now();
-  const [stableRes, sharpRes, roundedRes, labelsRes] = await Promise.all([
+  const [stableRes, sharpRes, labelsRes] = await Promise.all([
     fetch(`${FONT_STABLE.file}?t=${cb}`),
     fetch(`${FONT_VARIANTS.sharp.file}?t=${cb}`),
-    fetch(`${FONT_VARIANTS.rounded.file}?t=${cb}`),
     fetch(`${FONT_LABELS_FILE}?t=${cb}`),
   ]);
   if (!stableRes.ok) throw new Error(`failed to fetch ${FONT_STABLE.file}`);
   if (!sharpRes.ok) throw new Error(`failed to fetch ${FONT_VARIANTS.sharp.file}`);
-  if (!roundedRes.ok) throw new Error(`failed to fetch ${FONT_VARIANTS.rounded.file}`);
   const buf = await stableRes.arrayBuffer();
   const sharpBuf = await sharpRes.arrayBuffer();
-  const roundedBuf = await roundedRes.arrayBuffer();
   if (labelsRes.ok) {
     try {
       state.ssLabels = await labelsRes.json();
@@ -289,14 +283,13 @@ async function loadFont() {
     }
   }
 
-  // Register all three masters as separate families. The stable face
-  // backs the chrome (outline / opentype machinery); the two variable
-  // faces carry the weight axis and are used by paragraphs + the
-  // Glyph Overview, driven per-element via CSS font-weight.
+  // Register the masters as separate families. The stable face backs
+  // the chrome (outline / opentype machinery); the variable face
+  // carries the weight axis and is used by paragraphs + the Glyph
+  // Overview, driven per-element via CSS font-weight.
   const faces = [
-    { key: "sharp",   family: FONT_VARIANTS.sharp.family,   buf: sharpBuf },
-    { key: "rounded", family: FONT_VARIANTS.rounded.family, buf: roundedBuf },
-    { key: "stable",  family: FONT_STABLE.family,           buf },
+    { key: "sharp",  family: FONT_VARIANTS.sharp.family, buf: sharpBuf },
+    { key: "stable", family: FONT_STABLE.family,         buf },
   ];
   for (const face of faces) {
     const ff = new FontFace(face.family, face.buf, {
@@ -468,7 +461,7 @@ async function pollFonts() {
   fontPollBusy = true;
   try {
     let changed = false;
-    for (const key of ["sharp", "rounded"]) {
+    for (const key of ["sharp"]) {
       try {
         if (await reloadVariantIfChanged(key)) changed = true;
       } catch (_) { /* offline / transient — retry next tick */ }
@@ -2024,9 +2017,6 @@ function syncControlsFromPara() {
   trackingInput.value = p.tracking;
   sizeInput.value = p.size;
   wghtInput.value = p.wght;
-  for (const btn of variantToggleEl.querySelectorAll("button")) {
-    btn.classList.toggle("is-active", btn.dataset.variant === p.variant);
-  }
   for (const btn of paraColorsEl.querySelectorAll(".para-color")) {
     btn.classList.toggle("is-active", btn.dataset.color === p.color);
   }
@@ -2131,15 +2121,6 @@ async function init() {
   bindSlider(sizeInput, "size", parseFloat);
   bindSlider(wghtInput, "wght", (v) => parseInt(v, 10));
 
-  // Sharp / Rounded — per-paragraph variant.
-  for (const btn of variantToggleEl.querySelectorAll("button")) {
-    btn.addEventListener("click", () => {
-      updateParaSetting("variant", btn.dataset.variant);
-      for (const b of variantToggleEl.querySelectorAll("button")) {
-        b.classList.toggle("is-active", b === btn);
-      }
-    });
-  }
   // Per-paragraph named-weight buttons (Text / Medium / Bold / …).
   for (const btn of weightBtnsEl.querySelectorAll("button")) {
     btn.addEventListener("click", () => updateParaSetting("wght", Number(btn.dataset.w)));
