@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>CM Typeface Tester — 260520</title>
-  <link rel="stylesheet" href="styles.css?v=20260520o" />
+  <link rel="stylesheet" href="styles.css?v=20260520p" />
   <!-- Preload the bg photo so the first click on the image swatch
        paints instantly instead of waiting for the 3.4MB JPG to
        fetch on demand. -->
@@ -42,19 +42,34 @@
             <span>Size</span>
             <input type="range" id="fontsize" min="1.5" max="40" step="0.1" value="8" />
           </label>
-          <label class="slider-row">
-            <span>Optical</span>
-            <input type="range" id="opsz" min="12" max="72" step="1" value="24" />
-          </label>
+        </div>
+        <!-- Weight — named-instance buttons + a fine slider. -->
+        <div class="weight-bar">
+          <span class="weight-bar__label">Weight</span>
+          <div class="weight-btns" id="weightBtns">
+            <button type="button" data-w="500">Text</button>
+            <button type="button" data-w="600">Medium</button>
+            <button type="button" data-w="700">Bold</button>
+            <button type="button" data-w="800">Headline</button>
+            <button type="button" data-w="900">Display</button>
+          </div>
+          <input type="range" id="wght" min="500" max="900" step="1" value="500" />
         </div>
       </section>
 
-      <!-- Optical-size control — shown only in Glyph Overview mode. -->
+      <!-- Weight control — shown only in Glyph Overview mode. -->
       <section class="panel panel--overview-controls">
-        <label class="slider-row">
-          <span>Optical</span>
-          <input type="range" id="ovOpsz" min="12" max="72" step="1" value="36" />
-        </label>
+        <div class="weight-bar">
+          <span class="weight-bar__label">Weight</span>
+          <div class="weight-btns" id="ovWeightBtns">
+            <button type="button" data-w="500">Text</button>
+            <button type="button" data-w="600">Medium</button>
+            <button type="button" data-w="700">Bold</button>
+            <button type="button" data-w="800">Headline</button>
+            <button type="button" data-w="900">Display</button>
+          </div>
+          <input type="range" id="ovWght" min="500" max="900" step="1" value="700" />
+        </div>
       </section>
 
       <!-- Bottom action bar: case, mode toggles, swatches, outline-toggle -->
@@ -147,6 +162,6 @@ te gaan.</div>
   </div>
 
 
-  <script type="module" src="app.js?v=20260520o"></script>
+  <script type="module" src="app.js?v=20260520p"></script>
 </body>
 </html>

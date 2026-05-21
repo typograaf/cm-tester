@@ -530,6 +530,78 @@ button::-moz-focus-inner { border: 0; }
 .slider-row input[type="range"]:active::-moz-range-thumb { transform: scale(1.12); }
 
 /* ------------------------------------------------------------------
+   Weight row — named-instance buttons (Text / Medium / …) + a fine
+   slider, sharing the row.
+   ------------------------------------------------------------------ */
+.weight-bar {
+  display: flex;
+  align-items: center;
+  gap: 2.4rem;
+}
+.weight-bar__label {
+  font: 400 var(--body-size)/1.4 var(--ui);
+  font-variation-settings: "wght" 500, "wdth" 60;
+  letter-spacing: var(--body-track);
+  color: var(--dark-green);
+  white-space: nowrap;
+  min-width: 6.8rem;
+}
+.weight-btns {
+  display: inline-flex;
+  gap: 0.6rem;
+  flex: 0 0 auto;
+}
+.weight-btns button {
+  font-family: var(--ui);
+  font-weight: 700;
+  font-variation-settings: "wght" 700, "wdth" 60;
+  font-size: var(--body-size);
+  line-height: 1.6;
+  letter-spacing: var(--body-track);
+  color: var(--dark-green);
+  background: var(--pill-bg);
+  border: 0;
+  padding: 1.2rem 2.4rem;
+  border-radius: 9.3rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .15s, color .15s;
+}
+.weight-btns button:hover { background: #ececec; }
+.weight-btns button.is-active { background: var(--green); color: var(--white); }
+.weight-bar input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1 1 0;
+  min-width: 12rem;
+  height: 0.4rem;
+  background: var(--slider-track);
+  border-radius: 13.8rem;
+  outline: none;
+  cursor: pointer;
+}
+.weight-bar input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 3.6rem;
+  height: 1.8rem;
+  background: var(--green);
+  border-radius: 7.9rem;
+  border: 0;
+  cursor: pointer;
+  transition: transform .15s ease;
+}
+.weight-bar input[type="range"]::-moz-range-thumb {
+  width: 3.6rem;
+  height: 1.8rem;
+  background: var(--green);
+  border-radius: 7.9rem;
+  border: 0;
+  cursor: pointer;
+}
+.weight-bar input[type="range"]:hover::-webkit-slider-thumb { transform: scale(1.12); }
+
+/* ------------------------------------------------------------------
    Action bar — sits on the page bg below the sliders panel.
    Holds case toggle, mode pills (Random / Glyph Overview),
    bg-swatches tray, outline-toggle tray.
@@ -1087,7 +1159,7 @@ button::-moz-focus-inner { border: 0; }
 
 .stage-para {
   font-family: var(--cm);
-  font-weight: 700;
+  font-weight: 500;            /* base weight; JS sets the real value */
   color: var(--dark-green);
   width: 100%;
   /* Cap the line length at roughly twelve words. ch scales with the
@@ -1107,6 +1179,9 @@ button::-moz-focus-inner { border: 0; }
   padding-right: 1.6rem;
   cursor: text;
 }
+/* Bold runs from Cmd-B — pinned to a fixed weight regardless of the
+   paragraph's base weight. */
+.stage-para b { font-weight: 700; }
 /* Centre alignment: centre the lines AND the (max-width-capped) box
    itself, so smaller paragraphs sit centred on the stage too. */
 .panel--stage[data-align="center"] .stage-para {

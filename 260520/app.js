@@ -8,9 +8,9 @@ import opentype from "https://cdn.jsdelivr.net/npm/opentype.js@1.3.4/+esm";
 
 // -------- config ---------------------------------------------------------
 
-// Two variable masters of the CM typeface. Both carry a single
-// optical-size axis (opsz, 12–72). Paragraphs pick one per-paragraph;
-// they render purely through CSS (no opentype.js parsing).
+// Two variable masters of the CM typeface, with a weight axis.
+// Paragraphs pick one per-paragraph; they render purely through CSS
+// (no opentype.js parsing).
 const FONT_VARIANTS = {
   sharp:   { file: "fonts/CM_Sharp_VF.ttf",   family: "CM-Sharp" },
   rounded: { file: "fonts/CM_Rounded_VF.ttf", family: "CM-Rounded" },
@@ -23,9 +23,20 @@ const FONT_VARIANTS = {
 const FONT_STABLE = { file: "fonts/CM_Stable.otf", family: "CM-Stable" };
 const FONT_LABELS_FILE = "fonts/CM_Stable.labels.json";
 
-// Optical-size axis range, read off the fonts' fvar table.
-const OPSZ_MIN = 12;
-const OPSZ_MAX = 72;
+// Weight axis. WEIGHTS are the font's named instances (fvar) — the
+// quick-pick buttons. WGHT_REGULAR ("Text") is the weight Cmd-B
+// bolds up from; WGHT_BOLD ("Bold") is what it bolds to.
+const WGHT_MIN = 500;
+const WGHT_MAX = 900;
+const WEIGHTS = [
+  { name: "Text",     value: 500 },
+  { name: "Medium",   value: 600 },
+  { name: "Bold",     value: 700 },
+  { name: "Headline", value: 800 },
+  { name: "Display",  value: 900 },
+];
+const WGHT_REGULAR = 500;
+const WGHT_BOLD = 700;
 
 // Type samples grouped by scale. Random String picks from the band
 // that matches the selected paragraph's size — big paragraphs get
@@ -128,7 +139,7 @@ const state = {
   outlineMode: false, // legacy alias kept in sync with stageMode==="outline"
   glyphMode: "compact",  // "compact" (typeset string) or "full" (all glyphs grid)
   userSizeOverride: false, // true once the user moves the size slider
-  overviewOpsz: 36,      // optical size for the Glyph Overview
+  overviewWght: 700,     // weight for the Glyph Overview
   fontFaces: {},         // key -> live FontFace (for hot-swapping)
   fontBytes: {},         // key -> loaded byte length (change detection)
 };
@@ -142,21 +153,21 @@ let paraSeq = 0;
 const newParaId = () => `p${++paraSeq}`;
 
 // Fallback values for a paragraph with no source to copy from.
-const PARA_DEFAULT = { variant: "sharp", size: 8, tracking: -0.01, leading: 0.95, opsz: 24, case: null, color: "bos" };
+const PARA_DEFAULT = { variant: "sharp", size: 8, tracking: -0.01, leading: 0.95, wght: 500, case: null, color: "bos" };
 
 // Initial document — a headline, a sub-header and a body paragraph,
-// each at its own scale, so the per-paragraph nature of the tester
-// reads at a glance.
+// each at its own scale + weight, so the per-paragraph nature of the
+// tester reads at a glance.
 const INITIAL_PARAS = [
   { text: "Leef gerust",
-    variant: "sharp",   size: 16, tracking: -0.015, leading: 0.9,  opsz: 72, case: "upper", color: "bos" },
+    variant: "sharp",   size: 16, tracking: -0.015, leading: 0.9,  wght: 900, case: "upper", color: "bos" },
   { text: "zonder bang te zijn\nom op je gezicht te gaan.",
-    variant: "rounded", size: 7,  tracking: -0.005, leading: 1.0,  opsz: 36, case: null, color: "bos" },
+    variant: "rounded", size: 7,  tracking: -0.005, leading: 1.0,  wght: 700, case: null, color: "bos" },
   { text: "Je kan vanaf nu in de app werken aan je gezondheid: een gezichtsscan die je stressniveau meet, gezondheidsactiviteiten volgens thema en gepersonaliseerde informatie over welke terugbetalingen je nog niet hebt aangevraagd.",
-    variant: "sharp",   size: 3,  tracking: 0.005,  leading: 1.3,  opsz: 13, case: null, color: "bos" },
+    variant: "sharp",   size: 3,  tracking: 0.005,  leading: 1.3,  wght: 500, case: null, color: "bos" },
 ];
 
-state.paras = [];          // [{ id, text, variant, size, tracking, leading, opsz, case }]
+state.paras = [];          // [{ id, text, variant, size, tracking, leading, wght, case, color }]
 state.selectedParaId = null;
 state.fontsReady = false;  // true once the variable fonts have loaded
 
@@ -190,13 +201,15 @@ const overviewBtn = $("glyphOverview");
 const featureDetailEl = document.querySelector(".feature-detail");
 const presetPillsEl = $("presetPills");
 const stageDocEl = $("stageDoc");
-const opszInput = $("opsz");
+const wghtInput = $("wght");
+const weightBtnsEl = $("weightBtns");
 const variantToggleEl = $("variantToggle");
 const addParaBtn = $("addPara");
 const removeParaBtn = $("removePara");
 const paraLabelEl = $("paraLabel");
 const paraColorsEl = $("paraColors");
-const ovOpszInput = $("ovOpsz");
+const ovWghtInput = $("ovWght");
+const ovWeightBtnsEl = $("ovWeightBtns");
 
 // One curated SS combination + a "Tester" sentinel for free play.
 // Picking the curated preset turns its tags ON and every other
@@ -277,9 +290,9 @@ async function loadFont() {
   }
 
   // Register all three masters as separate families. The stable face
-  // backs the chrome (overview / outline / mark); the two variable
-  // faces are used by paragraphs, with opsz driven per-element via
-  // font-variation-settings.
+  // backs the chrome (outline / opentype machinery); the two variable
+  // faces carry the weight axis and are used by paragraphs + the
+  // Glyph Overview, driven per-element via CSS font-weight.
   const faces = [
     { key: "sharp",   family: FONT_VARIANTS.sharp.family,   buf: sharpBuf },
     { key: "rounded", family: FONT_VARIANTS.rounded.family, buf: roundedBuf },
@@ -287,7 +300,10 @@ async function loadFont() {
   ];
   for (const face of faces) {
     const ff = new FontFace(face.family, face.buf, {
-      weight: "700",
+      // Variable masters get a weight range so CSS font-weight drives
+      // the wght axis (and Cmd-B / <b> just works); the stable OTF is
+      // a single weight.
+      weight: face.key === "stable" ? "700" : `${WGHT_MIN} ${WGHT_MAX}`,
       style: "normal",
       display: "block",
     });
@@ -436,7 +452,7 @@ async function reloadVariantIfChanged(key) {
   if (!res.ok) return false;
   const buf = await res.arrayBuffer();
   if (buf.byteLength === state.fontBytes[key]) return false;
-  const ff = new FontFace(v.family, buf, { weight: "700", style: "normal", display: "swap" });
+  const ff = new FontFace(v.family, buf, { weight: `${WGHT_MIN} ${WGHT_MAX}`, style: "normal", display: "swap" });
   await ff.load();
   if (state.fontFaces[key]) {
     try { document.fonts.delete(state.fontFaces[key]); } catch (_) {}
@@ -962,12 +978,12 @@ function renderSwatches() {
   }
 }
 
-// Optical size for the Glyph Overview — applied to the compact
-// typeset (stageText) and the full grid cells (stageGrid).
-function applyOverviewOpsz() {
-  const v = state.overviewOpsz;
-  stageText.style.fontVariationSettings = `"opsz" ${v}`;
-  if (stageGridEl) stageGridEl.style.fontVariationSettings = `"opsz" ${v}`;
+// Weight for the Glyph Overview — applied to the compact typeset
+// (stageText) and the full grid cells (stageGrid).
+function applyOverviewWght() {
+  const v = state.overviewWght;
+  stageText.style.fontWeight = String(v);
+  if (stageGridEl) stageGridEl.style.fontWeight = String(v);
 }
 
 function applyTypography(opts = {}) {
@@ -1007,7 +1023,7 @@ function applyTypography(opts = {}) {
   stageMark.style.fontFamily = family;
   stageMark.style.letterSpacing = `${trackingInput.value}em`;
   stageMark.style.fontFeatureSettings = fft;
-  stageMark.style.fontVariationSettings = `"opsz" 72`;
+  stageMark.style.fontWeight = "900";
 
   // Glyph overview cells inherit the live font so SS toggles update the
   // grid in real time.
@@ -1015,9 +1031,9 @@ function applyTypography(opts = {}) {
     stageGridEl.style.fontFamily = family;
     stageGridEl.style.fontFeatureSettings = fft;
   }
-  // Optical size for the Glyph Overview (compact typeset + full grid),
-  // driven by the overview optical slider.
-  applyOverviewOpsz();
+  // Weight for the Glyph Overview (compact typeset + full grid),
+  // driven by the overview weight slider / buttons.
+  applyOverviewWght();
 
   // Detail panel title also uses the live font once it's loaded
   // (absent in this build).
@@ -1785,11 +1801,13 @@ function pickRandomString() {
   for (let i = 0; i < 8 && next.trim() === cur; i++) {
     next = list[Math.floor(Math.random() * list.length)];
   }
-  p.text = next;
   const el = stageDocEl.querySelector(`[data-id="${p.id}"]`);
   if (el) {
-    el.textContent = next;
+    el.textContent = next;       // plain text — drops any bold runs
+    p.text = el.innerHTML;
     updateParaSpacing();
+  } else {
+    p.text = next;
   }
 }
 
@@ -1803,7 +1821,8 @@ function styleParaEl(el, p) {
   el.style.fontSize = `${p.size}em`;
   el.style.lineHeight = String(p.leading);
   el.style.letterSpacing = `${p.tracking}em`;
-  el.style.fontVariationSettings = `"opsz" ${p.opsz}`;
+  // Base weight — bold runs (<b>, from Cmd-B) override it per-span.
+  el.style.fontWeight = String(p.wght);
   el.style.textTransform =
     p.case === "upper" ? "uppercase"
     : p.case === "lower" ? "lowercase"
@@ -1919,6 +1938,19 @@ function getSelectedPara() {
   return state.paras.find((p) => p.id === state.selectedParaId) || null;
 }
 
+// The .stage-para element that currently holds the text selection /
+// caret, or null. Used to scope Cmd-B to one paragraph.
+function selectionParaEl() {
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount) return null;
+  let n = sel.anchorNode;
+  while (n && n !== document) {
+    if (n.nodeType === 1 && n.classList && n.classList.contains("stage-para")) return n;
+    n = n.parentNode;
+  }
+  return null;
+}
+
 // Mark the selected paragraph's element with .is-selected.
 function highlightSelected() {
   for (const el of stageDocEl.children) {
@@ -1934,13 +1966,14 @@ function renderDoc() {
     const el = document.createElement("div");
     el.className = "stage-para";
     el.dataset.id = p.id;
-    el.contentEditable = "plaintext-only";
+    // Rich (not plaintext-only) so Cmd-B bold runs (<b>) survive edits.
+    el.contentEditable = "true";
     el.spellcheck = false;
-    el.textContent = p.text;
+    el.innerHTML = p.text;
     styleParaEl(el, p);
     el.addEventListener("mousedown", () => selectPara(p.id));
     el.addEventListener("focus", () => selectPara(p.id));
-    el.addEventListener("input", () => { p.text = el.textContent; });
+    el.addEventListener("input", () => { p.text = el.innerHTML; });
     stageDocEl.appendChild(el);
   }
   if (!state.paras.some((p) => p.id === state.selectedParaId)) {
@@ -1990,12 +2023,15 @@ function syncControlsFromPara() {
   leadingInput.value = p.leading;
   trackingInput.value = p.tracking;
   sizeInput.value = p.size;
-  opszInput.value = p.opsz;
+  wghtInput.value = p.wght;
   for (const btn of variantToggleEl.querySelectorAll("button")) {
     btn.classList.toggle("is-active", btn.dataset.variant === p.variant);
   }
   for (const btn of paraColorsEl.querySelectorAll(".para-color")) {
     btn.classList.toggle("is-active", btn.dataset.color === p.color);
+  }
+  for (const btn of weightBtnsEl.querySelectorAll("button")) {
+    btn.classList.toggle("is-active", Number(btn.dataset.w) === p.wght);
   }
   const idx = state.paras.indexOf(p);
   paraLabelEl.textContent = `Paragraph ${idx + 1} / ${state.paras.length}`;
@@ -2016,6 +2052,13 @@ function updateParaSetting(key, value) {
   if (key === "size" || key === "leading" || key === "variant") {
     updateParaSpacing();
   }
+  // Keep the weight slider + named-weight buttons in step with each other.
+  if (key === "wght") {
+    wghtInput.value = value;
+    for (const btn of weightBtnsEl.querySelectorAll("button")) {
+      btn.classList.toggle("is-active", Number(btn.dataset.w) === value);
+    }
+  }
 }
 
 // New paragraph copies the selected one's settings (per the brief),
@@ -2030,7 +2073,7 @@ function addParagraph() {
     size: cur.size,
     tracking: cur.tracking,
     leading: cur.leading,
-    opsz: cur.opsz,
+    wght: cur.wght,
     case: cur.case || null,
     color: cur.color || "bos",
   };
@@ -2086,7 +2129,7 @@ async function init() {
   bindSlider(leadingInput, "leading", parseFloat);
   bindSlider(trackingInput, "tracking", parseFloat);
   bindSlider(sizeInput, "size", parseFloat);
-  bindSlider(opszInput, "opsz", (v) => parseInt(v, 10));
+  bindSlider(wghtInput, "wght", (v) => parseInt(v, 10));
 
   // Sharp / Rounded — per-paragraph variant.
   for (const btn of variantToggleEl.querySelectorAll("button")) {
@@ -2097,14 +2140,62 @@ async function init() {
       }
     });
   }
+  // Per-paragraph named-weight buttons (Text / Medium / Bold / …).
+  for (const btn of weightBtnsEl.querySelectorAll("button")) {
+    btn.addEventListener("click", () => updateParaSetting("wght", Number(btn.dataset.w)));
+  }
   // Per-paragraph colour swatches are built by renderColorPicker
   // (rebuilt on every background change), so no wiring is needed here.
 
-  // Optical-size slider for the Glyph Overview (compact + full).
-  ovOpszInput.addEventListener("input", () => {
-    state.overviewOpsz = parseInt(ovOpszInput.value, 10) || 36;
-    applyOverviewOpsz();
+  // Weight slider + named-weight buttons for the Glyph Overview.
+  const applyOvWght = (v) => {
+    state.overviewWght = v;
+    ovWghtInput.value = v;
+    for (const b of ovWeightBtnsEl.querySelectorAll("button")) {
+      b.classList.toggle("is-active", Number(b.dataset.w) === v);
+    }
+    applyOverviewWght();
     refitStage();   // compact typeset re-fits as the metrics shift
+  };
+  ovWghtInput.addEventListener("input", () => {
+    applyOvWght(parseInt(ovWghtInput.value, 10) || 700);
+  });
+  for (const btn of ovWeightBtnsEl.querySelectorAll("button")) {
+    btn.addEventListener("click", () => applyOvWght(Number(btn.dataset.w)));
+  }
+
+  // Bold produces <b> tags (not inline-style spans).
+  try { document.execCommand("styleWithCSS", false, false); } catch (_) {}
+
+  // Cmd/Ctrl-B — bold the selected text. Only fires when the
+  // paragraph's base weight is "Text" (regular); on any heavier
+  // paragraph it does nothing.
+  document.addEventListener("keydown", (e) => {
+    const isBold = (e.metaKey || e.ctrlKey) && !e.altKey &&
+      (e.key === "b" || e.key === "B");
+    if (!isBold) return;
+    e.preventDefault();
+    if (state.stageMode !== "random") return;
+    const el = selectionParaEl();
+    if (!el) return;
+    const p = state.paras.find((x) => x.id === el.dataset.id);
+    if (!p || p.wght !== WGHT_REGULAR) return;
+    document.execCommand("bold");          // input event syncs p.text
+  });
+
+  // In the rich paragraphs, keep Enter a simple line break (<br>)
+  // rather than the browser's default <div> split, and paste as
+  // plain text so no foreign formatting leaks in.
+  stageDocEl.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      document.execCommand("insertLineBreak");
+    }
+  });
+  stageDocEl.addEventListener("paste", (e) => {
+    e.preventDefault();
+    const text = (e.clipboardData || window.clipboardData).getData("text/plain");
+    document.execCommand("insertText", false, text);
   });
 
   addParaBtn.addEventListener("click", addParagraph);
