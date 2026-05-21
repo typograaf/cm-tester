@@ -2,7 +2,7 @@
 # Sync the latest CM font exports from Dropbox into the testers and
 # push to GitHub Pages. Two independent jobs:
 #   1. CM_Stable*.otf  (Production_1) -> every dated tester
-#   2. CM *VariableVF.ttf (Production 2) -> 260520 (Sharp + Rounded)
+#   2. the variable masters (Latest)  -> 260520 (Sharp + Rounded)
 # Driven by the com.typograaf.cm-production-sync LaunchAgent, which
 # watches both export folders.
 
@@ -11,7 +11,7 @@ set -uo pipefail
 REPO="/Users/mdnd-martijn/Documents/GitHub/cm-tester"
 EXPORTS="/Users/mdnd-martijn/Library/CloudStorage/Dropbox/AboutContact/Fonts/About Contact/WIP TYPE/Custom/Typeface Projects/CM/02-Exports"
 SRC_STABLE="$EXPORTS/Production_1"
-SRC_VAR="$EXPORTS/Production 2"
+SRC_VAR="$EXPORTS/Latest"
 LABELS_SCRIPT="$REPO/scripts/extract_ss_labels.py"
 LOG="$REPO/scripts/sync-production-font.log"
 
@@ -69,14 +69,14 @@ sync_stable() {
   commit_push "Font sync: $name" "${paths[@]}"
 }
 
-# Job 2 — the two variable masters into 260520. The newest *-VariableVF
-# is Sharp, the newest *RoundedVariableVF is Rounded. app.js loads them
-# under fixed filenames + a runtime cache-bust, so nothing else changes.
+# Job 2 — the two variable masters into 260520. The newest *VariableVF
+# is Sharp, the newest *RoundedVF is Rounded. app.js loads them under
+# fixed filenames + a runtime cache-bust, so nothing else changes.
 sync_variable() {
   [[ -d "$SRC_VAR" ]] || { log "variable: source folder missing"; return 0; }
   local sharp round paths=() names=()
   sharp="$(ls -1t "$SRC_VAR"/*-VariableVF.ttf 2>/dev/null | head -n 1 || true)"
-  round="$(ls -1t "$SRC_VAR"/*RoundedVariableVF.ttf 2>/dev/null | head -n 1 || true)"
+  round="$(ls -1t "$SRC_VAR"/*RoundedVF.ttf 2>/dev/null | head -n 1 || true)"
 
   if [[ -n "$sharp" ]]; then
     local dst="$REPO/260520/fonts/CM_Sharp_VF.ttf"
@@ -97,7 +97,7 @@ sync_variable() {
       paths+=("260520/fonts/CM_Rounded_VF.ttf"); names+=("$(basename "$round")")
     fi
   else
-    log "variable: no *RoundedVariableVF.ttf"
+    log "variable: no *RoundedVF.ttf"
   fi
 
   if [[ ${#paths[@]} -eq 0 ]]; then log "variable: no change"; return 0; fi

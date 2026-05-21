@@ -8,11 +8,20 @@ import opentype from "https://cdn.jsdelivr.net/npm/opentype.js@1.3.4/+esm";
 
 // -------- config ---------------------------------------------------------
 
-// The variable master of the CM typeface, with a weight axis.
-// Paragraphs render it purely through CSS (no opentype.js parsing).
+// The two variable masters of the CM typeface, both with a weight
+// axis (500–900). Which one renders is chosen by the weight, not a
+// toggle: Text/Medium/Bold (≤700) use the sharp master, Headline/
+// Display (≥800) use the rounded master.
 const FONT_VARIANTS = {
-  sharp: { file: "fonts/CM_Sharp_VF.ttf", family: "CM-Sharp" },
+  sharp:   { file: "fonts/CM_Sharp_VF.ttf",   family: "CM-Sharp" },
+  rounded: { file: "fonts/CM_Rounded_VF.ttf", family: "CM-Rounded" },
 };
+// Weights at or above this render with the rounded master.
+const ROUND_FROM_WGHT = 800;
+function familyForWeight(w) {
+  const v = w >= ROUND_FROM_WGHT ? FONT_VARIANTS.rounded : FONT_VARIANTS.sharp;
+  return `"${v.family}", system-ui, sans-serif`;
+}
 // The stable (non-variable) master. opentype.js parses this one — it
 // backs Glyph Overview, Outline mode and the brand mark. The jsdelivr
 // ESM opentype build trips over the variable TTFs, so they are kept
@@ -266,15 +275,18 @@ let detailOpacityAnim = null;
 
 async function loadFont() {
   const cb = Date.now();
-  const [stableRes, sharpRes, labelsRes] = await Promise.all([
+  const [stableRes, sharpRes, roundedRes, labelsRes] = await Promise.all([
     fetch(`${FONT_STABLE.file}?t=${cb}`),
     fetch(`${FONT_VARIANTS.sharp.file}?t=${cb}`),
+    fetch(`${FONT_VARIANTS.rounded.file}?t=${cb}`),
     fetch(`${FONT_LABELS_FILE}?t=${cb}`),
   ]);
   if (!stableRes.ok) throw new Error(`failed to fetch ${FONT_STABLE.file}`);
   if (!sharpRes.ok) throw new Error(`failed to fetch ${FONT_VARIANTS.sharp.file}`);
+  if (!roundedRes.ok) throw new Error(`failed to fetch ${FONT_VARIANTS.rounded.file}`);
   const buf = await stableRes.arrayBuffer();
   const sharpBuf = await sharpRes.arrayBuffer();
+  const roundedBuf = await roundedRes.arrayBuffer();
   if (labelsRes.ok) {
     try {
       state.ssLabels = await labelsRes.json();
@@ -288,8 +300,9 @@ async function loadFont() {
   // carries the weight axis and is used by paragraphs + the Glyph
   // Overview, driven per-element via CSS font-weight.
   const faces = [
-    { key: "sharp",  family: FONT_VARIANTS.sharp.family, buf: sharpBuf },
-    { key: "stable", family: FONT_STABLE.family,         buf },
+    { key: "sharp",   family: FONT_VARIANTS.sharp.family,   buf: sharpBuf },
+    { key: "rounded", family: FONT_VARIANTS.rounded.family, buf: roundedBuf },
+    { key: "stable",  family: FONT_STABLE.family,           buf },
   ];
   for (const face of faces) {
     const ff = new FontFace(face.family, face.buf, {
@@ -461,7 +474,7 @@ async function pollFonts() {
   fontPollBusy = true;
   try {
     let changed = false;
-    for (const key of ["sharp"]) {
+    for (const key of ["sharp", "rounded"]) {
       try {
         if (await reloadVariantIfChanged(key)) changed = true;
       } catch (_) { /* offline / transient — retry next tick */ }
@@ -972,18 +985,24 @@ function renderSwatches() {
 }
 
 // Weight for the Glyph Overview — applied to the compact typeset
-// (stageText) and the full grid cells (stageGrid).
+// (stageText) and the full grid cells (stageGrid). The master
+// (sharp / rounded) follows the weight, same as paragraphs.
 function applyOverviewWght() {
   const v = state.overviewWght;
+  const fam = familyForWeight(v);
   stageText.style.fontWeight = String(v);
-  if (stageGridEl) stageGridEl.style.fontWeight = String(v);
+  stageText.style.fontFamily = fam;
+  if (stageGridEl) {
+    stageGridEl.style.fontWeight = String(v);
+    stageGridEl.style.fontFamily = fam;
+  }
 }
 
 function applyTypography(opts = {}) {
   if (!state.font) return;
 
-  // Glyph Overview / Outline / brand mark render with the Sharp
-  // variable master so the optical-size axis is available.
+  // Stage text default family — Glyph Overview / Outline. The Glyph
+  // Overview's family is then refined by weight in applyOverviewWght.
   const family = `"${FONT_VARIANTS.sharp.family}", system-ui, sans-serif`;
 
   const parts = [];
@@ -1013,7 +1032,8 @@ function applyTypography(opts = {}) {
     : state.caseMode === "lower" ? "lowercase"
     : "none";
 
-  stageMark.style.fontFamily = family;
+  // The brand mark is Display weight (900) — rounded master.
+  stageMark.style.fontFamily = familyForWeight(900);
   stageMark.style.letterSpacing = `${trackingInput.value}em`;
   stageMark.style.fontFeatureSettings = fft;
   stageMark.style.fontWeight = "900";
@@ -1808,8 +1828,8 @@ function pickRandomString() {
 
 // Apply a paragraph's settings to its DOM element as inline styles.
 function styleParaEl(el, p) {
-  const fam = (FONT_VARIANTS[p.variant] || FONT_VARIANTS.sharp).family;
-  el.style.fontFamily = `"${fam}", system-ui, sans-serif`;
+  // Sharp or rounded master, chosen by the paragraph's weight.
+  el.style.fontFamily = familyForWeight(p.wght);
   el.style.color = COLORS[p.color] || COLORS.bos;
   el.style.fontSize = `${p.size}em`;
   el.style.lineHeight = String(p.leading);

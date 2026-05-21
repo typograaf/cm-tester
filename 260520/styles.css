@@ -1152,9 +1152,12 @@ button::-moz-focus-inner { border: 0; }
   padding-right: 1.6rem;
   cursor: text;
 }
-/* Bold runs from Cmd-B — pinned to a fixed weight regardless of the
-   paragraph's base weight. */
-.stage-para b { font-weight: 700; }
+/* Bold runs from Cmd-B — pinned to Bold (700), which is a sharp
+   weight, regardless of the paragraph's base weight. */
+.stage-para b {
+  font-weight: 700;
+  font-family: "CM-Sharp", system-ui, sans-serif;
+}
 /* Centre alignment: centre the lines AND the (max-width-capped) box
    itself, so smaller paragraphs sit centred on the stage too. */
 .panel--stage[data-align="center"] .stage-para {
